@@ -1,2 +1,0 @@
-# fumiklea
-my_repository

@@ -12,12 +12,12 @@ def main() -> None:
         base = (
             input("Введите код исходной валюты (например, USD): ")
             .strip()
-            .upper()  # noqa: E501
+            .upper() 
         )
         target = (
             input("Введите код целевой валюты (например, RUB): ")
             .strip()
-            .upper()  # noqa: E501
+            .upper()  
         )
 
         validate_amount(amount)
