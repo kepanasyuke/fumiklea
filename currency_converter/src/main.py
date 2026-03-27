@@ -10,11 +10,15 @@ def main() -> None:
     try:
         amount = float(input("Введите сумму: "))
         base = (
-            input("Введите код исходной валюты (например, USD): ").strip().upper()
-        )  # noqa: E501
+            input("Введите код исходной валюты (например, USD): ")
+            .strip()
+            .upper()  # noqa: E501
+        )
         target = (
-            input("Введите код целевой валюты (например, RUB): ").strip().upper()
-        )  # noqa: E501
+            input("Введите код целевой валюты (например, RUB): ")
+            .strip()
+            .upper()  # noqa: E501
+        )
 
         validate_amount(amount)
         rate = get_exchange_rate(base, target)

@@ -11,7 +11,7 @@ help:
 	@echo "  clean    - Remove __pycache__ and .pyc files"
 
 install:
-	pip install -r ../requirements.txt
+	pip install -r requirements.txt
 
 test:
 	PYTHONPATH=/workspaces/fumiklea python -m unittest discover -s tests
