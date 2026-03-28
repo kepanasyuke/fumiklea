@@ -10,12 +10,26 @@
     <div class="page">
         <div class="card">
             <h1>Умный калькулятор</h1>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-list">
+                        {% for category, message in messages %}
+                            <div class="flash flash--{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
             <form method="post">
-                <input type="text" name="expression" placeholder="Например: 12 / (2 + 4)" autocomplete="off">
-                <button type="submit">Вычислить</button>
+                <input type="text" name="expression" value="{{ expression }}" placeholder="Например: 12 / (2 + 4)" autocomplete="off">
+                <div class="form-actions">
+                    <button type="submit">Вычислить</button>
+                    <button type="submit" formaction="{{ url_for('clear_history') }}" formmethod="post" class="button-secondary">Очистить историю</button>
+                </div>
             </form>
 
-            {% if result is defined %}
+            {% if result is not none %}
                 <div class="result{% if result == 'Ошибка' %} result--error{% endif %}">
                     Результат: {{ result }}
                 </div>
