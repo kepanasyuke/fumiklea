@@ -1,3 +1,13 @@
+# Expected CSV format:
+# The CSV file must have a header row with at least the following columns:
+# - title (название аниме)
+# - rating (числовой рейтинг, например 8.7)
+# Other columns are allowed and will be displayed as well.
+# Example:
+# title,rating,year
+# "Naruto",8.2,2002
+# "Attack on Titan",9.1,2013
+
 import csv
 import sys
 import webbrowser
@@ -25,28 +35,37 @@ html_template = """<!DOCTYPE html>
     <table>
         <thead>
             <tr>
-                {}
+                {headers}
             </tr>
         </thead>
         <tbody>
-            {}
+            {rows}
         </tbody>
     </table>
 </body>
 </html>
 """
 
-with open(csv_file, 'r', encoding='utf-8') as f:
-    reader = csv.DictReader(f)
+with open(csv_file, 'r', encoding='utf-8') as csv_f:
+    reader = csv.DictReader(csv_f)
     rows = list(reader)
     headers = reader.fieldnames
 
-# Генерируем таблицу
 header_html = ''.join(f'<th>{h}</th>' for h in headers)
 rows_html = ''
 for row in rows:
-    rating = float(row['rating'])
-    rating_class = 'rating-high' if rating >= 9.0 else 'rating-mid' if rating >= 8.5 else ''
+    if 'rating' not in row or not row['rating']:
+        continue  # Skip rows without a 'rating' key or empty rating
+    try:
+        rating = float(row['rating'])
+        if rating >= 9.0:
+            rating_class = 'rating-high'
+        elif rating >= 8.5:
+            rating_class = 'rating-mid'
+        else:
+            rating_class = ''
+    except (ValueError, TypeError):
+        continue  # Skip rows with invalid rating
     row_html = '<tr>'
     for h in headers:
         if h == 'rating':
@@ -56,10 +75,10 @@ for row in rows:
     row_html += '</tr>'
     rows_html += row_html
 
-full_html = html_template.format(header_html, rows_html)
+full_html = html_template.format(headers=header_html, rows=rows_html)
 
-with tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, encoding='utf-8') as f:
-    f.write(full_html)
-    tmp_path = f.name
+with tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, encoding='utf-8') as html_f:
+    html_f.write(full_html)
+    tmp_path = html_f.name
 
 webbrowser.open('file://' + tmp_path)
