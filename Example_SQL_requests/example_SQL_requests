@@ -1,0 +1,164 @@
+SELECT
+   id AS menu_id 
+FROM
+   menu 
+EXCEPT
+SELECT
+   menu_id 
+FROM
+   person_order 
+ORDER BY
+   menu_id;
+
+SELECT
+    m.pizza_name,
+    m.price,
+    pz.name AS pizzeria_name,
+    pv.visit_date
+FROM
+    person_visits pv
+    JOIN person p ON p.id = pv.person_id
+    JOIN pizzeria pz ON pz.id = pv.pizzeria_id
+    JOIN menu m ON m.pizzeria_id = pz.id
+WHERE
+    p.name = 'Kate'
+    AND m.price BETWEEN 800 AND 1000
+ORDER BY
+    m.pizza_name,
+    m.price,
+    pz.name;
+
+SELECT
+   pizza_name,
+   price,
+   (
+      SELECT
+         name 
+      FROM
+         pizzeria 
+      WHERE
+         id = m.pizzeria_id
+   )
+   AS pizzeria_name 
+FROM
+   menu m 
+WHERE
+   id IN 
+   (
+      SELECT
+         id 
+      FROM
+         menu 
+      EXCEPT
+      SELECT
+         menu_id 
+      FROM
+         person_order 
+   )
+ORDER BY
+   pizza_name,
+   price;
+
+(
+    SELECT pz.name AS pizzeria_name
+    FROM person_visits pv
+    JOIN person p ON p.id = pv.person_id
+    JOIN pizzeria pz ON pz.id = pv.pizzeria_id
+    WHERE p.gender = 'female'
+    GROUP BY pz.id, pz.name
+    HAVING COUNT(*) > (
+        SELECT COUNT(*)
+        FROM person_visits pv2
+        JOIN person p2 ON p2.id = pv2.person_id
+        WHERE p2.gender = 'male' AND pv2.pizzeria_id = pz.id
+    )
+)
+UNION ALL
+(
+    SELECT pz.name AS pizzeria_name
+    FROM person_visits pv
+    JOIN person p ON p.id = pv.person_id
+    JOIN pizzeria pz ON pz.id = pv.pizzeria_id
+    WHERE p.gender = 'male'
+    GROUP BY pz.id, pz.name
+    HAVING COUNT(*) > (
+        SELECT COUNT(*)
+        FROM person_visits pv2
+        JOIN person p2 ON p2.id = pv2.person_id
+        WHERE p2.gender = 'female' AND pv2.pizzeria_id = pz.id
+    )
+)
+ORDER BY pizzeria_name;
+
+SELECT
+    m1.pizza_name,
+    p1.name AS pizzeria_name_1,
+    p2.name AS pizzeria_name_2,
+    m1.price
+FROM
+    menu m1
+    JOIN menu m2 ON m1.pizza_name = m2.pizza_name
+    AND m1.price = m2.price
+    AND m1.pizzeria_id < m2.pizzeria_id
+    JOIN pizzeria p1 ON m1.pizzeria_id = p1.id
+    JOIN pizzeria p2 ON m2.pizzeria_id = p2.id
+ORDER BY
+    m1.pizza_name;
+
+SELECT
+   pz.name AS pizzeria_name 
+FROM
+   person_visits pv 
+   JOIN
+      pizzeria pz 
+      ON pv.pizzeria_id = pz.id 
+   JOIN
+      person p 
+      ON pv.person_id = p.id 
+WHERE
+   p.name = 'Andrey' 
+EXCEPT
+SELECT
+   pz.name 
+FROM
+   person_order po 
+   JOIN
+      menu m 
+      ON po.menu_id = m.id 
+   JOIN
+      pizzeria pz 
+      ON m.pizzeria_id = pz.id 
+   JOIN
+      person p 
+      ON po.person_id = p.id 
+WHERE
+   p.name = 'Andrey' 
+ORDER BY
+   pizzeria_name;
+
+INSERT INTO
+    menu (id, pizzeria_id, pizza_name, price)
+VALUES
+    (19, 2, 'greek pizza', 800);
+
+INSERT INTO
+   menu (id, pizzeria_id, pizza_name, price) 
+   SELECT
+(
+      SELECT
+         id 
+      FROM
+         menu 
+      ORDER BY
+         id DESC LIMIT 1) + 1,
+         (
+            SELECT
+               id 
+            FROM
+               pizzeria 
+            WHERE
+               name = 'Dominos'
+         )
+,
+         'sicilian pizza',
+         900;
