@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Умный калькулятор</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="page">
+        <div class="card">
+            <h1>Умный калькулятор</h1>
+            <form method="post">
+                <input type="text" name="expression" placeholder="Например: 12 / (2 + 4)" autocomplete="off">
+                <button type="submit">Вычислить</button>
+            </form>
+
+            {% if result is defined %}
+                <div class="result{% if result == 'Ошибка' %} result--error{% endif %}">
+                    Результат: {{ result }}
+                </div>
+            {% endif %}
+
+            <h2>История</h2>
+            {% if history %}
+                <ul class="history">
+                    {% for entry in history %}
+                        <li>{{ entry }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="no-history">Пока нет вычислений. Введите выражение и нажмите «Вычислить».</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
