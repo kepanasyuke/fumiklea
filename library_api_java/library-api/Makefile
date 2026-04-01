@@ -4,9 +4,6 @@ JAR_NAME = library-api-0.0.1-SNAPSHOT.jar
 
 help:
 	@echo "Available commands:"
-	@echo "  make build       - Build the JAR locally using Maven (skip tests)"
-	@echo "  make run         - Run the JAR locally (needs PostgreSQL running)"
-	@echo "  make clean       - Clean Maven target"
 	@echo "  make docker-build - Build Docker image (without starting)"
 	@echo "  make docker-up   - Start Docker containers (PostgreSQL + app)"
 	@echo "  make docker-down - Stop Docker containers"
