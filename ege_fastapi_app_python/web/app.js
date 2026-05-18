@@ -16,7 +16,7 @@ async function register() {
     const username = document.getElementById('username').value;
     if (!username) return alert('Введите имя');
     try {
-        const data = await api(`/api/v1/user/register?username=${username}`, 'POST');
+        const data = await api(`/api/v1/user/register?username=${encodeURIComponent(username)}`, 'POST');
         userId = data.user_id;
         document.getElementById('userInfo').innerText = `Вы: ${username} (ID ${userId})`;
         document.getElementById('auth').style.display = 'none';
@@ -25,52 +25,76 @@ async function register() {
 }
 
 async function startVariant() {
-    const data = await api(`/api/v1/tasks/variant/generate?user_id=${userId}`, 'POST');
-    currentAttemptId = data.attempt_id;
-    tasks = data.tasks;
-    renderTasks();
+    try {
+        const data = await api(`/api/v1/tasks/variant/generate?user_id=${userId}`, 'POST');
+        console.log('Ответ сервера:', data);
+        currentAttemptId = data.attempt_id;
+        tasks = data.tasks;
+        if (!tasks || tasks.length === 0) {
+            alert('Не удалось загрузить задания. Попробуйте ещё раз.');
+            return;
+        }
+        renderTasks();
+    } catch(e) {
+        alert('Ошибка загрузки варианта: ' + e.message);
+    }
 }
 
 async function startTimeAttack() {
-    const data = await api(`/api/v1/tasks/time-attack/start?user_id=${userId}`, 'POST');
-    currentAttemptId = data.attempt_id;
-    tasks = data.tasks;
-    renderTasks();
-    setTimeout(() => {
-        if (currentAttemptId) {
-            alert('Время вышло! Отправляем ответы...');
-            submitAnswers();
+    try {
+        const data = await api(`/api/v1/tasks/time-attack/start?user_id=${userId}`, 'POST');
+        console.log('Ответ сервера:', data);
+        currentAttemptId = data.attempt_id;
+        tasks = data.tasks;
+        if (!tasks || tasks.length === 0) {
+            alert('Не удалось загрузить задания. Попробуйте ещё раз.');
+            return;
         }
-    }, 600000);
+        renderTasks();
+        setTimeout(() => {
+            if (currentAttemptId) {
+                alert('Время вышло! Отправляем ответы...');
+                submitAnswers();
+            }
+        }, 600000);
+    } catch(e) {
+        alert('Ошибка загрузки Time Attack: ' + e.message);
+    }
 }
 
 function renderTasks() {
     const area = document.getElementById('taskArea');
     area.style.display = 'block';
-    area.innerHTML = '<h2>Решите задания:</h2>';
+    let html = '<h2>Решите задания:</h2>';
     tasks.forEach(task => {
-        area.innerHTML += `
+        html += `
             <div class="task">
+                <p><strong>Задание №${task.id}</strong> (${task.topic})</p>
                 <p>${task.text}</p>
                 <input type="text" id="answer_${task.id}" placeholder="Ваш ответ">
             </div>
         `;
     });
-    area.innerHTML += '<button onclick="submitAnswers()">Отправить ответы</button>';
+    html += '<button onclick="submitAnswers()">Отправить ответы</button>';
+    area.innerHTML = html;
 }
 
 async function submitAnswers() {
     const answers = tasks.map(task => ({
         task_id: task.id,
-        answer: document.getElementById(`answer_${task.id}`).value || ''
+        answer: document.getElementById(`answer_${task.id}`)?.value || ''
     }));
-    const data = await api(`/api/v1/tasks/variant/submit`, 'POST', {
-        user_id: userId,
-        attempt_id: currentAttemptId,
-        answers: answers
-    });
-    showResult(data);
-    currentAttemptId = null;
+    try {
+        const data = await api(`/api/v1/tasks/variant/submit`, 'POST', {
+            user_id: userId,
+            attempt_id: currentAttemptId,
+            answers: answers
+        });
+        showResult(data);
+        currentAttemptId = null;
+    } catch(e) {
+        alert('Ошибка отправки ответов: ' + e.message);
+    }
 }
 
 function showResult(data) {
@@ -89,9 +113,13 @@ async function listCompetitions() {
 }
 
 async function showStats() {
-    const data = await api(`/api/v1/user/stats/${userId}`);
-    let html = `<p>Попыток: ${data.total_attempts}, Средний балл: ${data.avg_score}, Лучший: ${data.best_score}</p>`;
-    html += `<p>Достижения: ${data.achievements.join(', ') || 'нет'}</p>`;
-    if (data.weak_topics.length) html += `<p>Слабые темы: ${data.weak_topics.join(', ')}</p>`;
-    document.getElementById('resultArea').innerHTML = html;
+    try {
+        const data = await api(`/api/v1/user/stats/${userId}`);
+        let html = `<p>Попыток: ${data.total_attempts}, Средний балл: ${data.avg_score}, Лучший: ${data.best_score}</p>`;
+        html += `<p>Достижения: ${data.achievements?.join(', ') || 'нет'}</p>`;
+        if (data.weak_topics?.length) html += `<p>Слабые темы: ${data.weak_topics.join(', ')}</p>`;
+        document.getElementById('resultArea').innerHTML = html;
+    } catch(e) {
+        alert('Ошибка загрузки статистики: ' + e.message);
+    }
 }
