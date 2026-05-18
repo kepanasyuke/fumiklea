@@ -4,7 +4,7 @@ from app.core.dependencies import get_db
 from app.core.security import verify_token
 from app.infrastructure.repositories.task_repository import TaskRepository
 from app.domain.services.variant_service import VariantService
-from app.schemas.task import VariantOut, SubmitRequest, AttemptResult
+from app.schemas.task import TaskOut, VariantOut, SubmitRequest, AttemptResult
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 

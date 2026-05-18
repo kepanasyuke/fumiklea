@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app.api.v1 import tasks, user, competition, achievements, ai
+from app.domain.api.v1 import tasks, user, competition, achievements, ai
 from app.infrastructure.database import init_db
 
 app = FastAPI(title="EGE Math Trainer 2026")

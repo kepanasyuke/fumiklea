@@ -1,4 +1,4 @@
-.PHONY: build up down logs run run-open open kill install
+.PHONY: build up down logs run run-open open kill install tunnel
 
 install:
 	pip install -r requirements.txt
@@ -30,3 +30,9 @@ run-open:
 
 kill:
 	@lsof -ti :8000 | xargs kill -9 2>/dev/null || echo "Порт 8000 свободен"
+
+tunnel:
+	@echo "Запускаю сервер и туннель localtunnel..."
+	@python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+	@sleep 2
+	@lt --port 8000 --subdomain ege-math-trainer
