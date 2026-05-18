@@ -1,4 +1,4 @@
-.PHONY: build up down logs run run-open open kill install tunnel
+.PHONY: build up down logs run run-open open kill install clean test lint tunnel docker-clean
 
 install:
 	pip install -r requirements.txt
@@ -37,6 +37,16 @@ clean:
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@rm -rf .pytest_cache
 	@rm -f data/*.db data/*.db-journal
+
+test:
+	@python -m pytest
+
+lint:
+	@python -m flake8 app
+
+docker-clean:
+	@docker-compose down --rmi all --volumes --remove-orphans
+
 
 tunnel:
 	@echo "Убеждаюсь, что порт 8000 свободен..."

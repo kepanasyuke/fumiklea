@@ -77,6 +77,24 @@ make logs
 make clean
 ```
 
+Запустить тесты (если установлены dev-зависимости):
+
+```bash
+make test
+```
+
+Проверить код линтером:
+
+```bash
+make lint
+```
+
+Полная очистка Docker-ресурсов:
+
+```bash
+make docker-clean
+```
+
 ## Настройки
 
 Проект читает `.env` в корне (через `pydantic-settings`). Если нужно, скопируйте `.env.example`:
