@@ -1,6 +1,5 @@
 import asyncio
 import random
-from concurrent.futures import ThreadPoolExecutor
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.repositories.task_repository import TaskRepository
 from sdamgia import SdamGIA
@@ -9,41 +8,57 @@ class SdamGiaService:
     def __init__(self):
         self.client = SdamGIA()
         self.subject = 'math'
-        self.executor = ThreadPoolExecutor(max_workers=10)
 
-    def _fetch(self, problem_id: str):
+    def _fetch_problem(self, problem_id: str):
         try:
             return self.client.get_problem_by_id(self.subject, problem_id)
         except Exception:
             return None
 
+    def _search_ids(self, query: str):
+        try:
+            return self.client.search(self.subject, query)
+        except Exception:
+            return []
+
     async def fetch_and_cache_tasks(self, db: AsyncSession, numbers: list) -> list:
         repo = TaskRepository(db)
         loop = asyncio.get_running_loop()
-        async def get_ids(num):
-            ids = await loop.run_in_executor(None, self.client.search, self.subject, f"Задание {num}")
-            return random.choice(ids) if ids else None
-        chosen_ids = await asyncio.gather(*[get_ids(n) for n in numbers])
-        chosen_ids = [cid for cid in chosen_ids if cid]
-        async def process(prob_id):
-            cached = await repo.get_by_sdamgia_id(prob_id)
+        chosen_ids = []
+        for num in numbers:
+            ids = await loop.run_in_executor(None, self._search_ids, f"Задание {num}")
+            if ids:
+                chosen_ids.append(random.choice(ids))
+        tasks = []
+        for cid in chosen_ids:
+            cached = await repo.get_by_sdamgia_id(cid)
             if cached:
-                return cached
-            problem = await loop.run_in_executor(self.executor, self._fetch, prob_id)
+                tasks.append(cached)
+                continue
+            problem = await loop.run_in_executor(None, self._fetch_problem, cid)
             if problem:
-                data = self._parse_problem(problem)
-                return await repo.create_task(**data)
-            return None
-        results = await asyncio.gather(*[process(cid) for cid in chosen_ids])
-        return [t for t in results if t]
+                data = self._parse_problem(problem, cid)
+                task = await repo.create_task(**data)
+                tasks.append(task)
+        return tasks
 
-    def _parse_problem(self, problem: dict) -> dict:
+    def _parse_problem(self, problem: dict, sdamgia_id: str) -> dict:
+        topic = problem.get("topic", "Неизвестная тема")
+        text = problem.get("text", "")
+        answer = str(problem.get("answer", "")).strip()
+        tags = problem.get("tags", [])
+        part = 1
+        try:
+            num = int(sdamgia_id.split(".")[0]) if "." in sdamgia_id else int(sdamgia_id)
+            part = 1 if num <= 12 else 2
+        except (ValueError, IndexError):
+            pass
         return {
-            "sdamgia_id": str(problem.get("id")),
-            "topic": problem.get("topic", "Неизвестная"),
-            "text": problem.get("text", ""),
-            "answer": str(problem.get("answer", "")).strip(),
+            "sdamgia_id": sdamgia_id,
+            "topic": topic,
+            "text": text,
+            "answer": answer,
             "difficulty": 1,
-            "tags": problem.get("tags", []),
-            "part": 1 if problem.get("number", 1) <= 12 else 2
+            "tags": tags,
+            "part": part
         }
