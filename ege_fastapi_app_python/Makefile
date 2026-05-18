@@ -17,14 +17,14 @@ logs:
 	docker-compose logs -f
 
 run:
-	python -m uvicorn app.main:app --reload
+	python -m uvicorn app.main:app --host 0.0.0.0 --reload
 
 open:
 	python -m webbrowser http://localhost:8000
 
 run-open:
 	@echo "Запускаю сервер и открываю браузер..."
-	@python -m uvicorn app.main:app --reload &
+	@python -m uvicorn app.main:app --host 0.0.0.0 --reload &
 	@sleep 2
 	@make open
 	@wait
