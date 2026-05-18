@@ -99,11 +99,13 @@ async function submitAnswers() {
 
 function showResult(data) {
     let html = `<h2>Результат: ${data.score}/${data.max_score}</h2>`;
-    data.details.forEach(d => {
-        html += `<p class="${d.is_correct ? 'correct' : 'incorrect'}">
-            Задача ${d.task_id}: ваш ответ "${d.your_answer}" | верный "${d.correct_answer}"
-        </p>`;
-    });
+    if (data.details) {
+        data.details.forEach(d => {
+            html += `<p class="${d.is_correct ? 'correct' : 'incorrect'}">
+                Задача ${d.task_id}: ваш ответ "${d.your_answer}" | верный "${d.correct_answer}"
+            </p>`;
+        });
+    }
     document.getElementById('resultArea').innerHTML = html;
     document.getElementById('taskArea').style.display = 'none';
 }
