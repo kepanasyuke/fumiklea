@@ -1,6 +1,6 @@
 fastapi==0.110.0
 uvicorn==0.24.0
-sdamgia-api==0.1.1
+sdamgia-api==0.1.7
 httpx==0.25.0
 pydantic==2.0.3
 pydantic-settings==2.0.3
