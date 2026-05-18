@@ -11,7 +11,7 @@ class VariantService:
         self.db = db
         self.task_repo = task_repo
 
-    async def generate_full_variant(self, user_id: int) -> Attempt:
+    async def generate_full_variant(self, user_id: int) -> dict:
         tasks = await self._fetch_tasks(range(1, 20))
         attempt = Attempt(user_id=user_id, type="full", max_score=len(tasks))
         self.db.add(attempt)
@@ -19,9 +19,21 @@ class VariantService:
         for task in tasks:
             self.db.add(AttemptTask(attempt_id=attempt.id, task_id=task.id))
         await self.db.commit()
-        return attempt
+        tasks_out = [
+            {
+                "id": t.id,
+                "sdamgia_id": t.sdamgia_id,
+                "topic": t.topic,
+                "text": t.text,
+                "difficulty": t.difficulty,
+                "tags": t.tags,
+                "part": t.part,
+            }
+            for t in tasks
+        ]
+        return {"attempt_id": attempt.id, "tasks": tasks_out}
 
-    async def generate_time_attack(self, user_id: int) -> Attempt:
+    async def generate_time_attack(self, user_id: int) -> dict:
         tasks = await self._fetch_tasks(range(1, 13))
         if len(tasks) < 12:
             raise RuntimeError("Недостаточно заданий")
@@ -31,7 +43,19 @@ class VariantService:
         for task in tasks[:12]:
             self.db.add(AttemptTask(attempt_id=attempt.id, task_id=task.id))
         await self.db.commit()
-        return attempt
+        tasks_out = [
+            {
+                "id": t.id,
+                "sdamgia_id": t.sdamgia_id,
+                "topic": t.topic,
+                "text": t.text,
+                "difficulty": t.difficulty,
+                "tags": t.tags,
+                "part": t.part,
+            }
+            for t in tasks[:12]
+        ]
+        return {"attempt_id": attempt.id, "tasks": tasks_out}
 
     async def submit(self, attempt_id: int, user_id: int, answers: dict) -> dict:
         attempt = await self.db.get(Attempt, attempt_id)

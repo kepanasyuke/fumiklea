@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.infrastructure.database import Competition, Attempt, AttemptTask
+from sqlalchemy import select
+from app.infrastructure.database import Competition, Attempt, AttemptTask, User
 from app.domain.ports import TaskRepositoryPort
 from app.core.exceptions import AccessDenied, TimeExpired, AttemptNotFound
+from app.infrastructure.services.math_utils import normalize_answer
 
 class CompetitionService:
     def __init__(self, db: AsyncSession, task_repo: TaskRepositoryPort):
         self.db = db
         self.task_repo = task_repo
 
-    async def create(self, name: str, duration_minutes: int) -> Competition:
+    async def create(self, name: str, duration_minutes: int) -> dict:
         now = datetime.utcnow()
         comp = Competition(
             name=name,
@@ -19,9 +21,16 @@ class CompetitionService:
         )
         self.db.add(comp)
         await self.db.commit()
-        return comp
+        await self.db.refresh(comp)
+        return {
+            "id": comp.id,
+            "name": comp.name,
+            "start_time": comp.start_time,
+            "end_time": comp.end_time,
+            "is_active": True
+        }
 
-    async def join(self, comp_id: int, user_id: int) -> Attempt:
+    async def join(self, comp_id: int, user_id: int) -> dict:
         comp = await self.db.get(Competition, comp_id)
         if not comp or not self._is_active(comp):
             raise ValueError("Соревнование неактивно")
@@ -38,7 +47,19 @@ class CompetitionService:
         for task in tasks:
             self.db.add(AttemptTask(attempt_id=attempt.id, task_id=task.id))
         await self.db.commit()
-        return attempt
+        tasks_out = [
+            {
+                "id": t.id,
+                "sdamgia_id": t.sdamgia_id,
+                "topic": t.topic,
+                "text": t.text,
+                "difficulty": t.difficulty,
+                "tags": t.tags,
+                "part": t.part,
+            }
+            for t in tasks
+        ]
+        return {"attempt_id": attempt.id, "tasks": tasks_out}
 
     async def submit(self, attempt_id: int, user_id: int, answers: dict) -> dict:
         attempt = await self.db.get(Attempt, attempt_id)
@@ -50,8 +71,6 @@ class CompetitionService:
             comp = await self.db.get(Competition, attempt.competition_id)
             if comp and not self._is_active(comp):
                 raise TimeExpired()
-        from app.infrastructure.services.math_utils import normalize_answer
-        from sqlalchemy import select
         stmt = select(AttemptTask).where(AttemptTask.attempt_id == attempt_id)
         result = await self.db.execute(stmt)
         attempt_tasks = result.scalars().all()
@@ -78,8 +97,6 @@ class CompetitionService:
         return {"score": score, "max_score": attempt.max_score, "type": attempt.type, "details": details}
 
     async def leaderboard(self, comp_id: int, limit: int = 50) -> list:
-        from sqlalchemy import select
-        from app.infrastructure.database import User
         comp = await self.db.get(Competition, comp_id)
         if not comp:
             return []

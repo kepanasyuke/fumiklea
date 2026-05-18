@@ -34,12 +34,8 @@ class SdamGiaService:
                 data = self._parse_problem(problem)
                 return await repo.create_task(**data)
             return None
-        results = []
-        for cid in chosen_ids:
-            task = await process(cid)
-            if task:
-                results.append(task)
-        return results
+        results = await asyncio.gather(*[process(cid) for cid in chosen_ids])
+        return [t for t in results if t]
 
     def _parse_problem(self, problem: dict) -> dict:
         return {

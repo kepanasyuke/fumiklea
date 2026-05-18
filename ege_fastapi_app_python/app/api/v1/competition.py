@@ -20,13 +20,7 @@ async def create_competition(
     repo = TaskRepository(db)
     service = CompetitionService(db, repo)
     comp = await service.create(name, duration_minutes)
-    return CompetitionOut(
-        id=comp.id,
-        name=comp.name,
-        start_time=comp.start_time,
-        end_time=comp.end_time,
-        is_active=True
-    )
+    return CompetitionOut(**comp)
 
 @router.post("/{comp_id}/join", response_model=VariantOut)
 async def join_competition(
@@ -38,20 +32,8 @@ async def join_competition(
     repo = TaskRepository(db)
     service = CompetitionService(db, repo)
     try:
-        attempt = await service.join(comp_id, user_id)
-        tasks_out = [
-            {
-                "id": at.task.id,
-                "sdamgia_id": at.task.sdamgia_id,
-                "topic": at.task.topic,
-                "text": at.task.text,
-                "difficulty": at.task.difficulty,
-                "tags": at.task.tags,
-                "part": at.task.part
-            }
-            for at in attempt.attempt_tasks
-        ]
-        return VariantOut(tasks=tasks_out, attempt_id=attempt.id)
+        data = await service.join(comp_id, user_id)
+        return VariantOut(**data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
