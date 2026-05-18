@@ -3,6 +3,97 @@ import random
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.repositories.task_repository import TaskRepository
 
+# === ДОБАВИТЬ В НАЧАЛО ФАЙЛА, СРАЗУ ПОСЛЕ ИМПОРТОВ ===
+
+def _fetch_real_problem(problem_id: str) -> dict:
+    """
+    Загружает реальное задание с сайта РешуЕГЭ через sdamgia-api.
+    Возвращает словарь с topic, text, answer, img_url или None при ошибке.
+    """
+    try:
+        from sdamgia import SdamGIA
+        client = SdamGIA()
+        problem = client.get_problem_by_id('math', problem_id)
+        
+        if not problem or not problem.get('text'):
+            return None
+        
+        topic = problem.get('topic', 'Задача')
+        text = problem.get('text', '')
+        answer = str(problem.get('answer', '')).strip()
+        
+        # Пробуем найти картинку
+        img_url = None
+        if 'img' in problem:
+            img_url = problem['img']
+        elif 'get_file' in text:
+            import re
+            match = re.search(r'get_file\?id=(\d+)', text)
+            if match:
+                img_url = f"https://math-ege.sdamgia.ru/get_file?id={match.group(1)}"
+        
+        return {
+            "topic": topic,
+            "text": text,
+            "answer": answer,
+            "img_url": img_url
+        }
+    except Exception:
+        return None
+
+
+def _add_image_html(img_url: str) -> str:
+    """Оборачивает URL картинки в HTML с красивым контейнером"""
+    if not img_url:
+        return ""
+    
+    return f'''
+        <div style="margin:15px 0; padding:10px; background:#fafafa; 
+                    border:1px solid #e5e7eb; border-radius:8px; text-align:center;">
+            <img src="{img_url}" 
+                 alt="Чертёж к заданию" 
+                 style="max-width:100%; height:auto; display:inline-block;"
+                 onerror="this.style.display='none'; 
+                          this.parentElement.innerHTML='<p style=color:#999;padding:20px;>
+                          🖼️ Чертёж к заданию (не загрузился)</p>'">
+        </div>'''
+
+
+def _try_load_from_sdamgia(num: int) -> dict:
+    """
+    Пытается загрузить случайное задание типа num с РешуЕГЭ.
+    При успехе возвращает готовый словарь для вставки в БД.
+    При неудаче возвращает None.
+    """
+    try:
+        from sdamgia import SdamGIA
+        client = SdamGIA()
+        
+        # Ищем задания по типу
+        ids = client.search('math', f"Задание {num}")
+        if not ids:
+            ids = client.search('math', f"Тип {num}")
+        
+        if ids:
+            # Пробуем до 5 случайных ID
+            for _ in range(5):
+                problem_id = random.choice(ids)
+                problem = _fetch_real_problem(problem_id)
+                if problem and problem['text']:
+                    return {
+                        "sdamgia_id": f"sdamgia_{problem_id}",
+                        "topic": problem['topic'],
+                        "text": problem['text'] + _add_image_html(problem.get('img_url')),
+                        "answer": problem['answer'],
+                        "difficulty": 2 if num > 12 else 1,
+                        "tags": ["с РешуЕГЭ"],
+                        "part": 1 if num <= 12 else 2
+                    }
+    except Exception:
+        pass
+    
+    return None
+
 TASKS_BANK = {
     1: [
         {"topic": "Простейшие уравнения", "text": "Найдите корень уравнения \\(\\log_2(4-x)=5\\).", "answer": "-28"},
@@ -356,6 +447,29 @@ def _get_task_for_number(num: int):
         "part": 1 if num <= 12 else 2
     }
 
+class SdamGiaService:
+    def __init__(self):
+        pass
+
+    async def fetch_and_cache_tasks(self, db: AsyncSession, numbers: list) -> list:
+        repo = TaskRepository(db)
+        tasks = []
+        
+        for num in numbers:
+            # 1. Пробуем загрузить с РешуЕГЭ
+            real_task = _try_load_from_sdamgia(num)
+            
+            if real_task:
+                task = await repo.create_task(**real_task)
+                tasks.append(task)
+                continue
+            
+            # 2. Если не получилось — берём из локальной базы
+            task_data = _get_task_for_number(num)
+            task = await repo.create_task(**task_data)
+            tasks.append(task)
+        
+        return tasks
 
 class SdamGiaService:
     def __init__(self):
@@ -364,8 +478,19 @@ class SdamGiaService:
     async def fetch_and_cache_tasks(self, db: AsyncSession, numbers: list) -> list:
         repo = TaskRepository(db)
         tasks = []
+        
         for num in numbers:
+            # 1. Пробуем загрузить с РешуЕГЭ
+            real_task = _try_load_from_sdamgia(num)
+            
+            if real_task:
+                task = await repo.create_task(**real_task)
+                tasks.append(task)
+                continue
+            
+            # 2. Если не получилось — берём из локальной базы
             task_data = _get_task_for_number(num)
             task = await repo.create_task(**task_data)
             tasks.append(task)
+        
         return tasks
