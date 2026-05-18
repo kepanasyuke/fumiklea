@@ -1,4 +1,4 @@
-.PHONY: build up down logs run run-open open install
+.PHONY: build up down logs run run-open open kill install
 
 install:
 	pip install -r requirements.txt
@@ -19,15 +19,7 @@ run:
 	python -m uvicorn app.main:app --reload
 
 open:
-	@if [ "$$(uname)" = "Darwin" ]; then \
-		open http://localhost:8000; \
-	elif [ "$$(uname)" = "Linux" ]; then \
-		xdg-open http://localhost:8000; \
-	elif [ "$$(OS)" = "Windows_NT" ]; then \
-		start http://localhost:8000; \
-	else \
-		echo "Не удалось определить ОС. Откройте http://localhost:8000 вручную."; \
-	fi
+	python -m webbrowser http://localhost:8000
 
 run-open:
 	@echo "Запускаю сервер и открываю браузер..."
@@ -35,3 +27,6 @@ run-open:
 	@sleep 2
 	@make open
 	@wait
+
+kill:
+	@lsof -ti :8000 | xargs kill -9 2>/dev/null || echo "Порт 8000 свободен"
