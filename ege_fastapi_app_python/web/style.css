@@ -223,3 +223,20 @@ body {
         flex-direction: column;
     }
 }
+
+.answer-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.answer-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #f0f9ff;
+}

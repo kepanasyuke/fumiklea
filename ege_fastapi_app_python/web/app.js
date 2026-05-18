@@ -171,3 +171,38 @@ function showCompetitionsInfo() {
 function hideError() {
     showPanel('actions-container');
 }
+
+function renderTasks(title) {
+    document.getElementById('tasks-title').textContent = title;
+    const container = document.getElementById('tasks-list');
+    container.innerHTML = '';
+    
+    loadedTasks.forEach((task, i) => {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        
+        const isPart2 = task.part === 2;
+        
+        card.innerHTML = `
+            <div class="task-number">
+                📋 Задание №${i + 1} 
+                <span style="color: ${isPart2 ? '#dc2626' : '#1e3a8a'}">
+                    (Часть ${task.part}${isPart2 ? ' — развёрнутый ответ' : ''})
+                </span>
+            </div>
+            <div class="task-topic">📚 ${task.topic}</div>
+            <div class="task-text">${task.text}</div>
+            ${isPart2 ? 
+                `<textarea id="answer-${task.id}" class="answer-textarea" 
+                   placeholder="Введите полное решение задачи..." rows="6"></textarea>` :
+                `<input type="text" id="answer-${task.id}" class="answer-input" 
+                   placeholder="Введите ответ">`
+            }
+        `;
+        container.appendChild(card);
+    });
+    
+    document.getElementById('submit-section').style.display = 'block';
+    showPanel('tasks-container');
+    MathJax.typesetPromise();
+}
