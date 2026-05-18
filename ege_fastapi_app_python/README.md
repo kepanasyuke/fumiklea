@@ -71,6 +71,12 @@ make down
 make logs
 ```
 
+Очистить артефакты и локальную БД:
+
+```bash
+make clean
+```
+
 ## Настройки
 
 Проект читает `.env` в корне (через `pydantic-settings`). Если нужно, скопируйте `.env.example`:

@@ -32,6 +32,12 @@ run-open:
 kill:
 	@lsof -ti :8000 | xargs kill -9 2>/dev/null || echo "Порт 8000 свободен"
 
+clean:
+	@echo "Cleaning project artifacts..."
+	@find . -type d -name "__pycache__" -exec rm -rf {} +
+	@rm -rf .pytest_cache
+	@rm -f data/*.db data/*.db-journal
+
 tunnel:
 	@echo "Убеждаюсь, что порт 8000 свободен..."
 	@make kill
