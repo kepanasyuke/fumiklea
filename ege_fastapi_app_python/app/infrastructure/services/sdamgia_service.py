@@ -1,3 +1,4 @@
+import re
 import random
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.repositories.task_repository import TaskRepository
@@ -230,66 +231,96 @@ TASKS_BANK = {
 
 def _generate_graphic(task_num: int, task_text: str) -> str:
     """
-    Автоматически генерирует SVG-график для заданий, где он нужен.
-    Анализирует текст задачи и подбирает подходящий чертёж.
+    Рисует график с сеткой, осями и подписанными точками.
+    Числа берутся из текста задачи.
     """
-    graphics = {
-        6: '''<svg width="320" height="200" xmlns="http://www.w3.org/2000/svg">
-            <rect width="320" height="200" fill="#fafafa" rx="8"/>
-            <line x1="40" y1="160" x2="280" y2="160" stroke="#333" stroke-width="1.5"/>
-            <line x1="40" y1="40" x2="40" y2="160" stroke="#333" stroke-width="1.5"/>
-            <polyline points="40,120 70,100 100,100 130,130 160,130 190,70 220,70 250,100 280,100" 
-                      fill="none" stroke="#1e40af" stroke-width="2.5"/>
-            <circle cx="190" cy="70" r="4" fill="#ef4444"/>
-            <text x="170" y="55" font-size="11" fill="#ef4444" font-weight="bold">f'(x)</text>
-            <text x="285" y="170" font-size="12">x</text>
-            <text x="25" y="35" font-size="12">y</text>
-            <line x1="100" y1="160" x2="100" y2="100" stroke="#666" stroke-dasharray="5,3"/>
-            <text x="90" y="178" font-size="10">a</text>
-            <line x1="250" y1="160" x2="250" y2="100" stroke="#666" stroke-dasharray="5,3"/>
-            <text x="240" y="178" font-size="10">b</text>
-            </svg>''',
-        
-        9: '''<svg width="320" height="200" xmlns="http://www.w3.org/2000/svg">
-            <rect width="320" height="200" fill="#fafafa" rx="8"/>
-            <line x1="40" y1="160" x2="280" y2="160" stroke="#333" stroke-width="1.5"/>
-            <line x1="40" y1="40" x2="40" y2="160" stroke="#333" stroke-width="1.5"/>
-            <path d="M 60,140 Q 100,100 140,80 Q 180,60 220,50 Q 260,40 270,38" 
-                  fill="none" stroke="#1e40af" stroke-width="2.5"/>
-            <circle cx="140" cy="80" r="4" fill="#ef4444"/>
-            <text x="145" y="72" font-size="11" fill="#ef4444" font-weight="bold">(x₀, y₀)</text>
-            <text x="285" y="170" font-size="12">x</text>
-            <text x="25" y="35" font-size="12">y</text>
-            <line x1="140" y1="160" x2="140" y2="80" stroke="#666" stroke-dasharray="5,3"/>
-            </svg>''',
-        
-        13: '''<svg width="320" height="220" xmlns="http://www.w3.org/2000/svg">
-            <rect width="320" height="220" fill="#fafafa" rx="8"/>
-            <polygon points="160,30 270,150 50,150" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
-            <polygon points="160,30 50,150 100,90 160,30" fill="#bfdbfe" stroke="#1e40af" stroke-width="1.5"/>
-            <line x1="160" y1="30" x2="160" y2="85" stroke="#ef4444" stroke-dasharray="5,3"/>
-            <circle cx="160" cy="85" r="3" fill="#ef4444"/>
-            <text x="155" y="22" font-size="14" font-weight="bold">S</text>
-            <text x="275" y="158" font-size="12">A</text>
-            <text x="35" y="158" font-size="12">B</text>
-            <text x="95" y="82" font-size="12">C</text>
-            <text x="155" y="80" font-size="12" fill="#ef4444">O</text>
-            </svg>''',
-        
-        16: '''<svg width="320" height="220" xmlns="http://www.w3.org/2000/svg">
-            <rect width="320" height="220" fill="#fafafa" rx="8"/>
-            <polygon points="60,180 260,180 220,50 100,50" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
-            <text x="40" y="192" font-size="12">A</text>
-            <text x="265" y="192" font-size="12">B</text>
-            <text x="225" y="42" font-size="12">C</text>
-            <text x="80" y="42" font-size="12">D</text>
-            <line x1="100" y1="50" x2="60" y2="180" stroke="#333" stroke-width="1.5"/>
-            <line x1="60" y1="180" x2="260" y2="180" stroke="#ef4444" stroke-width="1.5"/>
-            <text x="140" y="195" font-size="10" fill="#ef4444">основание</text>
-            </svg>'''
-    }
+    # Извлекаем числа из текста
+    numbers = re.findall(r'-?\d+\.?\d*', task_text)
+    nums = [float(n) for n in numbers[:8]] if numbers else [0]
     
-    return graphics.get(task_num, "")
+    # Сетка
+    grid = ''.join([
+        f'<line x1="{x}" y1="10" x2="{x}" y2="190" stroke="#e5e7eb" stroke-width="0.5"/>'
+        for x in range(30, 291, 26)
+    ] + [
+        f'<line x1="30" y1="{y}" x2="290" y2="{y}" stroke="#e5e7eb" stroke-width="0.5"/>'
+        for y in range(10, 191, 18)
+    ])
+    
+    if task_num == 6:
+        # График производной с точками из текста
+        points = nums[:5] if len(nums) >= 5 else [-3, 0, 1, 0, 8]
+        x_vals = [30 + i * 52 for i in range(len(points))]
+        path = ' '.join([f'{x},{180 - p * 20}' for x, p in zip(x_vals, points)])
+        
+        return f'''<svg width="340" height="220" xmlns="http://www.w3.org/2000/svg">
+            <rect width="340" height="220" fill="#fff" rx="8"/>
+            {grid}
+            <line x1="30" y1="200" x2="310" y2="200" stroke="#333" stroke-width="1.5"/>
+            <line x1="30" y1="20" x2="30" y2="200" stroke="#333" stroke-width="1.5"/>
+            <polyline points="{path}" fill="none" stroke="#1e40af" stroke-width="2.5"/>
+            {' '.join([f'<circle cx="{x}" cy="{180 - p * 20}" r="3" fill="#ef4444"/>' for x, p in zip(x_vals, points)])}
+            <text x="315" y="205" font-size="12" font-weight="bold">x</text>
+            <text x="15" y="15" font-size="12" font-weight="bold">y</text>
+            <text x="28" y="215" font-size="10">{nums[0] if len(nums) > 0 else '-3'}</text>
+            <text x="280" y="215" font-size="10">{nums[-1] if len(nums) > 1 else '8'}</text>
+            </svg>'''
+    
+    elif task_num == 9:
+        # Гипербола или корень
+        if 'sqrt' in task_text or 'корень' in task_text.lower():
+            path = 'M 50,170 Q 80,120 120,80 Q 160,50 200,35 Q 240,25 270,20'
+        else:
+            path = 'M 50,40 Q 60,70 80,90 Q 100,110 120,130 Q 150,150 180,165'
+        
+        return f'''<svg width="340" height="220" xmlns="http://www.w3.org/2000/svg">
+            <rect width="340" height="220" fill="#fff" rx="8"/>
+            {grid}
+            <line x1="30" y1="200" x2="310" y2="200" stroke="#333" stroke-width="1.5"/>
+            <line x1="30" y1="20" x2="30" y2="200" stroke="#333" stroke-width="1.5"/>
+            <path d="{path}" fill="none" stroke="#1e40af" stroke-width="2.5"/>
+            <circle cx="150" cy="100" r="4" fill="#ef4444"/>
+            <text x="155" y="95" font-size="11" fill="#ef4444">({nums[0] if nums else '?'}, {nums[1] if len(nums)>1 else '?'})</text>
+            <text x="315" y="205" font-size="12" font-weight="bold">x</text>
+            <text x="15" y="15" font-size="12" font-weight="bold">y</text>
+            </svg>'''
+    
+    elif task_num == 13:
+        # Стереометрия — пирамида или призма
+        return f'''<svg width="340" height="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="340" height="240" fill="#fff" rx="8"/>
+            {grid}
+            <polygon points="170,20 290,160 50,160" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+            <polygon points="170,20 50,160 105,85 170,20" fill="#bfdbfe" stroke="#1e40af" stroke-width="1.5"/>
+            <line x1="170" y1="20" x2="170" y2="80" stroke="#ef4444" stroke-dasharray="6,3"/>
+            <circle cx="170" cy="80" r="3" fill="#ef4444"/>
+            <text x="165" y="15" font-size="14" font-weight="bold">S</text>
+            <text x="295" y="170" font-size="12">A</text>
+            <text x="35" y="170" font-size="12">B</text>
+            <text x="100" y="80" font-size="12">C</text>
+            <text x="165" y="75" font-size="11" fill="#ef4444">O</text>
+            <text x="130" y="120" font-size="10">a = {nums[0] if nums else '?'}</text>
+            <text x="200" y="80" font-size="10">h = {nums[1] if len(nums)>1 else '?'}</text>
+            </svg>'''
+    
+    elif task_num == 16:
+        # Планиметрия — треугольник или трапеция
+        return f'''<svg width="340" height="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="340" height="240" fill="#fff" rx="8"/>
+            {grid}
+            <polygon points="50,200 290,200 170,40" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+            <circle cx="50" cy="200" r="3" fill="#333"/>
+            <circle cx="290" cy="200" r="3" fill="#333"/>
+            <circle cx="170" cy="40" r="3" fill="#333"/>
+            <text x="30" y="215" font-size="12">A</text>
+            <text x="295" y="215" font-size="12">B</text>
+            <text x="165" y="30" font-size="12">C</text>
+            <text x="130" y="220" font-size="10">c = {nums[0] if nums else '?'}</text>
+            <text x="100" y="120" font-size="10">a = {nums[1] if len(nums)>1 else '?'}</text>
+            <text x="200" y="120" font-size="10">b = {nums[2] if len(nums)>2 else '?'}</text>
+            </svg>'''
+    
+    return ""
 
 
 def _get_task_for_number(num: int):
