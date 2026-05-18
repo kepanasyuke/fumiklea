@@ -3,20 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тренажёр ЕГЭ 2026 - Профильная математика</title>
+    <title>Тренажёр ЕГЭ 2026 — Профильная математика</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 </head>
 <body>
-    <!-- ГЛАВНЫЙ КОНТЕЙНЕР -->
     <div id="main-container">
-        
-        <!-- ШАПКА -->
         <div id="header-container">
             <h1>🎓 Тренажёр ЕГЭ по профильной математике 2026</h1>
-            <p>Подготовка к экзамену с реальными заданиями из банка ФИПИ</p>
+            <p>Подготовка к экзамену с реальными заданиями</p>
         </div>
 
-        <!-- КОНТЕЙНЕР РЕГИСТРАЦИИ -->
         <div id="auth-container" class="panel">
             <h2>Регистрация</h2>
             <div id="auth-form">
@@ -26,7 +34,6 @@
             <div id="user-info-display"></div>
         </div>
 
-        <!-- КОНТЕЙНЕР ДЕЙСТВИЙ -->
         <div id="actions-container" class="panel" style="display: none;">
             <h2>Доступные действия</h2>
             <div id="buttons-grid">
@@ -45,7 +52,6 @@
             </div>
         </div>
 
-        <!-- КОНТЕЙНЕР ЗАДАНИЙ -->
         <div id="tasks-container" class="panel" style="display: none;">
             <h2 id="tasks-title">Вариант</h2>
             <div id="tasks-list"></div>
@@ -56,31 +62,26 @@
             </div>
         </div>
 
-        <!-- КОНТЕЙНЕР РЕЗУЛЬТАТОВ -->
         <div id="results-container" class="panel" style="display: none;">
             <h2>Результаты проверки</h2>
             <div id="results-content"></div>
         </div>
 
-        <!-- КОНТЕЙНЕР СТАТИСТИКИ -->
         <div id="stats-container" class="panel" style="display: none;">
             <h2>Статистика</h2>
             <div id="stats-content"></div>
         </div>
 
-        <!-- КОНТЕЙНЕР ЗАГРУЗКИ -->
         <div id="loading-container" class="panel" style="display: none;">
             <div id="loading-spinner"></div>
             <p id="loading-message">Загрузка...</p>
         </div>
 
-        <!-- КОНТЕЙНЕР ОШИБОК -->
         <div id="error-container" class="panel" style="display: none;">
             <h2>❌ Ошибка</h2>
             <div id="error-message"></div>
             <button class="action-btn secondary-btn" onclick="hideError()">Закрыть</button>
         </div>
-
     </div>
 
     <script src="/static/app.js"></script>
