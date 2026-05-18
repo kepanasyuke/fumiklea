@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренажёр ЕГЭ 2026 — Профильная математика</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+    <div id="main-container">
+        <div id="header-container">
+            <h1>🎓 Тренажёр ЕГЭ по профильной математике 2026</h1>
+            <p>Подготовка к экзамену с реальными заданиями</p>
+        </div>
+
+        <div id="auth-container" class="panel">
+            <h2>Регистрация</h2>
+            <div id="auth-form">
+                <input type="text" id="username-input" placeholder="Введите ваше имя">
+                <button id="register-btn" onclick="registerUser()">Зарегистрироваться</button>
+            </div>
+            <div id="user-info-display"></div>
+        </div>
+
+        <div id="actions-container" class="panel" style="display: none;">
+            <h2>Доступные действия</h2>
+            <div id="buttons-grid">
+                <button class="action-btn primary-btn" onclick="loadFullVariant()">
+                    📝 Начать полный вариант
+                </button>
+                <button class="action-btn secondary-btn" onclick="loadTimeAttack()">
+                    ⚡ Time Attack (12 заданий)
+                </button>
+                <button class="action-btn secondary-btn" onclick="showCompetitionsInfo()">
+                    🏆 Соревнования
+                </button>
+                <button class="action-btn secondary-btn" onclick="showUserStats()">
+                    📊 Моя статистика
+                </button>
+            </div>
+        </div>
+
+        <div id="tasks-container" class="panel" style="display: none;">
+            <h2 id="tasks-title">Вариант</h2>
+            <div id="tasks-list"></div>
+            <div id="submit-section" style="display: none;">
+                <button class="action-btn primary-btn" onclick="submitAllAnswers()">
+                    ✅ Отправить все ответы
+                </button>
+            </div>
+        </div>
+
+        <div id="results-container" class="panel" style="display: none;">
+            <h2>Результаты проверки</h2>
+            <div id="results-content"></div>
+        </div>
+
+        <div id="stats-container" class="panel" style="display: none;">
+            <h2>Статистика</h2>
+            <div id="stats-content"></div>
+        </div>
+
+        <div id="loading-container" class="panel" style="display: none;">
+            <div id="loading-spinner"></div>
+            <p id="loading-message">Загрузка...</p>
+        </div>
+
+        <div id="error-container" class="panel" style="display: none;">
+            <h2>❌ Ошибка</h2>
+            <div id="error-message"></div>
+            <button class="action-btn secondary-btn" onclick="hideError()">Закрыть</button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
