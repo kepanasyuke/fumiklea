@@ -2,24 +2,52 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Тренажёр ЕГЭ 2026</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>🎓 Тренажёр ЕГЭ по профильной математике 2026</h1>
-    <div id="auth">
-        <input type="text" id="username" placeholder="Ваше имя">
-        <button onclick="register()">Зарегистрироваться</button>
-        <p id="userInfo"></p>
+    <div class="container">
+        <header>
+            <h1>🎓 Тренажёр ЕГЭ по профильной математике 2026</h1>
+            <p class="subtitle">Подготовка к экзамену с реальными заданиями</p>
+        </header>
+
+        <section id="auth" class="card">
+            <h2>Регистрация</h2>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Введите ваше имя" class="form-input">
+                <button onclick="register()" class="btn btn-primary">Зарегистрироваться</button>
+            </div>
+            <p id="userInfo" class="user-info"></p>
+        </section>
+
+        <section id="actions" class="card" style="display: none;">
+            <h2>Выберите действие</h2>
+            <div class="button-group">
+                <button onclick="startVariant()" class="btn btn-primary">📝 Начать вариант</button>
+                <button onclick="startTimeAttack()" class="btn btn-secondary">⚡ Time Attack (12 заданий)</button>
+                <button onclick="listCompetitions()" class="btn btn-secondary">🏆 Соревнования</button>
+                <button onclick="showStats()" class="btn btn-secondary">📊 Моя статистика</button>
+            </div>
+        </section>
+
+        <section id="taskArea" class="card" style="display: none;">
+            <h2>Решите задания</h2>
+            <div id="tasksContainer"></div>
+            <button onclick="submitAnswers()" class="btn btn-success" id="submitBtn" style="display: none;">✅ Отправить ответы</button>
+        </section>
+
+        <section id="resultArea" class="card" style="display: none;">
+            <h2>Результаты</h2>
+            <div id="resultContent"></div>
+        </section>
+
+        <footer>
+            <p>© 2026 Тренажёр ЕГЭ. Все задания взяты с открытых источников.</p>
+        </footer>
     </div>
-    <div id="actions" style="display:none;">
-        <button onclick="startVariant()">Начать вариант</button>
-        <button onclick="startTimeAttack()">Time Attack (12 заданий, 10 минут)</button>
-        <button onclick="listCompetitions()">Соревнования</button>
-        <button onclick="showStats()">Моя статистика</button>
-    </div>
-    <div id="taskArea" style="display:none;"></div>
-    <div id="resultArea"></div>
+
     <script src="/static/app.js"></script>
 </body>
 </html>
