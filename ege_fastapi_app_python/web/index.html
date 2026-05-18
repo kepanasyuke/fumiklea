@@ -3,49 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тренажёр ЕГЭ 2026</title>
+    <title>Тренажёр ЕГЭ 2026 - Профильная математика</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
+    <!-- ГЛАВНЫЙ КОНТЕЙНЕР -->
+    <div id="main-container">
+        
+        <!-- ШАПКА -->
+        <div id="header-container">
             <h1>🎓 Тренажёр ЕГЭ по профильной математике 2026</h1>
-            <p class="subtitle">Подготовка к экзамену с реальными заданиями</p>
-        </header>
+            <p>Подготовка к экзамену с реальными заданиями из банка ФИПИ</p>
+        </div>
 
-        <section id="auth" class="card">
+        <!-- КОНТЕЙНЕР РЕГИСТРАЦИИ -->
+        <div id="auth-container" class="panel">
             <h2>Регистрация</h2>
-            <div class="form-group">
-                <input type="text" id="username" placeholder="Введите ваше имя" class="form-input">
-                <button onclick="register()" class="btn btn-primary">Зарегистрироваться</button>
+            <div id="auth-form">
+                <input type="text" id="username-input" placeholder="Введите ваше имя">
+                <button id="register-btn" onclick="registerUser()">Зарегистрироваться</button>
             </div>
-            <p id="userInfo" class="user-info"></p>
-        </section>
+            <div id="user-info-display"></div>
+        </div>
 
-        <section id="actions" class="card" style="display: none;">
-            <h2>Выберите действие</h2>
-            <div class="button-group">
-                <button onclick="startVariant()" class="btn btn-primary">📝 Начать вариант</button>
-                <button onclick="startTimeAttack()" class="btn btn-secondary">⚡ Time Attack (12 заданий)</button>
-                <button onclick="listCompetitions()" class="btn btn-secondary">🏆 Соревнования</button>
-                <button onclick="showStats()" class="btn btn-secondary">📊 Моя статистика</button>
+        <!-- КОНТЕЙНЕР ДЕЙСТВИЙ -->
+        <div id="actions-container" class="panel" style="display: none;">
+            <h2>Доступные действия</h2>
+            <div id="buttons-grid">
+                <button class="action-btn primary-btn" onclick="loadFullVariant()">
+                    📝 Начать полный вариант
+                </button>
+                <button class="action-btn secondary-btn" onclick="loadTimeAttack()">
+                    ⚡ Time Attack (12 заданий)
+                </button>
+                <button class="action-btn secondary-btn" onclick="showCompetitionsInfo()">
+                    🏆 Соревнования
+                </button>
+                <button class="action-btn secondary-btn" onclick="showUserStats()">
+                    📊 Моя статистика
+                </button>
             </div>
-        </section>
+        </div>
 
-        <section id="taskArea" class="card" style="display: none;">
-            <h2>Решите задания</h2>
-            <div id="tasksContainer"></div>
-            <button onclick="submitAnswers()" class="btn btn-success" id="submitBtn" style="display: none;">✅ Отправить ответы</button>
-        </section>
+        <!-- КОНТЕЙНЕР ЗАДАНИЙ -->
+        <div id="tasks-container" class="panel" style="display: none;">
+            <h2 id="tasks-title">Вариант</h2>
+            <div id="tasks-list"></div>
+            <div id="submit-section" style="display: none;">
+                <button class="action-btn primary-btn" onclick="submitAllAnswers()">
+                    ✅ Отправить все ответы
+                </button>
+            </div>
+        </div>
 
-        <section id="resultArea" class="card" style="display: none;">
-            <h2>Результаты</h2>
-            <div id="resultContent"></div>
-        </section>
+        <!-- КОНТЕЙНЕР РЕЗУЛЬТАТОВ -->
+        <div id="results-container" class="panel" style="display: none;">
+            <h2>Результаты проверки</h2>
+            <div id="results-content"></div>
+        </div>
 
-        <footer>
-            <p>© 2026 Тренажёр ЕГЭ. Все задания взяты с открытых источников.</p>
-        </footer>
+        <!-- КОНТЕЙНЕР СТАТИСТИКИ -->
+        <div id="stats-container" class="panel" style="display: none;">
+            <h2>Статистика</h2>
+            <div id="stats-content"></div>
+        </div>
+
+        <!-- КОНТЕЙНЕР ЗАГРУЗКИ -->
+        <div id="loading-container" class="panel" style="display: none;">
+            <div id="loading-spinner"></div>
+            <p id="loading-message">Загрузка...</p>
+        </div>
+
+        <!-- КОНТЕЙНЕР ОШИБОК -->
+        <div id="error-container" class="panel" style="display: none;">
+            <h2>❌ Ошибка</h2>
+            <div id="error-message"></div>
+            <button class="action-btn secondary-btn" onclick="hideError()">Закрыть</button>
+        </div>
+
     </div>
 
     <script src="/static/app.js"></script>

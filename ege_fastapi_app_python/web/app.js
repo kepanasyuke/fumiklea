@@ -1,175 +1,229 @@
-let apiKey = 'ege-token-2026';
-let userId = null;
+const API_KEY = 'ege-token-2026';
+const BASE_URL = '';
+let currentUserId = null;
 let currentAttemptId = null;
-let tasks = [];
+let loadedTasks = [];
 
-async function api(url, method='GET', body=null) {
-    const headers = { 'X-API-Key': apiKey, 'Content-Type': 'application/json' };
-    const opts = { method, headers };
-    if (body) opts.body = JSON.stringify(body);
-    const res = await fetch(url, opts);
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+function api(method, path, body = null) {
+    const headers = {
+        'X-API-Key': API_KEY,
+        'Content-Type': 'application/json'
+    };
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+    
+    return fetch(BASE_URL + path, options)
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status + ': ' + r.statusText);
+            return r.json();
+        });
 }
 
-async function register() {
-    const username = document.getElementById('username').value.trim();
-    if (!username) return alert('Введите имя');
-    try {
-        const data = await api(`/api/v1/user/register?username=${encodeURIComponent(username)}`, 'POST');
-        userId = data.user_id;
-        document.getElementById('userInfo').innerHTML = '✅ Вы зарегистрированы как <strong>' + username + '</strong> (ID: ' + userId + ')';
-        document.getElementById('actions').style.display = 'block';
-    } catch(e) { 
-        alert('Ошибка регистрации: ' + e.message); 
+function hideAllPanels() {
+    const panels = ['auth-container', 'actions-container', 'tasks-container', 
+                    'results-container', 'stats-container', 'loading-container', 'error-container'];
+    panels.forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+}
+
+function showPanel(panelId) {
+    hideAllPanels();
+    document.getElementById(panelId).style.display = 'block';
+}
+
+function showLoading(message) {
+    document.getElementById('loading-message').textContent = message || 'Загрузка...';
+    showPanel('loading-container');
+}
+
+function showError(message) {
+    document.getElementById('error-message').textContent = message;
+    showPanel('error-container');
+}
+
+function hideError() {
+    document.getElementById('auth-container').style.display = 'block';
+    if (currentUserId) {
+        document.getElementById('actions-container').style.display = 'block';
     }
 }
 
-async function startVariant() {
+async function registerUser() {
+    const username = document.getElementById('username-input').value.trim();
+    if (!username) {
+        alert('Пожалуйста, введите имя');
+        return;
+    }
+    
     try {
-        const taskArea = document.getElementById('taskArea');
-        const tasksContainer = document.getElementById('tasksContainer');
-        tasksContainer.innerHTML = '<p style="text-align:center; padding:20px;">⏳ Загружаем задания...</p>';
-        taskArea.style.display = 'block';
-        document.getElementById('submitBtn').style.display = 'none';
+        showLoading('Регистрация...');
+        const data = await api('POST', '/api/v1/user/register?username=' + encodeURIComponent(username));
+        currentUserId = data.user_id;
         
-        const data = await api('/api/v1/tasks/variant/generate?user_id=' + userId, 'POST');
-        console.log('Получены задания:', data);
+        document.getElementById('user-info-display').innerHTML = 
+            '✅ Добро пожаловать, <strong>' + username + '</strong>! (ID: ' + currentUserId + ')';
         
-        currentAttemptId = data.attempt_id;
-        tasks = data.tasks;
-        
-        if (!tasks || tasks.length === 0) {
-            tasksContainer.innerHTML = '<p style="color:red;">❌ Не удалось загрузить задания. Попробуйте ещё раз.</p>';
-            return;
-        }
-        
-        tasksContainer.innerHTML = '';
-        tasks.forEach(function(task) {
-            var div = document.createElement('div');
-            div.className = 'task-card';
-            div.innerHTML = '<div class="task-header">📋 Задание №' + task.id + '</div>' +
-                           '<div class="task-topic">📚 ' + task.topic + ' | Часть ' + task.part + '</div>' +
-                           '<div class="task-text">' + task.text + '</div>' +
-                           '<input type="text" id="answer_' + task.id + '" class="answer-input" placeholder="Введите ответ">';
-            tasksContainer.appendChild(div);
-        });
-        
-        document.getElementById('submitBtn').style.display = 'block';
-        document.getElementById('resultArea').style.display = 'none';
-        taskArea.scrollIntoView({ behavior: 'smooth' });
-    } catch(e) {
-        document.getElementById('tasksContainer').innerHTML = '<p style="color:red;">❌ Ошибка: ' + e.message + '</p>';
+        showPanel('actions-container');
+    } catch (e) {
+        showError('Ошибка регистрации: ' + e.message);
     }
 }
 
-async function startTimeAttack() {
+async function loadFullVariant() {
     try {
-        const taskArea = document.getElementById('taskArea');
-        const tasksContainer = document.getElementById('tasksContainer');
-        tasksContainer.innerHTML = '<p style="text-align:center; padding:20px;">⏳ Загружаем блиц-вариант...</p>';
-        taskArea.style.display = 'block';
-        document.getElementById('submitBtn').style.display = 'none';
+        showLoading('Генерируем вариант из 19 заданий...');
         
-        const data = await api('/api/v1/tasks/time-attack/start?user_id=' + userId, 'POST');
+        const data = await api('POST', '/api/v1/tasks/variant/generate?user_id=' + currentUserId);
+        
         currentAttemptId = data.attempt_id;
-        tasks = data.tasks;
+        loadedTasks = data.tasks;
         
-        if (!tasks || tasks.length === 0) {
-            tasksContainer.innerHTML = '<p style="color:red;">❌ Не удалось загрузить задания.</p>';
+        if (!loadedTasks || loadedTasks.length === 0) {
+            showError('Не удалось загрузить задания. Сервер вернул пустой список.');
             return;
         }
         
-        tasksContainer.innerHTML = '';
-        tasks.forEach(function(task) {
-            var div = document.createElement('div');
-            div.className = 'task-card';
-            div.innerHTML = '<div class="task-header">📋 Задание №' + task.id + '</div>' +
-                           '<div class="task-topic">📚 ' + task.topic + ' | Часть ' + task.part + '</div>' +
-                           '<div class="task-text">' + task.text + '</div>' +
-                           '<input type="text" id="answer_' + task.id + '" class="answer-input" placeholder="Введите ответ">';
-            tasksContainer.appendChild(div);
-        });
+        displayTasks('Полный вариант (' + loadedTasks.length + ' заданий)');
+    } catch (e) {
+        showError('Ошибка загрузки варианта: ' + e.message);
+    }
+}
+
+async function loadTimeAttack() {
+    try {
+        showLoading('Готовим блиц-вариант из 12 заданий...');
         
-        document.getElementById('submitBtn').style.display = 'block';
-        document.getElementById('resultArea').style.display = 'none';
-        taskArea.scrollIntoView({ behavior: 'smooth' });
+        const data = await api('POST', '/api/v1/tasks/time-attack/start?user_id=' + currentUserId);
         
-        setTimeout(function() {
+        currentAttemptId = data.attempt_id;
+        loadedTasks = data.tasks;
+        
+        if (!loadedTasks || loadedTasks.length === 0) {
+            showError('Не удалось загрузить задания.');
+            return;
+        }
+        
+        displayTasks('Time Attack (' + loadedTasks.length + ' заданий, 10 минут)');
+        
+        setTimeout(() => {
             if (currentAttemptId) {
-                alert('Время вышло! Отправляем ответы...');
-                submitAnswers();
+                alert('⏰ Время вышло! Ответы отправляются автоматически.');
+                submitAllAnswers();
             }
         }, 600000);
-    } catch(e) {
-        document.getElementById('tasksContainer').innerHTML = '<p style="color:red;">❌ Ошибка: ' + e.message + '</p>';
+    } catch (e) {
+        showError('Ошибка загрузки Time Attack: ' + e.message);
     }
 }
 
-async function submitAnswers() {
-    var answers = tasks.map(function(task) {
-        var el = document.getElementById('answer_' + task.id);
+function displayTasks(title) {
+    document.getElementById('tasks-title').textContent = title;
+    
+    const listContainer = document.getElementById('tasks-list');
+    listContainer.innerHTML = '';
+    
+    loadedTasks.forEach(task => {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.id = 'task-card-' + task.id;
+        
+        card.innerHTML = 
+            '<div class="task-number">📋 Задание №' + task.id + '</div>' +
+            '<div class="task-topic">📚 ' + task.topic + ' | Часть ' + task.part + '</div>' +
+            '<div class="task-text">' + task.text + '</div>' +
+            '<input type="text" ' +
+            'id="answer-input-' + task.id + '" ' +
+            'class="answer-input" ' +
+            'placeholder="Введите ваш ответ" ' +
+            'onkeypress="if(event.key===\'Enter\') submitAllAnswers()">';
+        
+        listContainer.appendChild(card);
+    });
+    
+    document.getElementById('submit-section').style.display = 'block';
+    showPanel('tasks-container');
+    
+    document.getElementById('tasks-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function submitAllAnswers() {
+    const answers = loadedTasks.map(task => {
+        const input = document.getElementById('answer-input-' + task.id);
         return {
             task_id: task.id,
-            answer: el ? el.value : ''
+            answer: input ? input.value : ''
         };
     });
     
     try {
-        var data = await api('/api/v1/tasks/variant/submit', 'POST', {
-            user_id: userId,
+        showLoading('Проверяем ответы...');
+        
+        const data = await api('POST', '/api/v1/tasks/variant/submit', {
+            user_id: currentUserId,
             attempt_id: currentAttemptId,
             answers: answers
         });
-        showResult(data);
+        
+        displayResults(data);
         currentAttemptId = null;
-    } catch(e) {
-        alert('Ошибка отправки: ' + e.message);
+    } catch (e) {
+        showError('Ошибка при отправке ответов: ' + e.message);
     }
 }
 
-function showResult(data) {
-    var container = document.getElementById('resultContent');
-    var html = '<div class="result-score">🎯 Ваш результат: ' + data.score + ' из ' + data.max_score + ' баллов</div>';
+function displayResults(data) {
+    const container = document.getElementById('results-content');
     
-    if (data.details) {
-        data.details.forEach(function(d) {
-            html += '<div class="result-item ' + (d.is_correct ? 'result-correct' : 'result-incorrect') + '">' +
-                    '<strong>Задача ' + d.task_id + '</strong> (' + d.topic + ')<br>' +
-                    'Ваш ответ: <strong>' + (d.your_answer || 'нет ответа') + '</strong><br>' +
-                    'Правильный ответ: <strong>' + d.correct_answer + '</strong><br>' +
-                    (d.is_correct ? '✅ Верно!' : '❌ Неверно') +
-                    '</div>';
+    let html = '<div class="score-display">🎯 ' + data.score + ' из ' + data.max_score + ' баллов</div>';
+    
+    if (data.details && data.details.length > 0) {
+        data.details.forEach(detail => {
+            html += 
+                '<div class="result-item ' + (detail.is_correct ? 'result-correct' : 'result-incorrect') + '">' +
+                '<strong>Задание ' + detail.task_id + '</strong> (' + detail.topic + ')<br>' +
+                'Ваш ответ: <strong>' + (detail.your_answer || 'нет ответа') + '</strong><br>' +
+                'Правильный ответ: <strong>' + detail.correct_answer + '</strong><br>' +
+                (detail.is_correct ? '✅ Верно' : '❌ Неверно') +
+                '</div>';
         });
     }
     
     container.innerHTML = html;
-    document.getElementById('resultArea').style.display = 'block';
-    document.getElementById('taskArea').style.display = 'none';
-    document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' });
+    showPanel('results-container');
+    document.getElementById('results-container').scrollIntoView({ behavior: 'smooth' });
 }
 
-async function listCompetitions() {
-    alert('🏆 Соревнования доступны через API.\nОткройте /docs для управления соревнованиями.');
-}
-
-async function showStats() {
+async function showUserStats() {
     try {
-        var data = await api('/api/v1/user/stats/' + userId);
-        var container = document.getElementById('resultContent');
-        var html = '<div class="result-score">📊 Ваша статистика</div>';
+        showLoading('Загружаем статистику...');
+        
+        const data = await api('GET', '/api/v1/user/stats/' + currentUserId);
+        
+        const container = document.getElementById('stats-content');
+        let html = '<div class="score-display">📊 Статистика</div>';
         html += '<p><strong>Всего попыток:</strong> ' + data.total_attempts + '</p>';
         html += '<p><strong>Средний балл:</strong> ' + data.avg_score + '</p>';
         html += '<p><strong>Лучший результат:</strong> ' + data.best_score + '</p>';
         html += '<p><strong>Достижения:</strong> ' + (data.achievements?.join(', ') || 'пока нет') + '</p>';
-        if (data.weak_topics?.length) {
-            html += '<p><strong>Слабые темы:</strong> ' + data.weak_topics.join(', ') + '</p>';
+        
+        if (data.weak_topics && data.weak_topics.length > 0) {
+            html += '<p><strong>Темы для повторения:</strong> ' + data.weak_topics.join(', ') + '</p>';
         }
+        
         container.innerHTML = html;
-        document.getElementById('resultArea').style.display = 'block';
-        document.getElementById('taskArea').style.display = 'none';
-        document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' });
-    } catch(e) {
-        alert('Ошибка загрузки статистики: ' + e.message);
+        showPanel('stats-container');
+        document.getElementById('stats-container').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+        showError('Ошибка загрузки статистики: ' + e.message);
     }
 }
+
+function showCompetitionsInfo() {
+    alert('🏆 Функция соревнований доступна через API.\n\nОткройте /docs для просмотра документации.');
+}
+
+window.onload = function() {
+    hideAllPanels();
+    document.getElementById('auth-container').style.display = 'block';
+};
