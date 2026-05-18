@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=PT+Serif&display=swap');
+
+body {
+    font-family: 'PT Serif', 'Times New Roman', serif;
+    background-color: #f5f5f5;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border: 1px solid #d1d5db;
+}
+h1, h2 { color: #1e3a8a; border-bottom: 2px solid #d1d5db; padding-bottom: 5px; }
+input[type="text"] {
+    font-family: inherit;
+    border: none;
+    border-bottom: 2px solid #9ca3af;
+    padding: 5px 0;
+    margin: 10px 0;
+    width: 200px;
+    font-size: 16px;
+}
+input[type="text"]:focus { outline: none; border-bottom-color: #1e3a8a; }
+button {
+    background: #1e3a8a;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 10px 5px;
+    border-radius: 4px;
+}
+button:hover { background: #152c6b; }
+.task {
+    border-bottom: 1px dashed #d1d5db;
+    padding: 15px 0;
+}
+.correct { color: #166534; font-weight: bold; }
+.incorrect { color: #991b1b; font-weight: bold; }
