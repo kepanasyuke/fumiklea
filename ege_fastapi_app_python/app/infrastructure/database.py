@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from sqlalchemy import (Column, Integer, String, Float, DateTime, JSON, ForeignKey, Text, Boolean)
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -88,6 +89,10 @@ class UserAchievement(Base):
     achievement = relationship("Achievement")
 
 async def init_db():
+    if settings.DATABASE_URL.startswith("sqlite+aiosqlite:///"):
+        db_path = Path(settings.DATABASE_URL.removeprefix("sqlite+aiosqlite:///"))
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
     engine = create_async_engine(settings.DATABASE_URL, echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

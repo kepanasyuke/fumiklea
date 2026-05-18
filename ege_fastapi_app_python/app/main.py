@@ -1,8 +1,13 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app.domain.api.v1 import tasks, user, competition, achievements, ai
+from app.api.v1 import tasks, user, competition, achievements, ai
 from app.infrastructure.database import init_db
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+STATIC_DIR = BASE_DIR / "web"
 
 app = FastAPI(title="EGE Math Trainer 2026")
 
@@ -10,11 +15,11 @@ app = FastAPI(title="EGE Math Trainer 2026")
 async def startup():
     await init_db()
 
-app.mount("/static", StaticFiles(directory="web"), name="static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 def index():
-    return FileResponse("web/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
 
 app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(user.router, prefix="/api/v1")

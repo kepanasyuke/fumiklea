@@ -2,6 +2,7 @@
 
 install:
 	pip install -r requirements.txt
+	npm install -g localtunnel
 
 build:
 	docker-compose build
@@ -32,7 +33,10 @@ kill:
 	@lsof -ti :8000 | xargs kill -9 2>/dev/null || echo "Порт 8000 свободен"
 
 tunnel:
-	@echo "Запускаю сервер и туннель localtunnel..."
+	@echo "Убеждаюсь, что порт 8000 свободен..."
+	@make kill
+	@echo "Запускаю сервер в фоне..."
 	@python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-	@sleep 2
-	@lt --port 8000 --subdomain ege-math-trainer
+	@sleep 3
+	@echo "Запускаю localtunnel..."
+	@npx localtunnel --port 8000 --subdomain ege-math-trainer
