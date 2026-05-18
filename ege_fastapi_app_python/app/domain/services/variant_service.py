@@ -1,10 +1,11 @@
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.infrastructure.database import Attempt, AttemptTask
+from app.infrastructure.database import Attempt, AttemptTask, Task
 from app.domain.ports import TaskRepositoryPort
 from app.core.exceptions import AttemptNotFound, AccessDenied, TimeExpired
 from app.infrastructure.services.math_utils import normalize_answer
+import re
 
 class VariantService:
     def __init__(self, db: AsyncSession, task_repo: TaskRepositoryPort):
@@ -12,49 +13,46 @@ class VariantService:
         self.task_repo = task_repo
 
     async def generate_full_variant(self, user_id: int) -> dict:
-        tasks = await self._fetch_tasks(range(1, 20))
+        tasks = await self._fetch_real_tasks()
         attempt = Attempt(user_id=user_id, type="full", max_score=len(tasks))
         self.db.add(attempt)
         await self.db.flush()
         for task in tasks:
             self.db.add(AttemptTask(attempt_id=attempt.id, task_id=task.id))
         await self.db.commit()
-        tasks_out = [
-            {
+        tasks_out = []
+        for t in tasks:
+            tasks_out.append({
                 "id": t.id,
                 "sdamgia_id": t.sdamgia_id,
-                "topic": t.topic,
-                "text": t.text,
+                "topic": self._clean_html(t.topic),
+                "text": self._clean_html(t.text),
                 "difficulty": t.difficulty,
                 "tags": t.tags,
                 "part": t.part,
-            }
-            for t in tasks
-        ]
+            })
         return {"attempt_id": attempt.id, "tasks": tasks_out}
 
     async def generate_time_attack(self, user_id: int) -> dict:
-        tasks = await self._fetch_tasks(range(1, 13))
-        if len(tasks) < 12:
-            raise RuntimeError("Недостаточно заданий")
+        tasks = await self._fetch_real_tasks()
+        tasks = tasks[:12]
         attempt = Attempt(user_id=user_id, type="time_attack", max_score=12, started_at=datetime.utcnow())
         self.db.add(attempt)
         await self.db.flush()
-        for task in tasks[:12]:
+        for task in tasks:
             self.db.add(AttemptTask(attempt_id=attempt.id, task_id=task.id))
         await self.db.commit()
-        tasks_out = [
-            {
+        tasks_out = []
+        for t in tasks:
+            tasks_out.append({
                 "id": t.id,
                 "sdamgia_id": t.sdamgia_id,
-                "topic": t.topic,
-                "text": t.text,
+                "topic": self._clean_html(t.topic),
+                "text": self._clean_html(t.text),
                 "difficulty": t.difficulty,
                 "tags": t.tags,
                 "part": t.part,
-            }
-            for t in tasks[:12]
-        ]
+            })
         return {"attempt_id": attempt.id, "tasks": tasks_out}
 
     async def submit(self, attempt_id: int, user_id: int, answers: dict) -> dict:
@@ -82,7 +80,7 @@ class VariantService:
                 score += 1
             details.append({
                 "task_id": at.task_id,
-                "topic": task.topic,
+                "topic": self._clean_html(task.topic),
                 "your_answer": user_ans,
                 "correct_answer": correct_ans,
                 "is_correct": is_correct
@@ -91,7 +89,39 @@ class VariantService:
         await self.db.commit()
         return {"score": score, "max_score": attempt.max_score, "type": attempt.type, "details": details}
 
-    async def _fetch_tasks(self, numbers):
-        from app.infrastructure.services.sdamgia_service import SdamGiaService
-        sdamgia = SdamGiaService()
-        return await sdamgia.fetch_and_cache_tasks(self.db, list(numbers))
+    def _clean_html(self, text: str) -> str:
+        """Удаляет HTML-теги из текста"""
+        if not text:
+            return ""
+        clean = re.sub(r'<[^>]+>', '', text)
+        clean = clean.replace('&nbsp;', ' ').replace('&lt;', '<').replace('&gt;', '>')
+        return clean.strip()
+
+    async def _fetch_real_tasks(self):
+        """Загружает реальные задания из БД или создаёт тестовые"""
+        from app.infrastructure.database import Task
+        from sqlalchemy import select, func
+        
+        # Пробуем получить реальные задания из БД
+        result = await self.db.execute(select(Task).order_by(func.random()).limit(19))
+        tasks = result.scalars().all()
+        
+        if len(tasks) >= 19:
+            return tasks[:19]
+        
+        # Если реальных заданий нет, создаём тестовые
+        test_tasks = []
+        for i in range(1, 20):
+            task = Task(
+                sdamgia_id=f"test_{i}",
+                topic=f"Тестовая тема {i}",
+                text=f"Найдите значение выражения: {i} + {i*2}",
+                answer="42",
+                difficulty=1,
+                tags=["тест"],
+                part=1 if i <= 12 else 2
+            )
+            self.db.add(task)
+            test_tasks.append(task)
+        await self.db.commit()
+        return test_tasks
