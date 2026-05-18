@@ -228,22 +228,74 @@ TASKS_BANK = {
     ]
 }
 
-class SdamGiaService:
-    def __init__(self):
-        pass
+def _generate_graphic(task_num: int, task_text: str) -> str:
+    """
+    Автоматически генерирует SVG-график для заданий, где он нужен.
+    Анализирует текст задачи и подбирает подходящий чертёж.
+    """
+    graphics = {
+        6: '''<svg width="320" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="320" height="200" fill="#fafafa" rx="8"/>
+            <line x1="40" y1="160" x2="280" y2="160" stroke="#333" stroke-width="1.5"/>
+            <line x1="40" y1="40" x2="40" y2="160" stroke="#333" stroke-width="1.5"/>
+            <polyline points="40,120 70,100 100,100 130,130 160,130 190,70 220,70 250,100 280,100" 
+                      fill="none" stroke="#1e40af" stroke-width="2.5"/>
+            <circle cx="190" cy="70" r="4" fill="#ef4444"/>
+            <text x="170" y="55" font-size="11" fill="#ef4444" font-weight="bold">f'(x)</text>
+            <text x="285" y="170" font-size="12">x</text>
+            <text x="25" y="35" font-size="12">y</text>
+            <line x1="100" y1="160" x2="100" y2="100" stroke="#666" stroke-dasharray="5,3"/>
+            <text x="90" y="178" font-size="10">a</text>
+            <line x1="250" y1="160" x2="250" y2="100" stroke="#666" stroke-dasharray="5,3"/>
+            <text x="240" y="178" font-size="10">b</text>
+            </svg>''',
+        
+        9: '''<svg width="320" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="320" height="200" fill="#fafafa" rx="8"/>
+            <line x1="40" y1="160" x2="280" y2="160" stroke="#333" stroke-width="1.5"/>
+            <line x1="40" y1="40" x2="40" y2="160" stroke="#333" stroke-width="1.5"/>
+            <path d="M 60,140 Q 100,100 140,80 Q 180,60 220,50 Q 260,40 270,38" 
+                  fill="none" stroke="#1e40af" stroke-width="2.5"/>
+            <circle cx="140" cy="80" r="4" fill="#ef4444"/>
+            <text x="145" y="72" font-size="11" fill="#ef4444" font-weight="bold">(x₀, y₀)</text>
+            <text x="285" y="170" font-size="12">x</text>
+            <text x="25" y="35" font-size="12">y</text>
+            <line x1="140" y1="160" x2="140" y2="80" stroke="#666" stroke-dasharray="5,3"/>
+            </svg>''',
+        
+        13: '''<svg width="320" height="220" xmlns="http://www.w3.org/2000/svg">
+            <rect width="320" height="220" fill="#fafafa" rx="8"/>
+            <polygon points="160,30 270,150 50,150" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+            <polygon points="160,30 50,150 100,90 160,30" fill="#bfdbfe" stroke="#1e40af" stroke-width="1.5"/>
+            <line x1="160" y1="30" x2="160" y2="85" stroke="#ef4444" stroke-dasharray="5,3"/>
+            <circle cx="160" cy="85" r="3" fill="#ef4444"/>
+            <text x="155" y="22" font-size="14" font-weight="bold">S</text>
+            <text x="275" y="158" font-size="12">A</text>
+            <text x="35" y="158" font-size="12">B</text>
+            <text x="95" y="82" font-size="12">C</text>
+            <text x="155" y="80" font-size="12" fill="#ef4444">O</text>
+            </svg>''',
+        
+        16: '''<svg width="320" height="220" xmlns="http://www.w3.org/2000/svg">
+            <rect width="320" height="220" fill="#fafafa" rx="8"/>
+            <polygon points="60,180 260,180 220,50 100,50" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+            <text x="40" y="192" font-size="12">A</text>
+            <text x="265" y="192" font-size="12">B</text>
+            <text x="225" y="42" font-size="12">C</text>
+            <text x="80" y="42" font-size="12">D</text>
+            <line x1="100" y1="50" x2="60" y2="180" stroke="#333" stroke-width="1.5"/>
+            <line x1="60" y1="180" x2="260" y2="180" stroke="#ef4444" stroke-width="1.5"/>
+            <text x="140" y="195" font-size="10" fill="#ef4444">основание</text>
+            </svg>'''
+    }
+    
+    return graphics.get(task_num, "")
 
-    def _get_task_for_number(self, num: int):
-        if num in TASKS_BANK and TASKS_BANK[num]:
-            task_data = random.choice(TASKS_BANK[num])
-            return {
-                "sdamgia_id": f"ege_{num}_{random.randint(10000, 99999)}",
-                "topic": task_data["topic"],
-                "text": task_data["text"],
-                "answer": task_data["answer"],
-                "difficulty": 2 if num > 12 else 1,
-                "tags": ["реальное задание ЕГЭ"],
-                "part": 1 if num <= 12 else 2
-            }
+
+def _get_task_for_number(num: int):
+    """Выбирает случайное задание для номера num"""
+    tasks_for_type = TASKS_BANK.get(num, [])
+    if not tasks_for_type:
         return {
             "sdamgia_id": f"ege_{num}",
             "topic": f"Задание типа {num}",
@@ -253,12 +305,36 @@ class SdamGiaService:
             "tags": ["заглушка"],
             "part": 1 if num <= 12 else 2
         }
+    
+    task_data = random.choice(tasks_for_type)
+    
+    # Добавляем график, если нужно
+    text = task_data["text"]
+    if num in [6, 9, 13, 16]:
+        graphic = _generate_graphic(num, text)
+        if graphic:
+            text += f'<br><center>{graphic}</center>'
+    
+    return {
+        "sdamgia_id": f"ege_{num}_{random.randint(10000, 99999)}",
+        "topic": task_data["topic"],
+        "text": text,
+        "answer": task_data["answer"],
+        "difficulty": 2 if num > 12 else 1,
+        "tags": ["реальное задание ЕГЭ"],
+        "part": 1 if num <= 12 else 2
+    }
+
+
+class SdamGiaService:
+    def __init__(self):
+        pass
 
     async def fetch_and_cache_tasks(self, db: AsyncSession, numbers: list) -> list:
         repo = TaskRepository(db)
         tasks = []
         for num in numbers:
-            task_data = self._get_task_for_number(num)
+            task_data = _get_task_for_number(num)
             task = await repo.create_task(**task_data)
             tasks.append(task)
         return tasks
