@@ -1,7 +1,11 @@
 const API_KEY = 'ege-token-2026';
+const API_BASE = '/api/v1';
 let currentUserId = null;
+let currentUsername = null;
 let currentAttemptId = null;
 let loadedTasks = [];
+
+window.addEventListener('DOMContentLoaded', initApp);
 
 function api(method, path, body = null) {
     const headers = {
@@ -10,199 +14,235 @@ function api(method, path, body = null) {
     };
     const options = { method, headers };
     if (body) options.body = JSON.stringify(body);
-    
+
     return fetch(path, options)
-        .then(r => {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
+        .then(async r => {
+            const content = await r.text();
+            const json = content ? JSON.parse(content) : null;
+            if (!r.ok) {
+                const message = json?.detail || r.statusText || ('HTTP ' + r.status);
+                throw new Error(message);
+            }
+            return json;
         });
 }
 
-function hideAllPanels() {
-    ['auth-container', 'actions-container', 'tasks-container', 
-     'results-container', 'stats-container', 'loading-container', 'error-container']
-    .forEach(id => document.getElementById(id).style.display = 'none');
+function initApp() {
+    const storedUser = window.localStorage.getItem('ege_user');
+    if (storedUser) {
+        const session = JSON.parse(storedUser);
+        currentUserId = session.userId;
+        currentUsername = session.username;
+        showUserPanel();
+    } else {
+        showPanel('auth-container');
+    }
 }
 
 function showPanel(panelId) {
-    hideAllPanels();
+    ['auth-container', 'actions-container', 'tasks-container', 'results-container', 'stats-container', 'loading-container', 'error-container']
+        .forEach(id => document.getElementById(id).style.display = 'none');
     document.getElementById(panelId).style.display = 'block';
+}
+
+function showUserPanel() {
+    document.getElementById('user-info-display').innerHTML =
+        `✅ <strong>${currentUsername}</strong> (ID: ${currentUserId})`;
+    showPanel('actions-container');
+}
+
+function saveSession() {
+    window.localStorage.setItem('ege_user', JSON.stringify({ userId: currentUserId, username: currentUsername }));
+}
+
+function clearSession() {
+    window.localStorage.removeItem('ege_user');
+    currentUserId = null;
+    currentUsername = null;
+}
+
+function showError(message) {
+    document.getElementById('error-message').textContent = message;
+    showPanel('error-container');
+}
+
+function sanitizeHTML(value) {
+    return value.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
 }
 
 async function registerUser() {
     const username = document.getElementById('username-input').value.trim();
-    if (!username) return alert('Введите имя');
-    
+    if (!username) return showError('Введите имя пользователя');
+
     try {
-        const data = await api('POST', '/api/v1/user/register?username=' + encodeURIComponent(username));
+        const data = await api('POST', `${API_BASE}/user/register?username=${encodeURIComponent(username)}`);
         currentUserId = data.user_id;
-        document.getElementById('user-info-display').innerHTML = 
-            '✅ <strong>' + username + '</strong> (ID: ' + currentUserId + ')';
-        showPanel('actions-container');
-    } catch(e) {
-        alert('Ошибка: ' + e.message);
+        currentUsername = data.username;
+        saveSession();
+        showUserPanel();
+    } catch (e) {
+        showError('Регистрация не прошла: ' + e.message);
     }
 }
 
 async function loadFullVariant() {
+    if (!currentUserId) return showError('Сначала зарегистрируйтесь.');
     try {
-        document.getElementById('loading-message').textContent = 'Генерируем вариант...';
+        document.getElementById('loading-message').textContent = 'Генерируем полный вариант...';
         showPanel('loading-container');
-        
-        const data = await api('POST', '/api/v1/tasks/variant/generate?user_id=' + currentUserId);
+
+        const data = await api('POST', `${API_BASE}/tasks/variant/generate?user_id=${currentUserId}`);
         currentAttemptId = data.attempt_id;
         loadedTasks = data.tasks;
-        
-        renderTasks('Полный вариант (' + loadedTasks.length + ' заданий)');
-        MathJax.typesetPromise();
-    } catch(e) {
-        alert('Ошибка: ' + e.message);
+        renderTasks(`Полный вариант (${loadedTasks.length} заданий)`);
+        await MathJax.typesetPromise();
+    } catch (e) {
+        showError('Не удалось загрузить вариант: ' + e.message);
     }
 }
 
 async function loadTimeAttack() {
+    if (!currentUserId) return showError('Сначала зарегистрируйтесь.');
     try {
-        document.getElementById('loading-message').textContent = 'Готовим блиц...';
+        document.getElementById('loading-message').textContent = 'Готовим Time Attack...';
         showPanel('loading-container');
-        
-        const data = await api('POST', '/api/v1/tasks/time-attack/start?user_id=' + currentUserId);
+
+        const data = await api('POST', `${API_BASE}/tasks/time-attack/start?user_id=${currentUserId}`);
         currentAttemptId = data.attempt_id;
         loadedTasks = data.tasks;
-        
-        renderTasks('Time Attack (' + loadedTasks.length + ' заданий)');
-        MathJax.typesetPromise();
-        
+        renderTasks(`Time Attack (${loadedTasks.length} заданий)`);
+        await MathJax.typesetPromise();
+
         setTimeout(() => {
             if (currentAttemptId) {
-                alert('Время вышло!');
+                showError('Время вышло! Ответы отправляются автоматически.');
                 submitAllAnswers();
             }
         }, 600000);
-    } catch(e) {
-        alert('Ошибка: ' + e.message);
+    } catch (e) {
+        showError('Не удалось начать Time Attack: ' + e.message);
     }
+}
+
+function extractGraphLink(text) {
+    const match = text.match(/https:\/\/www\.geogebra\.org\/graphing[^"'\s<]*/);
+    return match ? match[0] : null;
 }
 
 function renderTasks(title) {
     document.getElementById('tasks-title').textContent = title;
     const container = document.getElementById('tasks-list');
     container.innerHTML = '';
-    
+
     loadedTasks.forEach((task, i) => {
         const card = document.createElement('div');
         card.className = 'task-card';
+
+        const isPart2 = task.part === 2;
+        const safeText = sanitizeHTML(task.text || '');
+        const graphLink = extractGraphLink(safeText);
+        const taskText = safeText.replace(/https:\/\/www\.geogebra\.org\/graphing[^"'\s<]*/g, '');
+
         card.innerHTML = `
-            <div class="task-number">📋 Задание №${i + 1} (Тип ${task.part === 1 ? task.id : '2'})</div>
+            <div class="task-number">
+                📋 Задание №${i + 1}
+                <span class="task-number-accent">(Часть ${task.part}${isPart2 ? ' — развёрнутый ответ' : ''})</span>
+            </div>
             <div class="task-topic">📚 ${task.topic}</div>
-            <div class="task-text">${task.text}</div>
-            <input type="text" id="answer-${task.id}" class="answer-input" placeholder="Ваш ответ">
+            <div class="task-text">${taskText}</div>
+            ${isPart2 ?
+                `<textarea id="answer-${task.id}" class="answer-textarea" placeholder="Введите полное решение..." rows="6"></textarea>` :
+                `<input type="text" id="answer-${task.id}" class="answer-input" placeholder="Введите ответ">`
+            }
+            <div class="task-tags">${(task.tags || []).map(tag => `<span class="tag-badge">${tag}</span>`).join('')}</div>
         `;
+
+        if (graphLink) {
+            const hint = document.createElement('div');
+            hint.className = 'graph-hint';
+            hint.innerHTML = `
+                <span>📈 График можно построить отдельно:</span>
+                <a href="${graphLink}" target="_blank" rel="noopener noreferrer">Открыть GeoGebra</a>
+            `;
+            card.appendChild(hint);
+        }
+
         container.appendChild(card);
     });
-    
+
     document.getElementById('submit-section').style.display = 'block';
     showPanel('tasks-container');
 }
 
 async function submitAllAnswers() {
+    if (!currentAttemptId) return showError('Нет активной попытки для отправки.');
     const answers = loadedTasks.map(t => ({
         task_id: t.id,
-        answer: document.getElementById('answer-' + t.id)?.value || ''
+        answer: document.getElementById(`answer-${t.id}`)?.value || ''
     }));
-    
+
     try {
-        document.getElementById('loading-message').textContent = 'Проверяем...';
+        document.getElementById('loading-message').textContent = 'Отправляем ответы...';
         showPanel('loading-container');
-        
-        const data = await api('POST', '/api/v1/tasks/variant/submit', {
+
+        const data = await api('POST', `${API_BASE}/tasks/variant/submit`, {
             user_id: currentUserId,
             attempt_id: currentAttemptId,
-            answers: answers
+            answers
         });
-        
+
         displayResults(data);
         currentAttemptId = null;
-    } catch(e) {
-        alert('Ошибка: ' + e.message);
+    } catch (e) {
+        showError('Не удалось отправить ответы: ' + e.message);
     }
 }
 
 function displayResults(data) {
     const container = document.getElementById('results-content');
-    let html = `<div class="score-display">🎯 ${data.score} из ${data.max_score} баллов</div>`;
-    
-    data.details.forEach(d => {
-        html += `
-            <div class="result-item ${d.is_correct ? 'result-correct' : 'result-incorrect'}">
-                <strong>Задание</strong> (${d.topic})<br>
-                Ваш ответ: <strong>${d.your_answer || '—'}</strong><br>
-                Правильно: <strong>${d.correct_answer}</strong>
-                ${d.is_correct ? ' ✅' : ' ❌'}
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
+    const items = data.details.map(d => `
+        <div class="result-item ${d.is_correct ? 'result-correct' : 'result-incorrect'}">
+            <div class="result-item-title">${d.is_correct ? '✅' : '❌'} ${d.topic}</div>
+            <div>Ваш ответ: <strong>${d.your_answer || '—'}</strong></div>
+            <div>Правильно: <strong>${d.correct_answer}</strong></div>
+        </div>
+    `).join('');
+
+    container.innerHTML = `
+        <div class="score-display">🎯 ${data.score} из ${data.max_score} баллов</div>
+        ${items}
+    `;
     showPanel('results-container');
 }
 
 async function showUserStats() {
     try {
-        const data = await api('GET', '/api/v1/user/stats/' + currentUserId);
+        const data = await api('GET', `${API_BASE}/user/stats/${currentUserId}`);
         const container = document.getElementById('stats-content');
         container.innerHTML = `
             <div class="score-display">📊 Статистика</div>
-            <p>Попыток: <strong>${data.total_attempts}</strong></p>
-            <p>Средний балл: <strong>${data.avg_score}</strong></p>
-            <p>Лучший результат: <strong>${data.best_score}</strong></p>
-            <p>Достижения: ${data.achievements?.join(', ') || '—'}</p>
-            ${data.weak_topics?.length ? '<p>Слабые темы: ' + data.weak_topics.join(', ') + '</p>' : ''}
+            <div class="stats-grid">
+                <div><strong>Попыток</strong><br>${data.total_attempts}</div>
+                <div><strong>Средний балл</strong><br>${data.avg_score.toFixed(1)}</div>
+                <div><strong>Лучший</strong><br>${data.best_score}</div>
+            </div>
+            <p><strong>Достижения:</strong> ${data.achievements?.length ? data.achievements.join(', ') : '—'}</p>
+            ${data.weak_topics?.length ? `<p><strong>Слабые темы:</strong> ${data.weak_topics.join(', ')}</p>` : ''}
         `;
         showPanel('stats-container');
-    } catch(e) {
-        alert('Ошибка: ' + e.message);
+    } catch (e) {
+        showError('Не удалось получить статистику: ' + e.message);
     }
 }
 
 function showCompetitionsInfo() {
-    alert('Соревнования — через /docs');
+    showError('Соревнования доступны через /docs. Скоро добавим персональную панель!');
 }
 
 function hideError() {
-    showPanel('actions-container');
-}
-
-function renderTasks(title) {
-    document.getElementById('tasks-title').textContent = title;
-    const container = document.getElementById('tasks-list');
-    container.innerHTML = '';
-    
-    loadedTasks.forEach((task, i) => {
-        const card = document.createElement('div');
-        card.className = 'task-card';
-        
-        const isPart2 = task.part === 2;
-        
-        card.innerHTML = `
-            <div class="task-number">
-                📋 Задание №${i + 1} 
-                <span style="color: ${isPart2 ? '#dc2626' : '#1e3a8a'}">
-                    (Часть ${task.part}${isPart2 ? ' — развёрнутый ответ' : ''})
-                </span>
-            </div>
-            <div class="task-topic">📚 ${task.topic}</div>
-            <div class="task-text">${task.text}</div>
-            ${isPart2 ? 
-                `<textarea id="answer-${task.id}" class="answer-textarea" 
-                   placeholder="Введите полное решение задачи..." rows="6"></textarea>` :
-                `<input type="text" id="answer-${task.id}" class="answer-input" 
-                   placeholder="Введите ответ">`
-            }
-        `;
-        container.appendChild(card);
-    });
-    
-    document.getElementById('submit-section').style.display = 'block';
-    showPanel('tasks-container');
-    MathJax.typesetPromise();
+    if (currentUserId) {
+        showPanel('actions-container');
+    } else {
+        showPanel('auth-container');
+    }
 }
