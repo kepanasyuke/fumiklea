@@ -1,10 +1,13 @@
 from datetime import datetime
+import urllib.parse
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.infrastructure.database import Attempt, AttemptTask
 from app.domain.ports import TaskRepositoryPort
 from app.core.exceptions import AttemptNotFound, AccessDenied, TimeExpired
 from app.infrastructure.services.math_utils import normalize_answer
+from app.infrastructure.services.sdamgia_service import _extract_function
 
 class VariantService:
     def __init__(self, db: AsyncSession, task_repo: TaskRepositoryPort):
@@ -28,6 +31,7 @@ class VariantService:
                 "difficulty": t.difficulty,
                 "tags": t.tags,
                 "part": t.part,
+                "graph_url": _build_graph_url(t.text)
             }
             for t in tasks
         ]
@@ -52,6 +56,7 @@ class VariantService:
                 "difficulty": t.difficulty,
                 "tags": t.tags,
                 "part": t.part,
+                "graph_url": _build_graph_url(t.text)
             }
             for t in tasks[:12]
         ]
@@ -95,3 +100,19 @@ class VariantService:
         from app.infrastructure.services.sdamgia_service import SdamGiaService
         sdamgia = SdamGiaService()
         return await sdamgia.fetch_and_cache_tasks(self.db, list(numbers))
+
+
+def _build_graph_url(task_text: str) -> Optional[str]:
+    try:
+        func = _extract_function(task_text)
+        if not func:
+            return None
+        encoded = urllib.parse.quote(func)
+        return (
+            f"https://www.geogebra.org/graphing"
+            f"?command=f(x)={encoded}"
+            f"&showToolBar=false&showAlgebraInput=false&showMenuBar=false"
+            f"&showResetIcon=false&appName=graphing&language=ru"
+        )
+    except Exception:
+        return None

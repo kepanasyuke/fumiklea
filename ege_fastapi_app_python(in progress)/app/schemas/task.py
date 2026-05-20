@@ -10,6 +10,7 @@ class TaskOut(BaseModel):
     difficulty: int
     tags: List[str]
     part: int
+    graph_url: Optional[str] = None
     answer: Optional[str] = None
 
 class AnswerSubmit(BaseModel):

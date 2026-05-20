@@ -140,8 +140,10 @@ function renderTasks(title) {
 
         const isPart2 = task.part === 2;
         const safeText = sanitizeHTML(task.text || '');
-        const graphLink = extractGraphLink(safeText);
-        const taskText = safeText.replace(/https:\/\/www\.geogebra\.org\/graphing[^"'\s<]*/g, '');
+        const graphLink = task.graph_url || extractGraphLink(safeText);
+        const taskText = graphLink
+            ? safeText.replace(/https:\/\/www\.geogebra\.org\/graphing[^"'\s<]*/g, '')
+            : safeText;
 
         card.innerHTML = `
             <div class="task-number">

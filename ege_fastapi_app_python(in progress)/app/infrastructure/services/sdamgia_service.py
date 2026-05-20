@@ -309,42 +309,21 @@ def _extract_function(task_text):
 
 
 def _get_graphic_for_task(task_num, task_text):
-    """Добавляет кнопку для построения графика в GeoGebra"""
+    """Возвращает URL GeoGebra для графика по тексту задачи, если задача относится к графикам."""
     if task_num not in [6, 9, 11]:
-        return ""
+        return None
     
     func = _extract_function(task_text)
     if not func:
-        return ""
+        return None
     
     encoded = urllib.parse.quote(func)
-    geogebra_url = (
+    return (
         f"https://www.geogebra.org/graphing"
         f"?command=f(x)={encoded}"
         f"&showToolBar=false&showAlgebraInput=false&showMenuBar=false"
         f"&showResetIcon=false&appName=graphing&language=ru"
     )
-    
-    return f'''
-    <div style="margin:20px 0; padding:20px; background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); 
-                border:2px solid #bae6fd; border-radius:12px; text-align:center;">
-        <div style="font-size:16px; color:#0369a1; margin-bottom:12px; font-weight:bold;">
-            📈 Построить график функции
-        </div>
-        <div style="background:#fff; padding:12px; border-radius:8px; margin-bottom:15px; 
-                    font-family:monospace; font-size:15px; color:#1e40af; border:1px solid #e0f2fe;">
-            f(x) = {func}
-        </div>
-        <a href="{geogebra_url}" target="_blank" rel="noopener noreferrer"
-           style="display:inline-block; padding:12px 28px; background:#1e40af; color:#fff; 
-                  text-decoration:none; border-radius:8px; font-weight:bold; font-size:15px;
-                  transition:all 0.2s; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-            🖱️ Открыть в GeoGebra
-        </a>
-        <div style="margin-top:12px; font-size:13px; color:#64748b;">
-            💡 График откроется в новом окне. Можно масштабировать, перемещать и исследовать функцию.
-        </div>
-    </div>'''
 
 
 def _fetch_real_problem(problem_id):
@@ -424,17 +403,11 @@ class SdamGiaService:
             real_task = _try_load_from_sdamgia(num)
             
             if real_task:
-                graphic = _get_graphic_for_task(num, real_task['text'])
-                if graphic:
-                    real_task['text'] += graphic
                 task = await repo.create_task(**real_task)
                 tasks.append(task)
                 continue
             
             task_data = _get_task_for_number(num)
-            graphic = _get_graphic_for_task(num, task_data['text'])
-            if graphic:
-                task_data['text'] += graphic
             task = await repo.create_task(**task_data)
             tasks.append(task)
         
