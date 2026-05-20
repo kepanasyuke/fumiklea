@@ -583,3 +583,23 @@ body {
     border-color: #3b82f6;
     background: #f0f9ff;
 }
+
+.ai-check-btn {
+    margin-top: 12px;
+    width: auto;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    background: rgba(59,130,246,0.1);
+    color: #1d4ed8;
+    border: 1px solid rgba(59,130,246,0.3);
+}
+
+.ai-feedback {
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(229,246,253,0.9);
+    color: #0c4a6e;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+}

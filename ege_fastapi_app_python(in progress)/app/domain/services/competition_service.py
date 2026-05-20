@@ -5,6 +5,7 @@ from app.infrastructure.database import Competition, Attempt, AttemptTask, User
 from app.domain.ports import TaskRepositoryPort
 from app.core.exceptions import AccessDenied, TimeExpired, AttemptNotFound
 from app.infrastructure.services.math_utils import normalize_answer
+from app.domain.services.variant_service import _build_graph_url
 
 class CompetitionService:
     def __init__(self, db: AsyncSession, task_repo: TaskRepositoryPort):
@@ -56,6 +57,7 @@ class CompetitionService:
                 "difficulty": t.difficulty,
                 "tags": t.tags,
                 "part": t.part,
+                "graph_url": _build_graph_url(t.text)
             }
             for t in tasks
         ]

@@ -66,11 +66,35 @@ class StatsService:
                 weak.append(topic)
         return weak
 
+ACHIEVEMENT_DEFINITIONS = {
+    "perfect_part1": {
+        "name": "Идеальная часть 1",
+        "description": "Верно решены все задания части 1."
+    },
+    "streak5": {
+        "name": "Стрик 5",
+        "description": "Пять правильных ответов подряд в одной попытке."
+    },
+    "master": {
+        "name": "Мастер",
+        "description": "Все задания варианта решены верно."
+    },
+    "10_attempts": {
+        "name": "Опытный боец",
+        "description": "Завершено 10 попыток."
+    }
+}
+
 async def _unlock(db: AsyncSession, user: User, code: str):
     stmt = select(Achievement).where(Achievement.code == code)
     achievement = (await db.execute(stmt)).scalar_one_or_none()
     if not achievement:
-        achievement = Achievement(code=code, name=code, description="")
+        definition = ACHIEVEMENT_DEFINITIONS.get(code, {})
+        achievement = Achievement(
+            code=code,
+            name=definition.get('name', code),
+            description=definition.get('description', '')
+        )
         db.add(achievement)
         await db.flush()
     stmt = select(UserAchievement).where(

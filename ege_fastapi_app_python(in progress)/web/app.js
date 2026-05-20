@@ -60,6 +60,8 @@ function clearSession() {
     window.localStorage.removeItem('ege_user');
     currentUserId = null;
     currentUsername = null;
+    currentAttemptId = null;
+    currentAttemptSubmitPath = '/tasks/variant/submit';
 }
 
 function showError(message) {
@@ -168,7 +170,9 @@ function renderTasks(title) {
             <div class="task-topic">📚 ${task.topic}</div>
             <div class="task-text">${taskText}</div>
             ${isPart2 ?
-                `<textarea id="answer-${task.id}" class="answer-textarea" placeholder="Введите полное решение..." rows="6"></textarea>` :
+                `<textarea id="answer-${task.id}" class="answer-textarea" placeholder="Введите полное решение..." rows="6"></textarea>
+                <button class="action-btn secondary-btn ai-check-btn" type="button" onclick="checkSolution(${task.id})">🤖 Проверить решение ИИ</button>
+                <div id="ai-feedback-${task.id}" class="ai-feedback"></div>` :
                 `<input type="text" id="answer-${task.id}" class="answer-input" placeholder="Введите ответ">`
             }
             <div class="task-tags">${(task.tags || []).map(tag => `<span class="tag-badge">${tag}</span>`).join('')}</div>
@@ -231,6 +235,26 @@ async function submitAllAnswers() {
         currentAttemptSubmitPath = '/tasks/variant/submit';
     } catch (e) {
         showError('Не удалось отправить ответы: ' + e.message);
+    }
+}
+
+async function checkSolution(taskId) {
+    const task = loadedTasks.find(t => t.id === taskId);
+    if (!task) return showError('Задача не найдена.');
+    const answer = document.getElementById(`answer-${taskId}`)?.value || '';
+    if (!answer.trim()) return showError('Введите решение для проверки ИИ.');
+
+    const feedback = document.getElementById(`ai-feedback-${taskId}`);
+    feedback.innerHTML = 'Проверка...';
+
+    try {
+        const data = await api('POST', `${API_BASE}/ai/check`, {
+            task_text: task.text,
+            solution_text: answer
+        });
+        feedback.innerHTML = `<pre>${sanitizeHTML(data.evaluation || data.error || 'Нет ответа')}</pre>`;
+    } catch (e) {
+        feedback.innerHTML = `Ошибка ИИ: ${sanitizeHTML(e.message)}`;
     }
 }
 

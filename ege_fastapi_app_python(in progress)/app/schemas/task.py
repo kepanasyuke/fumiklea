@@ -33,6 +33,13 @@ class AttemptResult(BaseModel):
     type: str
     details: List[dict]
 
+class AchievementOut(BaseModel):
+    code: str
+    name: str
+    description: str
+    icon: str
+    unlocked_at: str
+
 class TaskBankItem(BaseModel):
     number: int
     part: int

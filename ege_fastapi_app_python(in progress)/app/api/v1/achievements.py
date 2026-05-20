@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 from app.core.dependencies import get_db
 from app.core.security import verify_token
 from app.infrastructure.repositories.user_repository import UserRepository
+from app.schemas.task import AchievementOut
 
 router = APIRouter(prefix="/achievements", tags=["achievements"])
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", response_model=List[AchievementOut])
 async def user_achievements(
     user_id: int,
     db: AsyncSession = Depends(get_db),
