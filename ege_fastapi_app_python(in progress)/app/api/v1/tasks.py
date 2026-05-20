@@ -4,6 +4,7 @@ from app.core.dependencies import get_db
 from app.core.security import verify_token
 from app.infrastructure.repositories.task_repository import TaskRepository
 from app.domain.services.variant_service import VariantService
+from app.domain.services.stats_service import StatsService
 from app.infrastructure.services.sdamgia_service import SdamGiaService
 from app.schemas.task import VariantOut, SubmitRequest, AttemptResult, TaskBankOut
 
@@ -29,6 +30,9 @@ async def submit_variant(
     repo = TaskRepository(db)
     service = VariantService(db, repo)
     result = await service.submit(request.attempt_id, request.user_id, {a.task_id: a.answer for a in request.answers})
+    await StatsService.update_stats(db, request.user_id, request.attempt_id)
+    await StatsService.check_achievements(db, request.user_id, request.attempt_id)
+    await db.commit()
     return result
 
 @router.post("/time-attack/start", response_model=VariantOut)

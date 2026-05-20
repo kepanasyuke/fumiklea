@@ -49,8 +49,11 @@
                 <button class="action-btn secondary-btn" onclick="loadTaskBank()">
                     📚 Каталог заданий
                 </button>
-                <button class="action-btn secondary-btn" onclick="showCompetitionsInfo()">
-                    🏆 Соревнования
+                <button class="action-btn secondary-btn" onclick="loadAchievements()">
+                    🏅 Мои достижения
+                </button>
+                <button class="action-btn secondary-btn" onclick="showCompetitionPanel()">
+                    🏁 Соревнования
                 </button>
                 <button class="action-btn secondary-btn" onclick="showUserStats()">
                     📊 Моя статистика
@@ -79,6 +82,45 @@
         <div id="stats-container" class="panel" style="display: none;">
             <h2>Статистика</h2>
             <div id="stats-content"></div>
+        </div>
+
+        <div id="achievements-container" class="panel" style="display: none;">
+            <h2>Мои достижения</h2>
+            <div id="achievements-list"></div>
+            <div class="panel-actions">
+                <button class="action-btn secondary-btn" onclick="showUserPanel()">
+                    ← Вернуться к действиям
+                </button>
+            </div>
+        </div>
+
+        <div id="competition-container" class="panel" style="display: none;">
+            <h2>Соревнования</h2>
+            <div class="competition-block">
+                <div class="competition-card">
+                    <h3>Создать соревнование</h3>
+                    <input type="text" id="competition-name" placeholder="Название соревнования">
+                    <input type="number" id="competition-duration" placeholder="Длительность (минут)" min="5" value="30">
+                    <button class="action-btn primary-btn" onclick="createCompetition()">Создать</button>
+                    <div id="competition-create-result"></div>
+                </div>
+                <div class="competition-card">
+                    <h3>Присоединиться к соревнованию</h3>
+                    <input type="number" id="competition-id" placeholder="ID соревнования">
+                    <button class="action-btn primary-btn" onclick="joinCompetition()">Присоединиться</button>
+                    <button class="action-btn secondary-btn" onclick="loadLeaderboard()">Загрузить лидерборд</button>
+                    <div id="competition-join-result"></div>
+                </div>
+            </div>
+            <div class="competition-leaderboard">
+                <h3>Текущий лидерборд</h3>
+                <div id="leaderboard-content">Укажите ID и загрузите лидерборд.</div>
+            </div>
+            <div class="panel-actions">
+                <button class="action-btn secondary-btn" onclick="showUserPanel()">
+                    ← Вернуться к действиям
+                </button>
+            </div>
         </div>
 
         <div id="bank-container" class="panel" style="display: none;">

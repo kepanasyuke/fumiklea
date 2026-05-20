@@ -3,6 +3,7 @@ const API_BASE = '/api/v1';
 let currentUserId = null;
 let currentUsername = null;
 let currentAttemptId = null;
+let currentAttemptSubmitPath = '/tasks/variant/submit';
 let loadedTasks = [];
 
 window.addEventListener('DOMContentLoaded', initApp);
@@ -40,7 +41,7 @@ function initApp() {
 }
 
 function showPanel(panelId) {
-    ['auth-container', 'actions-container', 'tasks-container', 'results-container', 'stats-container', 'bank-container', 'loading-container', 'error-container']
+    ['auth-container', 'actions-container', 'tasks-container', 'results-container', 'stats-container', 'achievements-container', 'competition-container', 'bank-container', 'loading-container', 'error-container']
         .forEach(id => document.getElementById(id).style.display = 'none');
     document.getElementById(panelId).style.display = 'block';
 }
@@ -105,6 +106,7 @@ async function loadFullVariant() {
 
         const data = await api('POST', `${API_BASE}/tasks/variant/generate?user_id=${currentUserId}`);
         currentAttemptId = data.attempt_id;
+        currentAttemptSubmitPath = '/tasks/variant/submit';
         loadedTasks = data.tasks;
         renderTasks(`Полный вариант (${loadedTasks.length} заданий)`);
         await MathJax.typesetPromise();
@@ -121,6 +123,7 @@ async function loadTimeAttack() {
 
         const data = await api('POST', `${API_BASE}/tasks/time-attack/start?user_id=${currentUserId}`);
         currentAttemptId = data.attempt_id;
+        currentAttemptSubmitPath = '/tasks/variant/submit';
         loadedTasks = data.tasks;
         renderTasks(`Time Attack (${loadedTasks.length} заданий)`);
         await MathJax.typesetPromise();
@@ -217,7 +220,7 @@ async function submitAllAnswers() {
         document.getElementById('loading-message').textContent = 'Отправляем ответы...';
         showPanel('loading-container');
 
-        const data = await api('POST', `${API_BASE}/tasks/variant/submit`, {
+        const data = await api('POST', `${API_BASE}${currentAttemptSubmitPath}`, {
             user_id: currentUserId,
             attempt_id: currentAttemptId,
             answers
@@ -225,6 +228,7 @@ async function submitAllAnswers() {
 
         displayResults(data);
         currentAttemptId = null;
+        currentAttemptSubmitPath = '/tasks/variant/submit';
     } catch (e) {
         showError('Не удалось отправить ответы: ' + e.message);
     }
@@ -299,8 +303,102 @@ function renderTaskBank(items) {
     showPanel('bank-container');
 }
 
-function showCompetitionsInfo() {
-    showError('Соревнования доступны через /docs. Скоро добавим персональную панель!');
+async function loadAchievements() {
+    if (!currentUserId) return showError('Сначала зарегистрируйтесь.');
+    try {
+        document.getElementById('loading-message').textContent = 'Загружаем достижения...';
+        showPanel('loading-container');
+
+        const data = await api('GET', `${API_BASE}/achievements/${currentUserId}`);
+        renderAchievements(data);
+    } catch (e) {
+        showError('Не удалось загрузить достижения: ' + e.message);
+    }
+}
+
+function renderAchievements(items) {
+    const container = document.getElementById('achievements-list');
+    if (!items.length) {
+        container.innerHTML = '<div class="empty-state">Пока нет открытых достижений.</div>';
+    } else {
+        container.innerHTML = items.map(item => `
+            <div class="achievement-card">
+                <div class="achievement-icon">${item.icon || '🏅'}</div>
+                <div class="achievement-body">
+                    <div class="achievement-title">${item.name || item.code}</div>
+                    <div class="achievement-description">${item.description || 'Достижение получено.'}</div>
+                    <div class="achievement-meta">${new Date(item.unlocked_at).toLocaleString('ru-RU')}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+    showPanel('achievements-container');
+}
+
+function showCompetitionPanel() {
+    document.getElementById('competition-create-result').innerHTML = '';
+    document.getElementById('competition-join-result').innerHTML = '';
+    document.getElementById('leaderboard-content').innerHTML = 'Укажите ID и загрузите лидерборд.';
+    showPanel('competition-container');
+}
+
+async function createCompetition() {
+    const name = document.getElementById('competition-name').value.trim();
+    const duration = Number(document.getElementById('competition-duration').value);
+    if (!name || !duration) return showError('Введите название и длительность соревнования.');
+
+    try {
+        document.getElementById('loading-message').textContent = 'Создаём соревнование...';
+        showPanel('loading-container');
+
+        const data = await api('POST', `${API_BASE}/competition/create?name=${encodeURIComponent(name)}&duration_minutes=${duration}`);
+        document.getElementById('competition-create-result').innerHTML = `Соревнование <strong>${data.name}</strong> создано, ID ${data.id}.`;
+        showPanel('competition-container');
+    } catch (e) {
+        showError('Не удалось создать соревнование: ' + e.message);
+    }
+}
+
+async function joinCompetition() {
+    const compId = Number(document.getElementById('competition-id').value);
+    if (!compId || !currentUserId) return showError('Введите ID соревнования и зарегистрируйтесь.');
+
+    try {
+        document.getElementById('loading-message').textContent = 'Присоединяемся к соревнованию...';
+        showPanel('loading-container');
+
+        const data = await api('POST', `${API_BASE}/competition/${compId}/join?user_id=${currentUserId}`);
+        currentAttemptId = data.attempt_id;
+        currentAttemptSubmitPath = '/competition/submit';
+        loadedTasks = data.tasks;
+        renderTasks(`Соревнование #${compId} — ${loadedTasks.length} заданий`);
+    } catch (e) {
+        showError('Не удалось присоединиться: ' + e.message);
+    }
+}
+
+async function loadLeaderboard() {
+    const compId = Number(document.getElementById('competition-id').value);
+    if (!compId) return showError('Введите ID соревнования.');
+
+    try {
+        const data = await api('GET', `${API_BASE}/competition/${compId}/leaderboard`);
+        const container = document.getElementById('leaderboard-content');
+        if (!data.length) {
+            container.innerHTML = '<div class="empty-state">Лидерборд пуст или соревнование не найдено.</div>';
+            return;
+        }
+        container.innerHTML = `
+            <table class="leaderboard-table">
+                <thead><tr><th>Игрок</th><th>Счёт</th><th>Время</th></tr></thead>
+                <tbody>
+                    ${data.map(item => `<tr><td>${item.username}</td><td>${item.score}/${item.max_score}</td><td>${new Date(item.timestamp).toLocaleString('ru-RU')}</td></tr>`).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (e) {
+        showError('Не удалось загрузить лидерборд: ' + e.message);
+    }
 }
 
 function hideError() {

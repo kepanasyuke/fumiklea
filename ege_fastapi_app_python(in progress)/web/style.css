@@ -358,6 +358,103 @@ body {
     }
 }
 
+.competition-block {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.competition-card {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(248,113,113,0.18);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 10px 22px rgba(15,23,42,0.06);
+}
+
+.competition-card h3 {
+    margin-bottom: 12px;
+    color: #991b1b;
+}
+
+.competition-card input {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+}
+
+.competition-card button {
+    width: 100%;
+}
+
+.competition-leaderboard {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(248,113,113,0.18);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 10px 22px rgba(15,23,42,0.06);
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba(229,231,235,0.9);
+    text-align: left;
+}
+
+.leaderboard-table th {
+    color: #7f1d1d;
+    font-weight: 700;
+}
+
+.achievement-card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(248,113,113,0.18);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 14px;
+}
+
+.achievement-icon {
+    font-size: 2rem;
+}
+
+.achievement-body {
+    flex: 1;
+}
+
+.achievement-title {
+    font-weight: 700;
+    color: #991b1b;
+    margin-bottom: 8px;
+}
+
+.achievement-description,
+.achievement-meta {
+    color: #4b5563;
+    font-size: 0.95rem;
+}
+
+.empty-state {
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(254,229,229,0.9);
+    color: #991b1b;
+}
+
 .bank-card {
     background: rgba(255,255,255,0.95);
     border: 1px solid rgba(248,113,113,0.16);
