@@ -76,9 +76,17 @@ class VariantService:
         attempt_tasks = result.scalars().all()
         score = 0
         details = []
+        answer_map = {}
+        if isinstance(answers, list):
+            for item in answers:
+                if isinstance(item, dict) and 'task_id' in item:
+                    answer_map[str(item['task_id'])] = item.get('answer', '')
+        elif isinstance(answers, dict):
+            answer_map = answers
+
         for at in attempt_tasks:
             task = at.task
-            user_ans = normalize_answer(answers.get(str(at.task_id), ""))
+            user_ans = normalize_answer(answer_map.get(str(at.task_id), ""))
             correct_ans = normalize_answer(task.answer)
             is_correct = (user_ans == correct_ans)
             at.user_answer = user_ans

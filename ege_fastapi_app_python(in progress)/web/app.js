@@ -40,7 +40,7 @@ function initApp() {
 }
 
 function showPanel(panelId) {
-    ['auth-container', 'actions-container', 'tasks-container', 'results-container', 'stats-container', 'loading-container', 'error-container']
+    ['auth-container', 'actions-container', 'tasks-container', 'results-container', 'stats-container', 'bank-container', 'loading-container', 'error-container']
         .forEach(id => document.getElementById(id).style.display = 'none');
     document.getElementById(panelId).style.display = 'block';
 }
@@ -68,6 +68,18 @@ function showError(message) {
 
 function sanitizeHTML(value) {
     return value.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
+}
+
+function logoutUser() {
+    clearSession();
+    document.getElementById('username-input').value = '';
+    showPanel('auth-container');
+}
+
+function toggleGraph(taskId) {
+    const preview = document.getElementById(`graph-preview-${taskId}`);
+    if (!preview) return;
+    preview.style.display = preview.style.display === 'block' ? 'none' : 'block';
 }
 
 async function registerUser() {
@@ -160,6 +172,24 @@ function renderTasks(title) {
         `;
 
         if (graphLink) {
+            const graphBlock = document.createElement('div');
+            graphBlock.className = 'graph-block';
+            graphBlock.innerHTML = `
+                <button class="graph-toggle" type="button" onclick="toggleGraph(${task.id})">
+                    📈 Показать график функции
+                </button>
+                <div id="graph-preview-${task.id}" class="graph-preview" style="display:none;">
+                    <iframe class="graph-iframe" src="${graphLink}" title="График задачи ${i + 1}" loading="lazy"></iframe>
+                    <div class="graph-footer">
+                        График загружается из GeoGebra. Если он не отобразился, нажмите "Открыть в GeoGebra".
+                        <a href="${graphLink}" target="_blank" rel="noopener noreferrer">Открыть в новом окне</a>
+                    </div>
+                </div>
+            `;
+            card.appendChild(graphBlock);
+        }
+
+        if (graphLink) {
             const hint = document.createElement('div');
             hint.className = 'graph-hint';
             hint.innerHTML = `
@@ -235,6 +265,38 @@ async function showUserStats() {
     } catch (e) {
         showError('Не удалось получить статистику: ' + e.message);
     }
+}
+
+async function loadTaskBank() {
+    if (!currentUserId) return showError('Сначала зарегистрируйтесь.');
+    try {
+        document.getElementById('loading-message').textContent = 'Загружаем каталог заданий...';
+        showPanel('loading-container');
+
+        const data = await api('GET', `${API_BASE}/tasks/bank`);
+        renderTaskBank(data.items);
+    } catch (e) {
+        showError('Не удалось загрузить каталог заданий: ' + e.message);
+    }
+}
+
+function renderTaskBank(items) {
+    const container = document.getElementById('bank-list');
+    container.innerHTML = items.map(item => `
+        <div class="bank-card">
+            <div class="bank-card-header">
+                <div>№${item.number} — Часть ${item.part}</div>
+                <div class="bank-tag">${item.available} прим.</div>
+            </div>
+            <div class="bank-card-topic">${item.topic}</div>
+            <div class="bank-card-text">${sanitizeHTML(item.sample_text)}</div>
+            <div class="bank-card-meta">
+                ${item.has_graph ? '📈 С графиком' : '✏️ Текстовое задание'}
+            </div>
+        </div>
+    `).join('');
+
+    showPanel('bank-container');
 }
 
 function showCompetitionsInfo() {

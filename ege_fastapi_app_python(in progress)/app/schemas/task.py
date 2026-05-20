@@ -33,6 +33,17 @@ class AttemptResult(BaseModel):
     type: str
     details: List[dict]
 
+class TaskBankItem(BaseModel):
+    number: int
+    part: int
+    topic: str
+    available: int
+    has_graph: bool
+    sample_text: str
+
+class TaskBankOut(BaseModel):
+    items: List[TaskBankItem]
+
 class CompetitionOut(BaseModel):
     id: int
     name: str

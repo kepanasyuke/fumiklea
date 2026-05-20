@@ -46,11 +46,17 @@
                 <button class="action-btn secondary-btn" onclick="loadTimeAttack()">
                     ⚡ Time Attack (12 заданий)
                 </button>
+                <button class="action-btn secondary-btn" onclick="loadTaskBank()">
+                    📚 Каталог заданий
+                </button>
                 <button class="action-btn secondary-btn" onclick="showCompetitionsInfo()">
                     🏆 Соревнования
                 </button>
                 <button class="action-btn secondary-btn" onclick="showUserStats()">
                     📊 Моя статистика
+                </button>
+                <button class="action-btn secondary-btn" onclick="logoutUser()">
+                    🚪 Выйти
                 </button>
             </div>
         </div>
@@ -73,6 +79,16 @@
         <div id="stats-container" class="panel" style="display: none;">
             <h2>Статистика</h2>
             <div id="stats-content"></div>
+        </div>
+
+        <div id="bank-container" class="panel" style="display: none;">
+            <h2>Каталог заданий</h2>
+            <div id="bank-list"></div>
+            <div class="panel-actions">
+                <button class="action-btn secondary-btn" onclick="showUserPanel()">
+                    ← Вернуться к действиям
+                </button>
+            </div>
         </div>
 
         <div id="loading-container" class="panel" style="display: none;">

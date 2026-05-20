@@ -403,12 +403,35 @@ class SdamGiaService:
             real_task = _try_load_from_sdamgia(num)
             
             if real_task:
+                existing = await repo.get_by_sdamgia_id(real_task['sdamgia_id'])
+                if existing:
+                    tasks.append(existing)
+                    continue
                 task = await repo.create_task(**real_task)
                 tasks.append(task)
                 continue
             
             task_data = _get_task_for_number(num)
+            existing = await repo.get_by_sdamgia_id(task_data['sdamgia_id'])
+            if existing:
+                tasks.append(existing)
+                continue
             task = await repo.create_task(**task_data)
             tasks.append(task)
         
         return tasks
+
+    async def get_task_bank(self) -> dict:
+        items = []
+        for number, examples in TASKS_BANK.items():
+            sample = examples[0]
+            has_graph = bool(_extract_function(sample['text']))
+            items.append({
+                'number': number,
+                'part': 1 if number <= 12 else 2,
+                'topic': sample['topic'],
+                'available': len(examples),
+                'has_graph': has_graph,
+                'sample_text': sample['text']
+            })
+        return {'items': sorted(items, key=lambda item: item['number'])}

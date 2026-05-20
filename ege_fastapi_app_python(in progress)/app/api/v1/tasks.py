@@ -4,7 +4,8 @@ from app.core.dependencies import get_db
 from app.core.security import verify_token
 from app.infrastructure.repositories.task_repository import TaskRepository
 from app.domain.services.variant_service import VariantService
-from app.schemas.task import VariantOut, SubmitRequest, AttemptResult
+from app.infrastructure.services.sdamgia_service import SdamGiaService
+from app.schemas.task import VariantOut, SubmitRequest, AttemptResult, TaskBankOut
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -40,3 +41,12 @@ async def start_time_attack(
     service = VariantService(db, repo)
     data = await service.generate_time_attack(user_id)
     return VariantOut(**data)
+
+@router.get("/bank", response_model=TaskBankOut)
+async def get_task_bank(
+    db: AsyncSession = Depends(get_db),
+    token: str = Depends(verify_token)
+):
+    service = SdamGiaService()
+    bank_data = await service.get_task_bank()
+    return TaskBankOut(**bank_data)
