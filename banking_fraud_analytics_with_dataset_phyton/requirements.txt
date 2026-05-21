@@ -1,0 +1,8 @@
+streamlit
+pandas
+plotly
+numpy
+streamlit-aggrid
+openpyxl
+kaleido
+flake8

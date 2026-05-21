@@ -33,8 +33,7 @@ venv:
 install: venv
 	@echo "📥 Обновление pip и установка пакетов..."
 	$(PIP) install --upgrade pip
-	$(PIP) install streamlit pandas plotly numpy
-	$(PIP) install flake8  # Для проверки качества кода
+	$(PIP) install -r requirements.txt
 	@if [ ! -f $(DATA_FILE) ]; then \
 		echo "⚠️  Внимание: Файл $(DATA_FILE) не обнаружен в корневой директории!"; \
 	fi
