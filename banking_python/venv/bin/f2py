@@ -1,4 +1,4 @@
-#!/workspaces/fumiklea/banking/venv/bin/python3
+#!/workspaces/fumiklea/banking_python/venv/bin/python3
 import sys
 from numpy.f2py.f2py2e import main
 if __name__ == '__main__':
