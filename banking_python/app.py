@@ -212,7 +212,7 @@ COLOR_MAP_PLOT = {'Легитимная': '#1d4ed8', 'Мошенническая
 
 def apply_bank_theme(fig):
     fig.update_layout({
-        'plot_bgcolor': '#ffffff', 'paper_bgcolor': '#ffffff', 'font_color': '#000000', 'height': 420, 'showlegend': False,
+        'plot_bgcolor': '#ffffff', 'paper_bgcolor': '#ffffff', 'font_color': '#000000', 'height': 400, 'showlegend': False,
         'title_font': {'size': 13, 'color': '#000000', 'family': 'sans-serif', 'weight': 'bold'},
         'xaxis': {
             'gridcolor': '#e2e8f0', 'zeroline': False, 'linecolor': '#cbd5e1', 'linewidth': 1, 'mirror': True,
@@ -236,7 +236,7 @@ with tab_monitor:
         with st.container(border=True):
             fig_hist = px.histogram(
                 filtered_df, x='сумма', color='статус', barmode='overlay', color_discrete_map=COLOR_MAP_PLOT, 
-                title="РАСПРЕДЕЛЕНИЕ ОПЕРАЦИЙ ПО ОБЪЕМАМ<br><span style='font-size:11px; font-weight:normal; color:#2d3748;'>Мониторинг плотности транзакционного потока банка.<br>Определение аномальных ценовых всплесков активности.</span>", 
+                title="РАСПРЕДЕЛЕНИЕ ОПЕРАЦИЙ ПО ОБЪЕМАМ<br><span style='font-size:11px; font-weight:normal; color:#2d3748;'>Мониторинг плотности транзакционного потока банка. Определение аномальных ценовых всплесков активности.</span>", 
                 labels={'сумма': 'Сумма транзакции ($)', 'count': 'Количество транзакций', 'статус': 'Статус'}
             )
             fig_hist.update_yaxes(title_text="Количество операций")
@@ -246,7 +246,7 @@ with tab_monitor:
         with st.container(border=True):
             fig_scatter = px.scatter(
                 filtered_df, x='риск_устройства', y='попытки_входа', color='статус', color_discrete_map=COLOR_MAP_PLOT, 
-                title="КОРРЕЛЯЦИЯ: АППАРАТНЫЙ РИСК / ПОПЫТКИ ВХОДА<br><span style='font-size:11px; font-weight:normal; color:#2d3748;'>Выявление векторов распределенных хакерских атак.<br>Кластеризация сессий брутфорса со скомпрометированных устройств.</span>",
+                title="КОРРЕЛЯЦИЯ: АППАРАТНЫЙ РИСК / ПОПЫТКИ ВХОДА<br><span style='font-size:11px; font-weight:normal; color:#2d3748;'>Выявление векторов распределенных хакерских атак. Кластеризация сессий брутфорса со скомпрометированных устройств.</span>",
                 labels={'риск_устройства': 'Индекс риска устройства (0-1)', 'попытки_входа': 'Число попыток входа (ед.)', 'статус': 'Статус'}
             )
             fig_scatter.update_xaxes(title_text="Индекс аппаратного риска устройства (0-1)")
@@ -263,7 +263,7 @@ with tab_monitor:
             pay_data = pay_analysis.groupby(['способ_оплаты', 'статус']).size().reset_index(name='количество')
             fig_pay = px.bar(
                 pay_data, y='способ_оплаты', x='количество', color='статус', orientation='h', color_discrete_map=COLOR_MAP_PLOT, 
-                title="КОМПРОМЕТАЦИЯ ШЛЮЗОВ ПО МЕТОДАМ ОПЛАТЫ<br><span style='font-size:11px; font-weight:normal; color:#2d3748;'>Локализация уязвимостей в расчетной инфраструктуре.<br>Анализ каналов неконтролируемого вывода капитала.</span>", 
+                title="КОМПРОМЕТАЦИЯ ШЛЮЗОВ ПО МЕТОДАМ ОПЛАТЫ<br><span style='font-size:11px; font-weight:normal; color:#2d3748;'>Локализация уязвимостей в расчетной инфраструктуре. Анализ каналов неконтролируемого вывода капитала.</span>", 
                 labels={'способ_оплаты': 'Канал эквайринга банка', 'количество': 'Всего операций (ед.)', 'статус': 'Статус'}
             )
             apply_bank_theme(fig_pay)
@@ -275,13 +275,13 @@ with tab_monitor:
             auth_data = auth_analysis.groupby(['подтверждение', 'статус']).size().reset_index(name='количество')
             fig_auth = px.bar(
                 auth_data, x='подтверждение', y='количество', color='статус', color_discrete_map=COLOR_MAP_PLOT, 
-                title="УЯЗВИМОСТИ ДВУХФАКТОРНОЙ ВЕРИФИКАЦИИ<br><span style='font-size:11px; font-weight:normal; color:#2d3748;'>Оценка стойкости защитных протоколов подтверждения.<br>Мониторинг транзакций в обход авторизации сессии.</span>", 
+                title="УЯЗВИМОСТИ ДВУХФАКТОРНОЙ ВЕРИФИКАЦИИ<br><span style='font-size:11px; font-weight:normal; color:#2d3748;'>Оценка стойкости защитных протоколов подтверждения. Мониторинг транзакций в обход авторизации сессии.</span>", 
                 labels={'подтверждение': 'Метод подтверждения сессии', 'количество': 'Операций (ед.)', 'статус': 'Статус'}
             )
             apply_bank_theme(fig_auth)
             st.plotly_chart(fig_auth, use_container_width=True)
 
-# --- ВKЛАДКА 2: ГЛУБОКИЙ ДАТА-МАЙНИНГ И АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ ИНСПЕКЦИОННОГО ДОКЛАДА ---
+# --- ВKЛАДКА 2: ГЛУБОКИЙ ДАТА-МАЙНИНГ И ДИНАМИЧЕСКАЯ ОТЧЕТНОСТЬ ---
 with tab_logs:
     st.markdown("<h3 style='color: #111111; margin-top:0; font-family: Georgia, serif;'>МАТЕМАТИЧЕСКИЙ АНАЛИЗ ЛОГОВ И АВТОМАТИЗИРОВАННЫЙ КОМПЛАЕНС</h3>", unsafe_allow_html=True)
     st.markdown("<div class='section-description'><b>АРМ Ведущего риск-аналитика:</b> Модуль осуществляет сквозное агрегирование аномалий базы данных, проверяет законы математического распределения и генерирует комплексные инспекционные рапорты для СБ банка и регуляторов.</div>", unsafe_allow_html=True)
@@ -298,7 +298,6 @@ with tab_logs:
     with sel_col2:
         if st.button("Обход авторизации (Без защиты)", use_container_width=True): st.session_state['current_preset'] = "Обход авторизации"
     with sel_col3:
-        # ИСПРАВЛЕНО: Пресет аномальных сумм перебалансирован под реальные банковские угрозы датасета Kaggle (> $3500)
         if st.button("Аномальные суммы (> $3500)", use_container_width=True): st.session_state['current_preset'] = "Аномальные суммы"
     with sel_col4:
         if st.button("Сбросить выборку (Все логи)", use_container_width=True): st.session_state['current_preset'] = "Полный реестр"
@@ -354,32 +353,37 @@ with tab_logs:
 
     st.markdown("<br><br><hr style='border-color: #cbd5e1;'><br>", unsafe_allow_html=True)
     st.markdown("<h4 style='color: #000000; font-family: Georgia, serif;'>4. Инспекционный генератор комплексной отчетности СБ</h4>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #475569; font-size: 0.9rem; margin-top:-5px;'>Нажмите на кнопки ниже, чтобы запустить аналитический сбор данных и сгенерировать официальный развернутый юридический отчет.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #475569; font-size: 0.9rem; margin-top:-5px;'>Выберите тип документа. Отчет мгновенно пересчитывается и обновляется при любом изменении фильтров базы данных.</p>", unsafe_allow_html=True)
     
     st.markdown("""
         <style>
-        div[data-testid="stHorizontalBlock"] button {
-            height: 48px !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        div[data-testid="stHorizontalBlock"] button { height: 48px !important; display: flex; align-items: center; justify-content: center; }
         </style>
     """, unsafe_allow_html=True)
 
     fraud_only = df_workspace[df_workspace['статус'] == 'Мошенническая']
     
-    if 'generated_report_text' not in st.session_state:
-        st.session_state['generated_report_text'] = "Нажмите кнопку выше для компиляции доклада..."
+    # ИСПРАВЛЕНО: Создаем триггерный переключатель в session_state для отслеживания выбранной формы
+    if 'active_report_type' not in st.session_state:
+        st.session_state['active_report_type'] = "Рапорт СБ"
 
     rep_col1, rep_col2, rep_col3 = st.columns(3)
-    
     with rep_col1:
-        if st.button("Сформировать внутренний рапорт СБ", use_container_width=True):
-            if not fraud_only.empty:
-                top_pay = fraud_only['способ_оплаты'].mode().iloc[0] if not fraud_only['способ_оплаты'].mode().empty else "Не определен"
-                top_auth = fraud_only['подтверждение'].mode().iloc[0] if not fraud_only['подтверждение'].mode().empty else "Не определен"
-                st.session_state['generated_report_text'] = f"""СТРОГО КОНФИДЕНЦИАЛЬНО // РАПОРТ СЛУЖБЫ ВНУТРЕННЕГО КОНТРОЛЯ БАНКА
+        if st.button("Внутренний рапорт СБ", use_container_width=True): st.session_state['active_report_type'] = "Рапорт СБ"
+    with rep_col2:
+        if st.button("Официальный доклад для ЦБ РФ", use_container_width=True): st.session_state['active_report_type'] = "Доклад ЦБ"
+    with rep_col3:
+        if st.button("Отчет по форме 115-ФЗ", use_container_width=True): st.session_state['active_report_type'] = "Отчет 115"
+
+    # ИСПРАВЛЕНО: Выносим математический расчет ИЗ КНОПОК наружу. Теперь текст компилируется реактивно при каждом изменении фильтров!
+    top_pay = fraud_only['способ_оплаты'].mode().iloc[0] if not fraud_only.empty and not fraud_only['способ_оплаты'].mode().empty else "Не определен"
+    top_auth = fraud_only['подтверждение'].mode().iloc[0] if not fraud_only.empty and not fraud_only['подтверждение'].mode().empty else "Не определен"
+    total_fraud_sum = fraud_only['сумма'].sum() if not fraud_only.empty else 0.0
+    mean_fraud_sum = fraud_only['сумма'].mean() if not fraud_only.empty else 0.0
+    total_cases = len(fraud_only)
+
+    if st.session_state['active_report_type'] == "Рапорт СБ":
+        report_text = f"""СТРОГО КОНФИДЕНЦИАЛЬНО // РАПОРТ СЛУЖБЫ ВНУТРЕННЕГО КОНТРОЛЯ БАНКА
 ----------------------------------------------------------------------
 Идентификатор транзакционной сессии: SHA-256:{data_hash}
 Выбранный пресет мониторинга рисков: {st.session_state['current_preset']}
@@ -388,20 +392,16 @@ with tab_logs:
 МАТЕМАТИЧЕСКИЕ РЕЗУЛЬТАТЫ ЭКСПЕРТИЗЫ:
 1. Ключевая точка финансовой компрометации шлюзов: {top_pay}
 2. Основной уязвимый вектор авторизации пользователей: {top_auth}
-3. Суммарный объем прямого зафиксированного ущерба: ${fraud_only['сумма'].sum():,.2f}
-4. Средний размер мошеннического списания (чек фрода): ${fraud_only['сумма'].mean():,.2f}
+3. Суммарный объем прямого зафиксированного ущерба: ${total_fraud_sum:,.2f}
+4. Средний размер мошеннического списания (чек фрода): ${mean_fraud_sum:,.2f}
 
 ДИРЕКТИВА ДЛЯ ДЕПАРТАМЕНТА РИСК-МЕНЕДЖМЕНТА:
 Немедленно активировать принудительное биометрическое/SMS подтверждение для всех 
 операций, проходящих через шлюз {top_pay}. Снизить лимит разового списания до $500
 для гаджетов, чей индекс аппаратного риска в системе SIEM превышает показатель 0.65."""
-            else:
-                st.session_state['generated_report_text'] = "Аномалии отсутствуют. Внутренний рапорт СБ: система полностью стабильна."
 
-    with rep_col2:
-        if st.button("Сформировать официальный доклад для ЦБ РФ", use_container_width=True):
-            if not fraud_only.empty:
-                st.session_state['generated_report_text'] = f"""УВЕДОМЛЕНИЕ О КИБЕРИНЦИДЕНТАХ // В ДЕПАРТАМЕНТ ИНФОРМАЦИОННОЙ БЕЗОПАСНОСТИ ЦБ РФ
+    elif st.session_state['active_report_type'] == "Доклад ЦБ":
+        report_text = f"""УВЕДОМЛЕНИЕ О КИБЕРИНЦИДЕНТАХ // В ДЕПАРТАМЕНТ ИНФОРМАЦИОННОЙ БЕЗОПАСНОСТИ ЦБ РФ
 ----------------------------------------------------------------------
 Направляется в соответствии с Положением Банка России № 683-П
 Контрольный хэш-ключ реестра инцидентов: {data_hash}
@@ -409,7 +409,7 @@ with tab_logs:
 
 АКТ ПРОВЕРКИ ТРАНЗАКЦИОННОЙ ЛЕНТЫ:
 В ходе межоперационного аудита логов комплаенс-контроля была локализована серия распределенных 
-аномальных транзакций. Мошеннические операции со скомпрометированных устройств составили {len(fraud_only)} инцидентов на общую сумму ${fraud_only['сумма'].sum():,.2f}.
+аномальных транзакций. Мошеннические операции со скомпрометированных устройств составили {total_cases} инцидентов на общую сумму ${total_fraud_sum:,.2f}.
 
 При анализе законов криминалистического распределения Бенфорда выявлены аномальные отклонения
 первой значащей цифры в логах шлюза, что свидетельствует об искусственном дроблении сумм.
@@ -417,14 +417,9 @@ with tab_logs:
 МЕРЫ РЕАГИРОВАНИЯ:
 Банком инициирован пересмотр скоринговых весов SIEM-маршрутизации. Уязвимые сессии заблокированы, 
 скомпрометированные цифровые отпечатки внесены в черный список стоп-листов."""
-            else:
-                st.session_state['generated_report_text'] = f"УВЕДОМЛЕНИЕ ДЛЯ ЦБ РФ // Контрольная сумма логов: {data_hash}\nИнцидентов нарушения ИБ и несанкционированных переводов денежных средств не зафиксировано."
 
-    with rep_col3:
-        if st.button("Сформировать отчет по форме 115-ФЗ", use_container_width=True):
-            if not fraud_only.empty:
-                top_line_pay = fraud_only['способ_оплаты'].mode().iloc[0] if not fraud_only['способ_оплаты'].mode().empty else 'Не указан'
-                st.session_state['generated_report_text'] = f"""СПЕЦИАЛЬНОЕ СООБЩЕНИЕ В ФЕДЕРАЛЬНУЮ СЛУЖБУ ПО ФИНАНСОВОМУ МОНИТОРИНГУ (115-ФЗ)
+    elif st.session_state['active_report_type'] == "Отчет 115":
+        report_text = f"""СПЕЦИАЛЬНОЕ СООБЩЕНИЕ В ФЕДЕРАЛЬНУЮ СЛУЖБУ ПО ФИНАНСОВОМУ МОНИТОРИНГУ (115-ФЗ)
 ----------------------------------------------------------------------
 Критерий выявления: Обязательный контроль кодов подозрительности операций
 Реестр верификации логов: SHA256-HASH:{data_hash}
@@ -432,24 +427,23 @@ with tab_logs:
 СВЕДЕНИЯ О ПОДОЗРИТЕЛЬНОЙ ДЕЯТЕЛЬНОСТИ:
 Системой автоматического дата-майнинга зафиксированы множественные попытки несанкционированного
 вывода капитала через нерегулируемые платежные инструменты.
-- Основной используемый канал вывода: {top_line_pay}
-- Объем операций, подлежащих обязательному комплаенс-контролю: ${fraud_only['сумма'].sum():,.2f}
-- Оценка вовлеченности аппаратного фрода: {len(fraud_only)} подтвержденных кибератак
+- Основной используемый канал вывода: {top_pay}
+- Объем операций, подлежащих обязательному комплаенс-контролю: ${total_fraud_sum:,.2f}
+- Оценка вовлеченности аппаратного фрода: {total_cases} подтвержденных кибератак
 
 ЗАКЛЮЧЕНИЕ ОТВЕТСТВЕННОГО ЛИЦА КОМПЛАЕНС-КОНТРОЛЯ БАНКА:
 Характер транзакций (систематический брутфорс авторизации, обход двухфакторных протоколов защиты, 
 высокий аппаратный риск подключений) имеет признаки легализации доходов. 
 Данные переданы в уполномоченный орган для проведения финансовых расследований."""
-            else:
-                st.session_state['generated_report_text'] = "Отчет по 115-ФЗ: Операций, подпадающих под критерии обязательного контроля Росфинмониторинга, не обнаружено."
 
-    st.text_area("Готовое инспекционное заключение антифрод-аудита для печати:", st.session_state['generated_report_text'], height=250)
+    st.text_area(f"Печатная форма ({st.session_state['active_report_type']}) пересчитана автоматически:", report_text, height=250)
     
     st.download_button(
         label="Экспортировать сформированный текстовый отчет для печати (TXT)",
-        data=st.session_state['generated_report_text'], file_name="antifraud_compliance_report.txt", mime="text/plain", use_container_width=True
+        data=report_text, file_name=f"antifraud_{st.session_state['active_report_type']}_report.txt", mime="text/plain", use_container_width=True
     )
 
+    # ПОЛНЫЙ ПОТОКОВЫЙ СТРИМ СЕССИЙ БАНКА
     st.markdown("<br><h4 style='color: #111111; font-family: Georgia, serif;'>5. Сквозной реестр транзакций из базы данных (100% логов)</h4>", unsafe_allow_html=True)
     st.dataframe(
         df_workspace[['риск_устройства', 'сумма', 'способ_оплаты', 'тип_транзакции', 'подтверждение', 'статус']], 
@@ -460,6 +454,7 @@ with tab_logs:
             "способ_оплаты": "Канал оплаты", "тип_транзакции": "Тип перевода", "подтверждение": "Защита сессии", "статус": "Вердикт"
         }
     )
+
 
 
 
