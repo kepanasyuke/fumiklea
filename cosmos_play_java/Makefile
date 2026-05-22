@@ -1,83 +1,343 @@
-# Makefile для Космического арт-объекта
-# Команды:
-#   make         - загрузить модели и запустить сервер (основная цель)
-#   make download - только загрузить модели (без запуска)
-#   make run      - только запустить сервер (без загрузки моделей)
-#   make clean    - удалить папку с моделями и временные файлы
-#   make help     - показать справку
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Космический арт-объект | 3D-модели планет</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Courier New', monospace; }
+        #info {
+            position: absolute; bottom: 20px; left: 20px; color: #0f0;
+            background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 4px;
+            pointer-events: none; z-index: 10; font-size: 14px; backdrop-filter: blur(4px);
+            border-left: 3px solid #0f0;
+        }
+        #controls {
+            position: absolute; bottom: 20px; right: 20px; color: #0f0;
+            background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 4px;
+            font-size: 12px; pointer-events: none; z-index: 10; text-align: right;
+            border-right: 3px solid #0f0;
+        }
+        #loading-status {
+            position: absolute; top: 20px; left: 20px; color: #ffaa44;
+            background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 4px;
+            font-size: 12px; font-family: monospace; pointer-events: none; z-index: 10;
+            border-top: 2px solid #ffaa44; max-width: 380px;
+        }
+        .loading-done { color: #0f0 !important; border-top-color: #0f0 !important; }
+    </style>
+</head>
+<body>
+    <div id="info">КОСМИЧЕСКИЙ АРТ-ОБЪЕКТ<br>3D-модели планет | Автомасштабирование</div>
+    <div id="controls">МЫШЬ — вращать камеру<br>КОЛЁСИКО — приблизить</div>
+    <div id="loading-status">⏳ ЗАГРУЗКА 3D-МОДЕЛЕЙ ПЛАНЕТ...</div>
 
-# Переменные
-NASA_3D_REPO = https://github.com/nasa/NASA-3D-Resources/archive/refs/heads/master.zip
-MODELS_DIR = models
-PORT = 8000
-HOST = 127.0.0.1
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
 
-# Цель по умолчанию: загрузка + запуск
-all: download run
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        
+        // ---------- НАСТРОЙКИ СЦЕНЫ ----------
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x010108);
+        scene.fog = new THREE.FogExp2(0x010108, 0.00015);
 
-# Справка
-help:
-	@echo "========================================================"
-	@echo "   КОСМИЧЕСКАЯ КИНЕМАТИКА: КОМАНДЫ ЗАПУСКА"
-	@echo "========================================================"
-	@echo "  make         - загрузить модели и запустить сервер"
-	@echo "  make download - загрузить 3D-модели NASA"
-	@echo "  make run      - запустить локальный веб-сервер"
-	@echo "  make clean    - удалить папку с моделями"
-	@echo "  make help     - показать эту справку"
-	@echo "========================================================"
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 12, 28);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        renderer.toneMappingExposure = 1.4;
+        document.body.appendChild(renderer.domElement);
 
-# Загрузка моделей
-download: clean_download
-	@echo "🌐 Загрузка 3D-моделей из репозитория NASA..."
-	@curl -L -o models.zip $(NASA_3D_REPO)
-	@echo "📦 Распаковка архивов..."
-	@unzip -q models.zip -d $(MODELS_DIR)
-	@echo "📁 Организация файлов..."
-	@mv $(MODELS_DIR)/NASA-3D-Resources-master/3D\ Models/* $(MODELS_DIR)/ 2>/dev/null || true
-	@rm -rf $(MODELS_DIR)/NASA-3D-Resources-master
-	@echo "🗑️ Удаление временных файлов..."
-	@rm -f models.zip
-	@echo "✅ Модели успешно загружены в папку '$(MODELS_DIR)'."
+        // Пост-эффект свечения
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.3, 0.6);
+        bloomPass.threshold = 0.1;
+        bloomPass.strength = 0.8;
+        bloomPass.radius = 0.5;
+        const effectComposer = new EffectComposer(renderer);
+        effectComposer.addPass(renderScene);
+        effectComposer.addPass(bloomPass);
 
-# Очистка предыдущей загрузки
-clean_download:
-	@echo "🧹 Очистка старых файлов..."
-	@rm -rf $(MODELS_DIR)
-	@rm -f models.zip
+        // Управление камерой
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.rotateSpeed = 0.8;
+        controls.zoomSpeed = 1.2;
+        controls.enableZoom = true;
+        controls.enablePan = false;
+        controls.target.set(0, 0, 0);
+        controls.minDistance = 4;
+        controls.maxDistance = 60;
 
-# Очистка всего (моделей и временных файлов)
-clean: clean_download
-	@echo "✅ Очистка завершена."
+        // ---------- ЗВЁЗДНОЕ НЕБО ----------
+        const starCount = 8000;
+        const starGeometry = new THREE.BufferGeometry();
+        const starPositions = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            const r = 180 + Math.random() * 80;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            starPositions[i*3] = r * Math.sin(phi) * Math.cos(theta);
+            starPositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+            starPositions[i*3+2] = r * Math.cos(phi);
+            const colorTemp = Math.random();
+            let rC, gC, bC;
+            if (colorTemp < 0.6) { rC = 0.8; gC = 0.8; bC = 1.0; }
+            else if (colorTemp < 0.8) { rC = 1.0; gC = 0.9; bC = 0.7; }
+            else { rC = 1.0; gC = 0.6; bC = 0.5; }
+            starColors[i*3] = rC; starColors[i*3+1] = gC; starColors[i*3+2] = bC;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+        const starMaterial = new THREE.PointsMaterial({ size: 0.18, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+        
+        // ---------- ОСВЕЩЕНИЕ ----------
+        const sunLight = new THREE.PointLight(0xffaa66, 2.2, 100);
+        sunLight.position.set(0, 0, 0);
+        scene.add(sunLight);
+        const ambientLight = new THREE.AmbientLight(0x222222);
+        scene.add(ambientLight);
+        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.5);
+        fillLight.position.set(5, 10, 7);
+        scene.add(fillLight);
 
-# Запуск локального сервера с авто-выбором технологии
-run: stop
-	@echo "🚀 Запуск локального веб-сервера на порту $(PORT)..."
-	@if which python3 > /dev/null; then \
-		echo "Используется Python3 HTTP сервер"; \
-		echo "Откройте в браузере: http://$(HOST):$(PORT)"; \
-		python3 -m http.server $(PORT); \
-	elif which python > /dev/null; then \
-		echo "Используется Python HTTP сервер"; \
-		echo "Откройте в браузере: http://$(HOST):$(PORT)"; \
-		python -m http.server $(PORT); \
-	elif which npx > /dev/null; then \
-		echo "Используется Node.js serve"; \
-		echo "Откройте в браузере: http://$(HOST):$(PORT)"; \
-		npx serve -l $(PORT) .; \
-	else \
-		echo "❌ Ошибка: не найден ни Python3, ни Node.js. Установите один из них."; \
-		exit 1; \
-	fi
-
-# Принудительная остановка сервера (освобождение порта)
-stop:
-	@echo "🔍 Проверка порта $(PORT)..."
-	@lsof -t -i:$(PORT) | xargs kill -9 2>/dev/null || true
-	@echo "Порт $(PORT) свободен."
-
-# Быстрый запуск (download + run без очистки)
-start: download run
-
-# Цель для разработки: очистка, загрузка моделей, запуск
-dev: clean download run
+        // ---------- СОЛНЦЕ ----------
+        const sunGeometry = new THREE.SphereGeometry(2.8, 128, 128);
+        const sunMaterial = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4411, emissiveIntensity: 1.4, metalness: 0.95, roughness: 0.2 });
+        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        scene.add(sun);
+        const coronaGeometry = new THREE.SphereGeometry(3.2, 64, 64);
+        const coronaMaterial = new THREE.MeshPhongMaterial({ color: 0xff8844, transparent: true, opacity: 0.12, side: THREE.BackSide });
+        const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
+        scene.add(corona);
+        const sunGlowGeometry = new THREE.SphereGeometry(3.6, 32, 32);
+        const sunGlowMaterial = new THREE.MeshBasicMaterial({ color: 0xffaa66, transparent: true, opacity: 0.08, side: THREE.BackSide });
+        const sunGlow = new THREE.Mesh(sunGlowGeometry, sunGlowMaterial);
+        scene.add(sunGlow);
+        
+        // ---------- ДАННЫЕ ПЛАНЕТ ----------
+        const planetsData = [
+            { nameRu: "Меркурий", nameEn: "mercury", radius: 0.42, distance: 4.8, speed: 0.022, color: 0xccaa88, modelPath: "models/mercury/scene.glb" },
+            { nameRu: "Венера",   nameEn: "venus",   radius: 0.50, distance: 6.2, speed: 0.016, color: 0xeebb99, modelPath: "models/venus/scene.glb" },
+            { nameRu: "Земля",    nameEn: "earth",   radius: 0.54, distance: 8.0, speed: 0.013, color: 0x88aaff, modelPath: "models/earth/scene.glb" },
+            { nameRu: "Марс",     nameEn: "mars",    radius: 0.47, distance: 9.8, speed: 0.011, color: 0xdd8866, modelPath: "models/mars/scene.glb" },
+            { nameRu: "Юпитер",   nameEn: "jupiter", radius: 1.15, distance: 13.8, speed: 0.007, color: 0xccaa99, modelPath: "models/jupiter/scene.glb" },
+            { nameRu: "Сатурн",   nameEn: "saturn",  radius: 1.00, distance: 16.5, speed: 0.0055, color: 0xeeddbb, modelPath: "models/saturn/scene.glb" },
+            { nameRu: "Уран",     nameEn: "uranus",  radius: 0.78, distance: 19.2, speed: 0.004, color: 0xaaddff, modelPath: "models/uranus/scene.glb" },
+            { nameRu: "Нептун",   nameEn: "neptune", radius: 0.76, distance: 22.5, speed: 0.0032, color: 0x88aaff, modelPath: "models/neptune/scene.glb" }
+        ];
+        
+        const planets = [];
+        let loadedCount = 0;
+        const totalPlanets = planetsData.length;
+        const loadingDiv = document.getElementById('loading-status');
+        
+        const gltfLoader = new GLTFLoader();
+        const textureLoader = new THREE.TextureLoader();
+        
+        // Fallback: создание сферы с текстурой высокого разрешения (Solar System Scope)
+        function createFallbackPlanet(data) {
+            let textureUrl = '';
+            switch(data.nameEn) {
+                case 'mercury': textureUrl = 'https://www.solarsystemscope.com/textures/mercury.jpg'; break;
+                case 'venus':   textureUrl = 'https://www.solarsystemscope.com/textures/venus_surface.jpg'; break;
+                case 'earth':   textureUrl = 'https://www.solarsystemscope.com/textures/earth.jpg'; break;
+                case 'mars':    textureUrl = 'https://www.solarsystemscope.com/textures/mars.jpg'; break;
+                case 'jupiter': textureUrl = 'https://www.solarsystemscope.com/textures/jupiter.jpg'; break;
+                case 'saturn':  textureUrl = 'https://www.solarsystemscope.com/textures/saturn.jpg'; break;
+                case 'uranus':  textureUrl = 'https://www.solarsystemscope.com/textures/uranus.jpg'; break;
+                case 'neptune': textureUrl = 'https://www.solarsystemscope.com/textures/neptune.jpg'; break;
+                default: textureUrl = 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg';
+            }
+            const texture = textureLoader.load(textureUrl);
+            const material = new THREE.MeshStandardMaterial({ map: texture, color: data.color, roughness: 0.5, metalness: 0.1 });
+            const sphere = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 128, 128), material);
+            return sphere;
+        }
+        
+        // Функция обновления счётчика загрузки
+        function updateLoadingStatus() {
+            loadingDiv.innerHTML = `✅ ЗАГРУЖЕНО ${loadedCount} ИЗ ${totalPlanets} ПЛАНЕТ`;
+            if (loadedCount === totalPlanets) {
+                loadingDiv.classList.add('loading-done');
+                setTimeout(() => {
+                    loadingDiv.style.opacity = '0';
+                    setTimeout(() => loadingDiv.style.display = 'none', 1000);
+                }, 2000);
+            }
+        }
+        
+        // Создаём контейнеры и загружаем модели
+        planetsData.forEach((data) => {
+            const container = new THREE.Object3D();
+            container.userData = {
+                name: data.nameRu,
+                distance: data.distance,
+                speed: data.speed,
+                angle: Math.random() * Math.PI * 2
+            };
+            scene.add(container);
+            planets.push(container);
+            
+            // Загружаем .glb модель
+            gltfLoader.load(data.modelPath, (gltf) => {
+                const model = gltf.scene;
+                // Проверяем, есть ли в модели хотя бы одна Mesh
+                let hasMesh = false;
+                model.traverse((child) => {
+                    if (child.isMesh) hasMesh = true;
+                });
+                if (!hasMesh) {
+                    console.warn(`Модель ${data.nameRu} не содержит геометрии → используем текстуру`);
+                    const fallback = createFallbackPlanet(data);
+                    container.add(fallback);
+                    loadedCount++;
+                    updateLoadingStatus();
+                    return;
+                }
+                // Вычисляем реальный размер модели и масштабируем до нужного радиуса
+                const box = new THREE.Box3().setFromObject(model);
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                if (maxDim === 0) {
+                    console.warn(`Модель ${data.nameRu} имеет нулевой размер → fallback`);
+                    const fallback = createFallbackPlanet(data);
+                    container.add(fallback);
+                    loadedCount++;
+                    updateLoadingStatus();
+                    return;
+                }
+                const targetRadius = data.radius;
+                const scaleFactor = targetRadius / maxDim;
+                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                container.add(model);
+                console.log(`✅ ${data.nameRu} загружена, масштаб = ${scaleFactor.toFixed(4)} (ориг. размер ${maxDim.toFixed(2)})`);
+                loadedCount++;
+                updateLoadingStatus();
+            }, undefined, (error) => {
+                console.warn(`Ошибка загрузки ${data.nameRu}:`, error);
+                const fallback = createFallbackPlanet(data);
+                container.add(fallback);
+                loadedCount++;
+                updateLoadingStatus();
+            });
+        });
+        
+        // ---------- АСТЕРОИДНЫЙ ПОЯС ----------
+        const asteroidCount = 5000;
+        const asteroidGeom = new THREE.BufferGeometry();
+        const asteroidPos = new Float32Array(asteroidCount * 3);
+        for (let i = 0; i < asteroidCount; i++) {
+            const r = 11.5 + Math.random() * 1.8;
+            const angle = Math.random() * Math.PI * 2;
+            const yOff = (Math.random() - 0.5) * 1.0;
+            asteroidPos[i*3] = Math.cos(angle) * r;
+            asteroidPos[i*3+1] = yOff;
+            asteroidPos[i*3+2] = Math.sin(angle) * r;
+        }
+        asteroidGeom.setAttribute('position', new THREE.BufferAttribute(asteroidPos, 3));
+        const asteroidMat = new THREE.PointsMaterial({ color: 0xaa9977, size: 0.045 });
+        const asteroidBelt = new THREE.Points(asteroidGeom, asteroidMat);
+        scene.add(asteroidBelt);
+        
+        // ---------- ТУМАННОСТИ ----------
+        const nebulaCount = 1500;
+        const nebulaGeom = new THREE.BufferGeometry();
+        const nebulaPositions = new Float32Array(nebulaCount * 3);
+        const nebulaColors = new Float32Array(nebulaCount * 3);
+        for (let i = 0; i < nebulaCount; i++) {
+            nebulaPositions[i*3] = (Math.random() - 0.5) * 140;
+            nebulaPositions[i*3+1] = (Math.random() - 0.5) * 70;
+            nebulaPositions[i*3+2] = (Math.random() - 0.5) * 120 - 50;
+            const choice = Math.random();
+            let r, g, b;
+            if (choice < 0.33) { r = 0.7; g = 0.3; b = 0.6; }
+            else if (choice < 0.66) { r = 0.2; g = 0.4; b = 0.8; }
+            else { r = 0.4; g = 0.2; b = 0.7; }
+            nebulaColors[i*3] = r * 0.6; nebulaColors[i*3+1] = g * 0.5; nebulaColors[i*3+2] = b * 0.7;
+        }
+        nebulaGeom.setAttribute('position', new THREE.BufferAttribute(nebulaPositions, 3));
+        nebulaGeom.setAttribute('color', new THREE.BufferAttribute(nebulaColors, 3));
+        const nebulaMatObj = new THREE.PointsMaterial({ size: 0.14, vertexColors: true, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+        const nebulae = new THREE.Points(nebulaGeom, nebulaMatObj);
+        scene.add(nebulae);
+        
+        // ---------- АНИМАЦИЯ ----------
+        let time = 0;
+        let pulseDir = 1;
+        let pulseScale = 1;
+        let frameCount = 0;
+        let lastTime = performance.now();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            const now = performance.now();
+            frameCount++;
+            if (now - lastTime >= 1000) {
+                const fpsElem = document.getElementById('fps-counter');
+                if (fpsElem) fpsElem.innerHTML = `FPS: ${frameCount}`;
+                frameCount = 0;
+                lastTime = now;
+            }
+            time += 0.016;
+            
+            // Движение планет по орбитам
+            planets.forEach(planet => {
+                const d = planet.userData;
+                d.angle += d.speed * 0.6;
+                planet.position.x = Math.cos(d.angle) * d.distance;
+                planet.position.z = Math.sin(d.angle) * d.distance;
+                planet.rotation.y += 0.008;
+            });
+            
+            // Пульсация Солнца
+            pulseScale += 0.0035 * pulseDir;
+            if (pulseScale > 1.07) pulseDir = -1;
+            if (pulseScale < 0.96) pulseDir = 1;
+            corona.scale.set(pulseScale + 0.05, pulseScale + 0.05, pulseScale + 0.05);
+            sunGlow.scale.set(pulseScale + 0.12, pulseScale + 0.12, pulseScale + 0.12);
+            
+            asteroidBelt.rotation.y += 0.001;
+            asteroidBelt.rotation.x = Math.sin(time * 0.03) * 0.01;
+            nebulae.rotation.y += 0.0002;
+            nebulae.rotation.x += 0.0001;
+            stars.rotation.y += 0.0003;
+            stars.rotation.x += 0.0002;
+            
+            controls.update();
+            effectComposer.render();
+        }
+        
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            effectComposer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        console.log('Космическая сцена запущена, используется автоматическое масштабирование моделей');
+    </script>
+</body>
+</html>
