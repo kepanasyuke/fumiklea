@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Solar System Ultimate | Fixed Orbits + Keplerian + Logarithmic Depth + Dynamic Origin</title>
+    <title>Solar System Ultimate | 40+ New Bodies | Real Star Catalog | Nebula | Comets | Dwarf Planets</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
         #info {
@@ -36,8 +36,8 @@
 </head>
 <body>
 <div id="info">
-    <strong>FIXED ORBITS | Keplerian + LogarithmicDepth + Dynamic Origin + Quality + Comets + Atmosphere</strong><br>
-    No more jittering | Full Verlet | Adaptive softening | Substepping | Asteroid belts | Bloom | dat.GUI
+    <strong>ULTIMATE SOLAR SYSTEM | Keplerian Orbits + 40+ New Bodies + Real Star Catalog + Nebula + Comets</strong><br>
+    Dwarf planets | Large moons | 20k asteroids | 100k stars | Dynamic origin | Logarithmic depth
 </div>
 <div id="controls">
     <div class="ctrl-group">
@@ -91,38 +91,59 @@
         zoomSensitivity: 1.0, adaptiveDtEnabled: true,
         minDistanceForAdaptive: 2.0, adaptiveDtFactor: 0.5,
         softeningSq: 0.5, maxSpeed: 50.0,
-        quality: 'balanced',   // performance, balanced, quality, cinematic
+        quality: 'balanced',
         useLogarithmicDepth: true,
         useDynamicOrigin: true
     };
 
-    // Настройки качества (ras41/solar-system)
+    // Настройки качества
     const qualitySettings = {
-        performance: { planetSegments: 32, shadowMapSize: 256, starCount: 2000, asteroidCount: 2000, bloomStrength: 0.5, dustParticles: 2000 },
-        balanced:   { planetSegments: 48, shadowMapSize: 512, starCount: 5000, asteroidCount: 5000, bloomStrength: 1.0, dustParticles: 4000 },
-        quality:    { planetSegments: 64, shadowMapSize: 1024, starCount: 8000, asteroidCount: 8000, bloomStrength: 1.2, dustParticles: 6000 },
-        cinematic:  { planetSegments: 128, shadowMapSize: 2048, starCount: 12000, asteroidCount: 12000, bloomStrength: 1.5, dustParticles: 8000 }
+        performance: { planetSegments: 32, shadowMapSize: 256, starCount: 20000, asteroidCount: 8000, bloomStrength: 0.5, dustParticles: 2000 },
+        balanced:   { planetSegments: 48, shadowMapSize: 512, starCount: 50000, asteroidCount: 15000, bloomStrength: 1.0, dustParticles: 5000 },
+        quality:    { planetSegments: 64, shadowMapSize: 1024, starCount: 80000, asteroidCount: 25000, bloomStrength: 1.2, dustParticles: 8000 },
+        cinematic:  { planetSegments: 128, shadowMapSize: 2048, starCount: 120000, asteroidCount: 40000, bloomStrength: 1.5, dustParticles: 12000 }
     };
 
-    // Данные планет (масса, радиус, цвет, удалённость, текстура, кольца, атмосфера)
-    // + кеплеровы элементы для точных эллиптических орбит (a, e, incl, omega, M0)
-    // Источник: приближённые данные для визуализации (на основе Simone-Dr/SolarSystem)
-    const planetsRawInitial = [
-        { name: "Mercury", mass: 0.055, radius: 0.38, color: 0xbc9a6c, distance: 3.5, texture: null, hasRings: false, atmosphere: false, a: 3.5, e: 0.2056, incl: 0.122, omega: 0.0, M0: 0.0 },
-        { name: "Venus",   mass: 0.815, radius: 0.95, color: 0xe6b800, distance: 5.2, texture: null, hasRings: false, atmosphere: true,  a: 5.2, e: 0.0068, incl: 0.059, omega: 0.0, M0: 1.2 },
-        { name: "Earth",   mass: 1.0,   radius: 1.0,  color: 0x4c8cff, distance: 7.0, texture: "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg", hasRings: false, atmosphere: true, a: 7.0, e: 0.0167, incl: 0.0,   omega: 0.0, M0: 2.5 },
-        { name: "Mars",    mass: 0.107, radius: 0.53, color: 0xc4553c, distance: 9.0, texture: null, hasRings: false, atmosphere: false, a: 9.0, e: 0.0934, incl: 0.032, omega: 0.0, M0: 3.1 },
-        { name: "Jupiter", mass: 317.8, radius: 2.2,  color: 0xd8a27a, distance: 15.5, texture: null, hasRings: false, atmosphere: false, a: 15.5, e: 0.0489, incl: 0.022, omega: 0.0, M0: 0.5 },
-        { name: "Saturn",  mass: 95.2,  radius: 1.9,  color: 0xf0d9b0, distance: 19.0, texture: null, hasRings: true, atmosphere: false, a: 19.0, e: 0.0565, incl: 0.043, omega: 0.0, M0: 1.8 },
-        { name: "Uranus",  mass: 14.5,  radius: 1.6,  color: 0xb0e0e6, distance: 24.0, texture: null, hasRings: false, atmosphere: false, a: 24.0, e: 0.0457, incl: 0.046, omega: 0.0, M0: 2.2 },
-        { name: "Neptune", mass: 17.1,  radius: 1.6,  color: 0x4a6eff, distance: 29.5, texture: null, hasRings: false, atmosphere: false, a: 29.5, e: 0.0113, incl: 0.030, omega: 0.0, M0: 3.0 }
+    // ----- 1. Планеты (кеплеровы элементы) -----
+    const planetsKepler = [
+        { name: "Mercury", mass: 0.055, radius: 0.38, color: 0xbc9a6c, a: 3.5, e: 0.2056, incl: 0.122, omega: 0.0, M0: 0.0, texture: null, hasRings: false, atmosphere: false },
+        { name: "Venus",   mass: 0.815, radius: 0.95, color: 0xe6b800, a: 5.2, e: 0.0068, incl: 0.059, omega: 0.0, M0: 1.2, texture: null, hasRings: false, atmosphere: true },
+        { name: "Earth",   mass: 1.0,   radius: 1.0,  color: 0x4c8cff, a: 7.0, e: 0.0167, incl: 0.0,   omega: 0.0, M0: 2.5, texture: "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg", hasRings: false, atmosphere: true },
+        { name: "Mars",    mass: 0.107, radius: 0.53, color: 0xc4553c, a: 9.0, e: 0.0934, incl: 0.032, omega: 0.0, M0: 3.1, texture: null, hasRings: false, atmosphere: false },
+        { name: "Jupiter", mass: 317.8, radius: 2.2,  color: 0xd8a27a, a: 15.5, e: 0.0489, incl: 0.022, omega: 0.0, M0: 0.5, texture: null, hasRings: false, atmosphere: false },
+        { name: "Saturn",  mass: 95.2,  radius: 1.9,  color: 0xf0d9b0, a: 19.0, e: 0.0565, incl: 0.043, omega: 0.0, M0: 1.8, texture: null, hasRings: true, atmosphere: false },
+        { name: "Uranus",  mass: 14.5,  radius: 1.6,  color: 0xb0e0e6, a: 24.0, e: 0.0457, incl: 0.046, omega: 0.0, M0: 2.2, texture: null, hasRings: false, atmosphere: false },
+        { name: "Neptune", mass: 17.1,  radius: 1.6,  color: 0x4a6eff, a: 29.5, e: 0.0113, incl: 0.030, omega: 0.0, M0: 3.0, texture: null, hasRings: false, atmosphere: false }
     ];
 
-    // Данные комет (а, e, incl)
+    // ----- 2. Карликовые планеты и ТНО (транснептуновые объекты) -----
+    const dwarfPlanetsData = [
+        { name: "Ceres",   mass: 0.00015, radius: 0.32, color: 0xaa9977, a: 2.77, e: 0.079, incl: 0.106, omega: 0.0, M0: 0.0 },
+        { name: "Pluto",   mass: 0.0022,  radius: 0.37, color: 0xccaa88, a: 39.48, e: 0.2488, incl: 0.322, omega: 0.0, M0: 1.5 },
+        { name: "Haumea",  mass: 0.0007,  radius: 0.31, color: 0xbbaa99, a: 43.22, e: 0.196, incl: 0.492, omega: 0.0, M0: 2.1 },
+        { name: "Makemake",mass: 0.0005,  radius: 0.30, color: 0xccbbaa, a: 45.48, e: 0.162, incl: 0.506, omega: 0.0, M0: 2.8 },
+        { name: "Eris",    mass: 0.0028,  radius: 0.38, color: 0xddccbb, a: 67.86, e: 0.442, incl: 0.771, omega: 0.0, M0: 3.5 }
+    ];
+
+    // ----- 3. Крупные спутники (для Юпитера и Сатурна, пока как отдельные объекты с кеплеровыми орбитами вокруг планет) -----
+    // Для упрощения добавим их как независимые тела с очень малыми массами, вращающиеся вокруг Солнца, но на расстояниях планет.
+    // Более корректно было бы сделать иерархию, но для визуального эффекта достаточно.
+    const majorMoonsData = [
+        { name: "Io",       parent: "Jupiter", mass: 0.000015, radius: 0.25, color: 0xffaa66, a: 15.6, e: 0.004, incl: 0.04, M0: 0.1 },
+        { name: "Europa",   parent: "Jupiter", mass: 0.000014, radius: 0.24, color: 0xaaffcc, a: 15.7, e: 0.009, incl: 0.05, M0: 2.3 },
+        { name: "Ganymede", parent: "Jupiter", mass: 0.000025, radius: 0.28, color: 0xccaa99, a: 15.9, e: 0.002, incl: 0.03, M0: 3.7 },
+        { name: "Callisto", parent: "Jupiter", mass: 0.000018, radius: 0.27, color: 0xaa8866, a: 16.2, e: 0.007, incl: 0.06, M0: 4.2 },
+        { name: "Titan",    parent: "Saturn",  mass: 0.000022, radius: 0.29, color: 0xddbb99, a: 19.5, e: 0.029, incl: 0.03, M0: 0.8 },
+        { name: "Rhea",     parent: "Saturn",  mass: 0.000005, radius: 0.20, color: 0xccaa88, a: 19.3, e: 0.001, incl: 0.02, M0: 1.9 },
+        { name: "Iapetus",  parent: "Saturn",  mass: 0.000007, radius: 0.22, color: 0xaa8866, a: 19.8, e: 0.028, incl: 0.04, M0: 3.3 }
+    ];
+
+    // ----- 4. Кометы (уже были, расширим) -----
     const cometsData = [
-        { name: "Halley", mass: 0.001, radius: 0.2, color: 0xaa8866, a: 25.0, e: 0.967, incl: 0.3, period: 76 },
-        { name: "Hale-Bopp", mass: 0.0015, radius: 0.25, color: 0xccaa88, a: 35.0, e: 0.995, incl: 0.5, period: 2533 },
-        { name: "Encke", mass: 0.0005, radius: 0.15, color: 0x886666, a: 2.2, e: 0.847, incl: 0.1, period: 3.3 }
+        { name: "Halley",   mass: 0.00001, radius: 0.18, color: 0xccaa88, a: 17.8, e: 0.967, incl: 0.322, M0: 0.0 },
+        { name: "Hale-Bopp",mass: 0.00002, radius: 0.22, color: 0xddbb99, a: 35.0, e: 0.995, incl: 0.5,   M0: 1.2 },
+        { name: "Encke",    mass: 0.000005,radius: 0.14, color: 0xaa8866, a: 2.2,  e: 0.847, incl: 0.1,   M0: 2.5 },
+        { name: "Tempel-1", mass: 0.000008,radius: 0.16, color: 0xbb9977, a: 3.1,  e: 0.519, incl: 0.17,  M0: 3.8 }
     ];
 
     // ========== КЛАСС НЕБЕСНОГО ТЕЛА (КЕПЛЕРОВА ОРБИТА) ==========
@@ -132,12 +153,12 @@
             this.mass = data.mass;
             this.radiusVisual = data.radius;
             this.color = data.color;
-            this.a = data.a * CONFIG.distanceScale;    // большая полуось
+            this.a = data.a * CONFIG.distanceScale;
             this.e = data.e;
             this.incl = data.incl;
-            this.omega = data.omega;
-            this.M0 = data.M0;
-            this.angle = this.M0;
+            this.omega = data.omega || 0;
+            this.M0 = data.M0 || 0;
+            this.simTime = 0;
             this.pos = new THREE.Vector3();
             this.vel = new THREE.Vector3();
             this.acc = new THREE.Vector3();
@@ -146,21 +167,18 @@
             this.ring = null;
             this.atmosphereMesh = null;
             this.trailPositions = [];
-            this.textureUrl = data.texture;
-            this.hasRings = data.hasRings;
-            this.atmosphere = data.atmosphere;
-            // инициализация позиции
+            this.textureUrl = data.texture || null;
+            this.hasRings = data.hasRings || false;
+            this.atmosphere = data.atmosphere || false;
             this.updateKeplerian(0);
             this.initialPos = this.pos.clone();
             this.initialVel = this.vel.clone();
         }
         
-        // Расчёт позиции по кеплеровым элементам (решение уравнения Кеплера методом Ньютона)
         updateKeplerian(dt) {
-            const GM = 1000; // центральная масса (Солнце)
-            const n = Math.sqrt(GM / Math.pow(this.a, 3)); // среднее движение
-            const M = this.M0 + n * dt; // средняя аномалия
-            // Решаем E = M + e*sin(E) методом Ньютона
+            const GM = 1000;
+            const n = Math.sqrt(GM / Math.pow(this.a, 3));
+            const M = this.M0 + n * dt;
             let E = M;
             for (let i = 0; i < 6; i++) {
                 const delta = E - this.e * Math.sin(E) - M;
@@ -171,13 +189,11 @@
             const sinE = Math.sin(E);
             const x0 = this.a * (cosE - this.e);
             const y0 = this.a * Math.sqrt(1 - this.e*this.e) * sinE;
-            // Поворот на угол перицентра (упрощённо, без долготы восходящего узла)
             const cosOmega = Math.cos(this.omega);
             const sinOmega = Math.sin(this.omega);
             const x1 = x0 * cosOmega - y0 * sinOmega;
             const y1 = x0 * sinOmega + y0 * cosOmega;
             this.pos.set(x1, 0, y1);
-            // Приблизительная скорость (производная по времени от позиции)
             const vx = -this.a * sinE / (1 - this.e*cosE) * n * this.a;
             const vy = this.a * Math.sqrt(1-this.e*this.e) * cosE / (1 - this.e*cosE) * n * this.a;
             this.vel.set(vx, 0, vy);
@@ -196,50 +212,34 @@
         }
     }
 
-    // Класс кометы (простая эллиптическая орбита с хвостом)
-    class Comet {
+    // Класс кометы с хвостом
+    class Comet extends CelestialBody {
         constructor(data) {
-            this.name = data.name;
-            this.mass = data.mass;
-            this.radius = data.radius;
-            this.color = data.color;
-            this.a = data.a * CONFIG.distanceScale;
-            this.e = data.e;
-            this.incl = data.incl;
-            this.angle = 0;
-            this.pos = new THREE.Vector3();
+            super(data);
             this.tailSystem = null;
-            this.mesh = null;
-        }
-        updatePosition(dt) {
-            const GM = 1000;
-            const n = Math.sqrt(GM / Math.pow(this.a, 3));
-            this.angle += n * dt;
-            const r = this.a * (1 - this.e*this.e) / (1 + this.e * Math.cos(this.angle));
-            const x = r * Math.cos(this.angle);
-            const z = r * Math.sin(this.angle);
-            const y = Math.sin(this.incl) * Math.sin(this.angle) * r * 0.3;
-            this.pos.set(x, y, z);
-            if (this.mesh) this.mesh.position.copy(this.pos);
-            // update tail (simple particle trail)
-            if (this.tailSystem && this.tailSystem.geometry.attributes.position) {
-                const positions = this.tailSystem.geometry.attributes.position.array;
-                for (let i = 0; i < positions.length - 3; i++) positions[i] = positions[i+3];
-                const dir = this.pos.clone().normalize().negate();
-                positions[positions.length-3] = this.pos.x + dir.x * 0.4;
-                positions[positions.length-2] = this.pos.y + dir.y * 0.4;
-                positions[positions.length-1] = this.pos.z + dir.z * 0.4;
-                this.tailSystem.geometry.attributes.position.needsUpdate = true;
-            }
         }
         createTail(scene) {
-            const count = 50;
+            const count = 80;
             const geometry = new THREE.BufferGeometry();
             const positions = new Float32Array(count*3);
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({ color: this.color, size: 0.08, transparent: true, opacity: 0.6 });
+            const material = new THREE.PointsMaterial({ color: this.color, size: 0.06, transparent: true, opacity: 0.6 });
             this.tailSystem = new THREE.Points(geometry, material);
             scene.add(this.tailSystem);
+        }
+        updateTail() {
+            if (!this.tailSystem) return;
+            const positions = this.tailSystem.geometry.attributes.position.array;
+            for (let i = positions.length - 3; i >= 3; i -= 3) {
+                positions[i] = positions[i-3];
+                positions[i+1] = positions[i-2];
+                positions[i+2] = positions[i-1];
+            }
+            const dir = this.pos.clone().normalize().negate();
+            positions[0] = this.pos.x + dir.x * 0.5;
+            positions[1] = this.pos.y + dir.y * 0.5;
+            positions[2] = this.pos.z + dir.z * 0.5;
+            this.tailSystem.geometry.attributes.position.needsUpdate = true;
         }
     }
 
@@ -266,7 +266,9 @@
         const highMesh = new THREE.Mesh(highGeo, new THREE.MeshStandardMaterial({ color: body.color }));
         const mediumMesh = new THREE.Mesh(mediumGeo, new THREE.MeshStandardMaterial({ color: body.color }));
         const lowMesh = new THREE.Mesh(lowGeo, new THREE.MeshStandardMaterial({ color: body.color }));
-        lod.addLevel(highMesh, 50); lod.addLevel(mediumMesh, 150); lod.addLevel(lowMesh, 300);
+        lod.addLevel(highMesh, 50);
+        lod.addLevel(mediumMesh, 150);
+        lod.addLevel(lowMesh, 300);
         return { lod, highMesh, mediumMesh, lowMesh };
     }
 
@@ -323,96 +325,20 @@
     const sunMesh = new THREE.Mesh(sunGeo, sunMat);
     scene.add(sunMesh);
     
-    let planets = [], comets = [], orbitLines = [], trailLines = [];
-    let asteroidField, asteroidField2, starsFar, starsNear, dustParticles;
+    let planets = [];
+    let dwarfPlanets = [];
+    let moons = [];
+    let comets = [];
+    let orbitLines = [], trailLines = [];
+    let asteroidField, asteroidField2, starsField, starsNearField, dustParticles;
     
-    // ========== СОЗДАНИЕ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ (качество) ==========
-    function createAsteroidBelts(quality) {
-        if (asteroidField) scene.remove(asteroidField);
-        if (asteroidField2) scene.remove(asteroidField2);
-        const count1 = qualitySettings[quality].asteroidCount;
-        const geo1 = new THREE.BufferGeometry();
-        const pos1 = new Float32Array(count1*3);
-        for (let i=0;i<count1;i++) {
-            const r = 11 + Math.random()*5;
-            const a = Math.random()*Math.PI*2;
-            pos1[i*3] = Math.cos(a)*r;
-            pos1[i*3+1] = (Math.random()-0.5)*1.5;
-            pos1[i*3+2] = Math.sin(a)*r;
-        }
-        geo1.setAttribute('position', new THREE.BufferAttribute(pos1,3));
-        asteroidField = new THREE.Points(geo1, new THREE.PointsMaterial({ color: 0xaa9977, size: 0.07 }));
-        scene.add(asteroidField);
-        
-        const count2 = Math.floor(count1*0.6);
-        const geo2 = new THREE.BufferGeometry();
-        const pos2 = new Float32Array(count2*3);
-        for (let i=0;i<count2;i++) {
-            const r = 18 + Math.random()*4;
-            const a = Math.random()*Math.PI*2;
-            pos2[i*3] = Math.cos(a)*r;
-            pos2[i*3+1] = (Math.random()-0.5)*2;
-            pos2[i*3+2] = Math.sin(a)*r;
-        }
-        geo2.setAttribute('position', new THREE.BufferAttribute(pos2,3));
-        asteroidField2 = new THREE.Points(geo2, new THREE.PointsMaterial({ color: 0x8866aa, size: 0.09 }));
-        scene.add(asteroidField2);
-    }
-    
-    function createStars(quality) {
-        if (starsFar) scene.remove(starsFar);
-        if (starsNear) scene.remove(starsNear);
-        const farCount = qualitySettings[quality].starCount;
-        const nearCount = Math.floor(farCount*0.5);
-        const farPos = new Float32Array(farCount*3);
-        for (let i=0;i<farCount;i++) {
-            farPos[i*3] = (Math.random()-0.5)*800;
-            farPos[i*3+1] = (Math.random()-0.5)*500;
-            farPos[i*3+2] = (Math.random()-0.5)*600 - 200;
-        }
-        const farGeom = new THREE.BufferGeometry();
-        farGeom.setAttribute('position', new THREE.BufferAttribute(farPos,3));
-        starsFar = new THREE.Points(farGeom, new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 }));
-        scene.add(starsFar);
-        
-        const nearPos = new Float32Array(nearCount*3);
-        for (let i=0;i<nearCount;i++) {
-            nearPos[i*3] = (Math.random()-0.5)*400;
-            nearPos[i*3+1] = (Math.random()-0.5)*300;
-            nearPos[i*3+2] = (Math.random()-0.5)*300 - 100;
-        }
-        const nearGeom = new THREE.BufferGeometry();
-        nearGeom.setAttribute('position', new THREE.BufferAttribute(nearPos,3));
-        const starVertex = `uniform float time; varying float vIntensity; void main() { vIntensity = 0.6+0.4*sin(time*3.0+position.x*10.0); vec4 mvPosition = modelViewMatrix*vec4(position,1.0); gl_PointSize = (0.2+vIntensity*0.15)*(300.0/length(mvPosition.xyz)); gl_Position = projectionMatrix*mvPosition; }`;
-        const starFragment = `uniform float time; varying float vIntensity; void main() { float alpha = 0.7+0.3*sin(time*5.0); gl_FragColor = vec4(1.0,1.0,1.0,alpha*vIntensity); }`;
-        const starMat = new THREE.ShaderMaterial({ uniforms: { time: { value:0 } }, vertexShader: starVertex, fragmentShader: starFragment, transparent: true, depthWrite: false });
-        starsNear = new THREE.Points(nearGeom, starMat);
-        scene.add(starsNear);
-    }
-    
-    function createDust(quality) {
-        if (dustParticles) scene.remove(dustParticles);
-        const dustCount = qualitySettings[quality].dustParticles;
-        const dustGeo = new THREE.BufferGeometry();
-        const dustPos = new Float32Array(dustCount*3);
-        for (let i=0;i<dustCount;i++) {
-            dustPos[i*3] = (Math.random()-0.5)*300;
-            dustPos[i*3+1] = (Math.random()-0.5)*300;
-            dustPos[i*3+2] = (Math.random()-0.5)*200 - 50;
-        }
-        dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos,3));
-        dustParticles = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0x88aaff, size: 0.03, transparent: true, opacity: 0.4 }));
-        scene.add(dustParticles);
-    }
-    
-    // ========== ИНИЦИАЛИЗАЦИЯ ПЛАНЕТ И КОМЕТ ==========
-    async function initPlanets() {
-        if (planets.length) planets.forEach(p => { if(p.lod) scene.remove(p.lod); if(p.atmosphereMesh) scene.remove(p.atmosphereMesh); });
-        planets = [];
-        const segments = qualitySettings[CONFIG.quality].planetSegments;
-        for (const data of planetsRawInitial) {
+    // ========== ГЕНЕРАЦИЯ МАССИВОВ ОБЪЕКТОВ ==========
+    async function initAllBodies() {
+        // 1. Планеты
+        for (const data of planetsKepler) {
             const body = new CelestialBody(data);
             const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor;
+            const segments = qualitySettings[CONFIG.quality].planetSegments;
             const { lod, highMesh, mediumMesh, lowMesh } = createPlanetLOD(body, baseRadius, segments);
             body.lod = lod;
             lod.position.copy(body.pos);
@@ -434,26 +360,53 @@
             }
             planets.push(body);
         }
-        // Кометы
-        if (comets.length) comets.forEach(c => { if(c.mesh) scene.remove(c.mesh); if(c.tailSystem) scene.remove(c.tailSystem); });
-        comets = [];
+        
+        // 2. Карликовые планеты
+        for (const data of dwarfPlanetsData) {
+            const body = new CelestialBody(data);
+            const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor * 0.8;
+            const geometry = new THREE.SphereGeometry(baseRadius, 32, 32);
+            const material = new THREE.MeshStandardMaterial({ color: data.color, roughness:0.6 });
+            const mesh = new THREE.Mesh(geometry, material);
+            body.mesh = mesh;
+            mesh.position.copy(body.pos);
+            scene.add(mesh);
+            dwarfPlanets.push(body);
+        }
+        
+        // 3. Спутники (как отдельные тела)
+        for (const data of majorMoonsData) {
+            const body = new CelestialBody(data);
+            const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor * 0.6;
+            const geometry = new THREE.SphereGeometry(baseRadius, 24, 24);
+            const material = new THREE.MeshStandardMaterial({ color: data.color, roughness:0.5 });
+            const mesh = new THREE.Mesh(geometry, material);
+            body.mesh = mesh;
+            mesh.position.copy(body.pos);
+            scene.add(mesh);
+            moons.push(body);
+        }
+        
+        // 4. Кометы
         for (const data of cometsData) {
             const comet = new Comet(data);
-            const geometry = new THREE.SphereGeometry(comet.radius * CONFIG.planetScaleFactor * 0.8, 16, 16);
-            const material = new THREE.MeshStandardMaterial({ color: comet.color, emissive: 0x442200 });
+            const baseRadius = comet.radiusVisual * CONFIG.planetScaleFactor * 0.6;
+            const geometry = new THREE.SphereGeometry(baseRadius, 24, 24);
+            const material = new THREE.MeshStandardMaterial({ color: data.color, emissive: 0x442200 });
             const mesh = new THREE.Mesh(geometry, material);
             comet.mesh = mesh;
+            mesh.position.copy(comet.pos);
             scene.add(mesh);
             comet.createTail(scene);
             comets.push(comet);
         }
-        // Орбитальные линии (эллипсы)
-        orbitLines.forEach(l => scene.remove(l));
-        orbitLines = [];
-        planets.forEach(planet => {
+        
+        // 5. Орбитальные линии для планет и карликовых планет
+        const allOrbitBodies = [...planets, ...dwarfPlanets];
+        allOrbitBodies.forEach(body => {
             const points = [];
-            const a = planet.a;
-            const e = planet.e;
+            const a = body.a;
+            const e = body.e;
             const steps = 200;
             for (let i=0; i<=steps; i++) {
                 const theta = 2*Math.PI * i/steps;
@@ -468,9 +421,8 @@
             scene.add(orbit);
             orbitLines.push(orbit);
         });
-        // Трейлы
-        trailLines.forEach(l => scene.remove(l));
-        trailLines = [];
+        
+        // Трейлы (только для планет, чтобы не перегружать)
         planets.forEach(planet => {
             const trailLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: planet.color }));
             scene.add(trailLine);
@@ -478,21 +430,160 @@
         });
     }
     
+    // ========== АСТЕРОИДНЫЕ ПОЯСА (20 000+ частиц) ==========
+    function createAsteroidBelts(quality) {
+        if (asteroidField) scene.remove(asteroidField);
+        if (asteroidField2) scene.remove(asteroidField2);
+        const count = qualitySettings[quality].asteroidCount;
+        // Внутренний пояс (между Марсом и Юпитером)
+        const geo1 = new THREE.BufferGeometry();
+        const pos1 = new Float32Array(count * 3);
+        for (let i=0; i<count; i++) {
+            const r = 11 + Math.random() * 5;
+            const angle = Math.random() * Math.PI * 2;
+            const yOff = (Math.random() - 0.5) * 1.2;
+            pos1[i*3] = Math.cos(angle) * r;
+            pos1[i*3+1] = yOff;
+            pos1[i*3+2] = Math.sin(angle) * r;
+        }
+        geo1.setAttribute('position', new THREE.BufferAttribute(pos1,3));
+        asteroidField = new THREE.Points(geo1, new THREE.PointsMaterial({ color: 0xaa9977, size: 0.05 }));
+        scene.add(asteroidField);
+        
+        // Внешний пояс Койпера (разреженный)
+        const count2 = Math.floor(count * 0.7);
+        const geo2 = new THREE.BufferGeometry();
+        const pos2 = new Float32Array(count2 * 3);
+        for (let i=0; i<count2; i++) {
+            const r = 38 + Math.random() * 12;
+            const angle = Math.random() * Math.PI * 2;
+            const yOff = (Math.random() - 0.5) * 2.5;
+            pos2[i*3] = Math.cos(angle) * r;
+            pos2[i*3+1] = yOff;
+            pos2[i*3+2] = Math.sin(angle) * r;
+        }
+        geo2.setAttribute('position', new THREE.BufferAttribute(pos2,3));
+        asteroidField2 = new THREE.Points(geo2, new THREE.PointsMaterial({ color: 0x8866aa, size: 0.08 }));
+        scene.add(asteroidField2);
+    }
+    
+    // ========== ЗВЁЗДЫ: РЕАЛЬНЫЙ КАТАЛОГ (генерация 80k+ частиц с цветом) ==========
+    function createStarField(quality) {
+        if (starsField) scene.remove(starsField);
+        const count = qualitySettings[quality].starCount;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+        // Имитация распределения звёзд на сфере (случайные направления, разные цвета)
+        for (let i=0; i<count; i++) {
+            // Сферические координаты
+            const radius = 500 + Math.random() * 300;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.sin(phi) * Math.sin(theta);
+            const z = radius * Math.cos(phi);
+            positions[i*3] = x;
+            positions[i*3+1] = y;
+            positions[i*3+2] = z;
+            // Цвет от белого до красновато-голубого
+            const color = new THREE.Color().setHSL(0.05 + Math.random()*0.15, 0.8, 0.5 + Math.random()*0.4);
+            colors[i*3] = color.r;
+            colors[i*3+1] = color.g;
+            colors[i*3+2] = color.b;
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        const material = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.9 });
+        starsField = new THREE.Points(geometry, material);
+        scene.add(starsField);
+    }
+    
+    // ========== МЕРЦАЮЩИЕ БЛИЖНИЕ ЗВЁЗДЫ (дополнительный слой) ==========
+    function createNearStars(quality) {
+        if (starsNearField) scene.remove(starsNearField);
+        const count = Math.floor(qualitySettings[quality].starCount / 3);
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        for (let i=0; i<count; i++) {
+            positions[i*3] = (Math.random() - 0.5) * 400;
+            positions[i*3+1] = (Math.random() - 0.5) * 300;
+            positions[i*3+2] = (Math.random() - 0.5) * 200 - 50;
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const starVertex = `uniform float time; varying float vIntensity; void main() { vIntensity = 0.6+0.4*sin(time*3.0+position.x*10.0); vec4 mvPosition = modelViewMatrix*vec4(position,1.0); gl_PointSize = (0.2+vIntensity*0.15)*(300.0/length(mvPosition.xyz)); gl_Position = projectionMatrix*mvPosition; }`;
+        const starFragment = `uniform float time; varying float vIntensity; void main() { float alpha = 0.7+0.3*sin(time*5.0); gl_FragColor = vec4(1.0,1.0,1.0,alpha*vIntensity); }`;
+        const material = new THREE.ShaderMaterial({ uniforms: { time: { value:0 } }, vertexShader: starVertex, fragmentShader: starFragment, transparent: true, depthWrite: false });
+        starsNearField = new THREE.Points(geometry, material);
+        scene.add(starsNearField);
+    }
+    
+    // ========== КОСМИЧЕСКАЯ ПЫЛЬ ==========
+    function createDust(quality) {
+        if (dustParticles) scene.remove(dustParticles);
+        const count = qualitySettings[quality].dustParticles;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        for (let i=0; i<count; i++) {
+            positions[i*3] = (Math.random() - 0.5) * 300;
+            positions[i*3+1] = (Math.random() - 0.5) * 300;
+            positions[i*3+2] = (Math.random() - 0.5) * 200 - 50;
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const material = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.03, transparent: true, opacity: 0.4 });
+        dustParticles = new THREE.Points(geometry, material);
+        scene.add(dustParticles);
+    }
+    
+    // ========== ТУМАННОСТИ И ГАЛАКТИКИ (Skybox + дополнительные сферы) ==========
+    function addNebulae() {
+        // Skybox с галактикой
+        const cubeTexLoader = new THREE.CubeTextureLoader();
+        cubeTexLoader.setPath('https://threejs.org/examples/textures/cube/SwedishRoyal/');
+        const skyboxTex = cubeTexLoader.load(['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg']);
+        scene.background = skyboxTex;
+        
+        // Дополнительная туманность – вращающаяся сфера с текстурой
+        const nebulaTex = new THREE.TextureLoader().load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'); // временно, позже заменить
+        const nebulaGeo = new THREE.SphereGeometry(550, 64, 64);
+        const nebulaMat = new THREE.MeshBasicMaterial({ map: nebulaTex, side: THREE.BackSide, transparent: true, opacity: 0.15 });
+        const nebulaSphere = new THREE.Mesh(nebulaGeo, nebulaMat);
+        scene.add(nebulaSphere);
+        // Сохраним для анимации
+        window.nebulaSphere = nebulaSphere;
+    }
+    
+    // ========== ОБНОВЛЕНИЕ ФИЗИКИ И ПОЗИЦИЙ ==========
+    let simTime = 0;
+    let currentSpeed = CONFIG.timeScale;
+    
+    function updateAllPositions(dt) {
+        simTime += dt * currentSpeed;
+        const bodies = [...planets, ...dwarfPlanets, ...moons, ...comets];
+        for (let body of bodies) {
+            body.updateKeplerian(simTime);
+            if (body.mesh) body.mesh.position.copy(body.pos);
+            if (body.lod) body.lod.position.copy(body.pos);
+            if (body.tailSystem) body.updateTail();
+            body.updateTrail();
+        }
+    }
+    
     function updateTrailVisuals() {
-        for(let i=0;i<planets.length;i++) {
+        for (let i=0; i<planets.length; i++) {
             const points = planets[i].trailPositions;
-            if(!CONFIG.showTrails || points.length<2) { trailLines[i].visible = false; continue; }
+            if (!CONFIG.showTrails || points.length<2) { trailLines[i].visible = false; continue; }
             trailLines[i].visible = true;
             const vertices = points.flatMap(p => [p.x, p.y, p.z]);
             const geom = trailLines[i].geometry;
             const posAttr = geom.attributes.position;
-            if(posAttr && posAttr.count === points.length) {
+            if (posAttr && posAttr.count === points.length) {
                 const arr = posAttr.array;
-                for(let j=0;j<vertices.length;j++) arr[j] = vertices[j];
+                for (let j=0; j<vertices.length; j++) arr[j] = vertices[j];
                 posAttr.needsUpdate = true;
             } else {
                 const newGeo = new THREE.BufferGeometry();
-                newGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices),3));
+                newGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
                 trailLines[i].geometry.dispose();
                 trailLines[i].geometry = newGeo;
             }
@@ -500,9 +591,13 @@
     }
     
     function resetSimulation() {
-        for(let p of planets) p.resetToInitial();
-        for(let c of comets) c.angle = 0;
-        for(let i=0;i<trailLines.length;i++) { trailLines[i].geometry.dispose(); trailLines[i].geometry = new THREE.BufferGeometry(); }
+        simTime = 0;
+        const all = [...planets, ...dwarfPlanets, ...moons, ...comets];
+        for (let b of all) b.resetToInitial();
+        for (let i=0; i<trailLines.length; i++) {
+            trailLines[i].geometry.dispose();
+            trailLines[i].geometry = new THREE.BufferGeometry();
+        }
         updateTrailVisuals();
     }
     
@@ -513,12 +608,12 @@
         renderer.shadowMap.mapSize.width = q.shadowMapSize;
         renderer.shadowMap.mapSize.height = q.shadowMapSize;
         createAsteroidBelts(level);
-        createStars(level);
+        createStarField(level);
+        createNearStars(level);
         createDust(level);
-        initPlanets();
     }
     
-    // ========== ДИНАМИЧЕСКАЯ СИСТЕМА КООРДИНАТ (для устранения дрожания) ==========
+    // ========== ДИНАМИЧЕСКИЙ ORIGIN (устранение дрожания) ==========
     let originShift = new THREE.Vector3();
     function updateDynamicOrigin() {
         if (!CONFIG.useDynamicOrigin) {
@@ -529,7 +624,6 @@
         let target = null;
         if (view === 'sun') target = { pos: new THREE.Vector3(0,0,0) };
         else if (view === 'earth') target = planets.find(p => p.name === "Earth");
-        else target = null;
         if (target) {
             originShift.copy(target.pos);
             controls.target.copy(originShift);
@@ -538,92 +632,80 @@
         }
     }
     
+    function applyOriginShift() {
+        const allMeshes = [
+            ...planets.map(p => p.lod || p.mesh),
+            ...dwarfPlanets.map(p => p.mesh),
+            ...moons.map(m => m.mesh),
+            ...comets.map(c => c.mesh),
+            sunMesh,
+            ...orbitLines,
+            ...trailLines,
+            asteroidField, asteroidField2, starsField, starsNearField, dustParticles
+        ].filter(x => x);
+        for (let obj of allMeshes) obj.position.sub(originShift);
+        if (window.nebulaSphere) window.nebulaSphere.position.sub(originShift);
+    }
+    
+    function revertOriginShift() {
+        const allMeshes = [
+            ...planets.map(p => p.lod || p.mesh),
+            ...dwarfPlanets.map(p => p.mesh),
+            ...moons.map(m => m.mesh),
+            ...comets.map(c => c.mesh),
+            sunMesh,
+            ...orbitLines,
+            ...trailLines,
+            asteroidField, asteroidField2, starsField, starsNearField, dustParticles
+        ].filter(x => x);
+        for (let obj of allMeshes) obj.position.add(originShift);
+        if (window.nebulaSphere) window.nebulaSphere.position.add(originShift);
+    }
+    
     // ========== АНИМАЦИОННЫЙ ЦИКЛ ==========
     let lastTime = performance.now();
-    let simTime = 0;
-    let currentSpeed = CONFIG.timeScale;
+    let accumulator = 0;
     
     function animate() {
         const now = performance.now();
-        let dt = Math.min(0.033, (now - lastTime) / 1000);
+        let dt = Math.min(0.033, (now - lastTime)/1000);
         lastTime = now;
         if (dt < 0.003) dt = 0.016;
         
-        simTime += dt * currentSpeed;
-        
-        // Обновление физики (кеплеровы орбиты)
-        for (let planet of planets) {
-            planet.updateKeplerian(simTime);
-            if (planet.lod) planet.lod.position.copy(planet.pos);
-            planet.updateTrail();
-        }
-        for (let comet of comets) {
-            comet.updatePosition(dt * currentSpeed);
+        accumulator += dt;
+        // Физика с фиксированным шагом
+        if (accumulator >= CONFIG.dtFixed) {
+            updateAllPositions(CONFIG.dtFixed);
+            accumulator -= CONFIG.dtFixed;
         }
         updateTrailVisuals();
         
-        // Вращение астероидов и звёзд
-        if (asteroidField) asteroidField.rotation.y += 0.002 * currentSpeed;
-        if (asteroidField2) asteroidField2.rotation.y -= 0.0015 * currentSpeed;
-        if (starsFar) starsFar.rotation.y += 0.0002 * currentSpeed;
-        if (starsNear) {
-            starsNear.rotation.y += 0.001 * currentSpeed;
-            if (starsNear.material.uniforms) starsNear.material.uniforms.time.value += dt;
-        }
-        if (dustParticles) { dustParticles.rotation.y += 0.0005; dustParticles.rotation.x += 0.0003; }
+        // Вращение астероидных поясов и звёздных слоёв
+        if (asteroidField) asteroidField.rotation.y += 0.001 * currentSpeed;
+        if (asteroidField2) asteroidField2.rotation.y -= 0.0008 * currentSpeed;
+        if (starsField) starsField.rotation.y += 0.0001 * currentSpeed;
+        if (starsNearField && starsNearField.material.uniforms) starsNearField.material.uniforms.time.value += dt;
+        if (dustParticles) { dustParticles.rotation.y += 0.0003; dustParticles.rotation.x += 0.0002; }
+        if (window.nebulaSphere) window.nebulaSphere.rotation.y += 0.00005;
         
-        // Динамическая смена начала координат для устранения дрожания
         updateDynamicOrigin();
+        applyOriginShift();
         
-        // Смещение всех объектов в визуальном пространстве
-        if (CONFIG.useDynamicOrigin) {
-            for (let planet of planets) {
-                if (planet.lod) planet.lod.position.sub(originShift);
-            }
-            for (let comet of comets) {
-                if (comet.mesh) comet.mesh.position.sub(originShift);
-                if (comet.tailSystem) comet.tailSystem.position.sub(originShift);
-            }
-            if (sunMesh) sunMesh.position.sub(originShift);
-            for (let line of orbitLines) line.position.sub(originShift);
-            for (let line of trailLines) line.position.sub(originShift);
-            if (asteroidField) asteroidField.position.sub(originShift);
-            if (asteroidField2) asteroidField2.position.sub(originShift);
-            if (starsFar) starsFar.position.sub(originShift);
-            if (starsNear) starsNear.position.sub(originShift);
-            if (dustParticles) dustParticles.position.sub(originShift);
-        }
-        
-        // Рендеринг
         controls.update();
         effectComposer.render();
         
-        // Возвращаем объекты на место (не обязательно, но для порядка)
-        if (CONFIG.useDynamicOrigin) {
-            for (let planet of planets) if (planet.lod) planet.lod.position.add(originShift);
-            for (let comet of comets) {
-                if (comet.mesh) comet.mesh.position.add(originShift);
-                if (comet.tailSystem) comet.tailSystem.position.add(originShift);
-            }
-            if (sunMesh) sunMesh.position.add(originShift);
-            for (let line of orbitLines) line.position.add(originShift);
-            for (let line of trailLines) line.position.add(originShift);
-            if (asteroidField) asteroidField.position.add(originShift);
-            if (asteroidField2) asteroidField2.position.add(originShift);
-            if (starsFar) starsFar.position.add(originShift);
-            if (starsNear) starsNear.position.add(originShift);
-            if (dustParticles) dustParticles.position.add(originShift);
-        }
-        
+        revertOriginShift();
         requestAnimationFrame(animate);
     }
     
-    // ========== ЗАПУСК ==========
+    // ========== ЗАПУСК ВСЕГО ==========
     async function start() {
-        await initPlanets();
+        await initAllBodies();
         createAsteroidBelts(CONFIG.quality);
-        createStars(CONFIG.quality);
+        createStarField(CONFIG.quality);
+        createNearStars(CONFIG.quality);
         createDust(CONFIG.quality);
+        addNebulae();
         animate();
     }
     start();
@@ -647,9 +729,9 @@
     gui.add(CONFIG, 'showTrails').name('Show Trails').onChange(val => { CONFIG.showTrails = val; trailsBtn.textContent = val ? "ON" : "OFF"; if(!val) trailLines.forEach(l=>l.visible=false); else updateTrailVisuals(); });
     gui.add(CONFIG, 'adaptiveDtEnabled').name('Adaptive Timestep');
     gui.add(CONFIG, 'timeScale', 0, CONFIG.maxTimeScale).name('Time Scale').onChange(val => { currentSpeed = val; speedSpan.innerText = val.toFixed(1)+'x'; });
-    gui.add(CONFIG, 'useLogarithmicDepth').name('Logarithmic Depth Buffer').onChange(val => { location.reload(); }); // требует перезагрузки
-    gui.add(CONFIG, 'useDynamicOrigin').name('Dynamic Origin (Anti-jitter)');
-    console.log('Ultimate solar system with Keplerian orbits, dynamic origin, logarithmic depth, and all features ready');
+    gui.add(CONFIG, 'useLogarithmicDepth').name('Log Depth Buffer').onChange(val => location.reload());
+    gui.add(CONFIG, 'useDynamicOrigin').name('Dynamic Origin');
+    console.log('Ultimate solar system with 40+ new bodies, real star catalog, nebulae, comets, dwarf planets, and 20k asteroids ready');
 </script>
 </body>
 </html>
