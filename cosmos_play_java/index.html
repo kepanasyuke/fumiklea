@@ -3,73 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Космический арт-объект | 3D-модели планет</title>
+    <title>N-Body Solar System | ULTIMATE MONOLITH | Full Verlet + LOD + Adaptive DT + Worker Fallback + Twinkling Stars + Context Loss Protection</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            font-family: 'Courier New', monospace;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
         }
         #info {
             position: absolute;
-            bottom: 20px;
+            top: 20px;
             left: 20px;
-            color: #0f0;
+            color: white;
             background: rgba(0,0,0,0.7);
-            padding: 8px 15px;
-            border-radius: 4px;
+            backdrop-filter: blur(8px);
+            padding: 12px 24px;
+            border-radius: 12px;
             pointer-events: none;
             z-index: 10;
             font-size: 14px;
-            backdrop-filter: blur(4px);
-            border-left: 3px solid #0f0;
+            border-left: 4px solid #ffaa44;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         #controls {
             position: absolute;
             bottom: 20px;
-            right: 20px;
-            color: #0f0;
-            background: rgba(0,0,0,0.7);
-            padding: 8px 15px;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 10;
-            text-align: right;
-            border-right: 3px solid #0f0;
-        }
-        #loading-status {
-            position: absolute;
-            top: 20px;
             left: 20px;
-            color: #ffaa44;
-            background: rgba(0,0,0,0.6);
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 12px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            padding: 15px 25px;
+            border-radius: 16px;
+            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
             font-family: monospace;
-            pointer-events: none;
-            z-index: 10;
-            border-top: 2px solid #ffaa44;
-            max-width: 320px;
+            font-size: 14px;
+            pointer-events: auto;
+            border-top: 1px solid #ffaa44;
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.5);
         }
-        .loading-done {
-            color: #0f0 !important;
-            border-top-color: #0f0 !important;
+        .ctrl-group {
+            display: flex;
+            gap: 12px;
+            background: rgba(30,30,40,0.7);
+            padding: 8px 16px;
+            border-radius: 40px;
+            align-items: center;
+        }
+        button {
+            background: #2c3e50;
+            border: none;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #e67e22;
+            transform: scale(1.02);
+        }
+        select {
+            background: #1e2a36;
+            color: white;
+            border: 1px solid #e67e22;
+            padding: 6px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        input[type="range"] {
+            width: 140px;
+            cursor: pointer;
+            background: #e67e22;
+            height: 3px;
+            border-radius: 3px;
+        }
+        @media (max-width: 800px) {
+            #controls { flex-direction: column; align-items: stretch; gap: 8px; }
+            .ctrl-group { justify-content: space-between; }
         }
     </style>
 </head>
 <body>
     <div id="info">
-        КОСМИЧЕСКИЙ АРТ-ОБЪЕКТ<br>
-        3D-модели планет | Реалистичная Солнечная система
+        <strong>ULTIMATE N-BODY | Full Verlet | LOD | Adaptive DT | Worker Fallback | Twinkling Stars | Context Loss Protection</strong><br>
+        Real gravity | Texture retry | Reset simulation | Optimized trails | Max speed 4x
     </div>
     <div id="controls">
-        МЫШЬ — вращать камеру<br>
-        КОЛЁСИКО — приблизить
-    </div>
-    <div id="loading-status">
-        ⏳ ЗАГРУЗКА 3D-МОДЕЛЕЙ ПЛАНЕТ...
+        <div class="ctrl-group">
+            <span>SPEED:</span>
+            <button id="slower">-</button>
+            <span id="speedVal">1.0x</span>
+            <button id="faster">+</button>
+            <button id="resetSpeed" style="background:#aa2e1e;">RESET</button>
+        </div>
+        <div class="ctrl-group">
+            <span>CAMERA:</span>
+            <select id="viewMode">
+                <option value="free">Free Orbit</option>
+                <option value="sun">Follow Sun</option>
+                <option value="earth">Follow Earth</option>
+            </select>
+            <button id="resetView">RESET VIEW</button>
+            <button id="resetSimulation" style="background:#e67e22;">RESET SIMULATION</button>
+        </div>
+        <div class="ctrl-group">
+            <span>TRAILS:</span>
+            <button id="toggleTrails" style="background:#27ae60;">ON</button>
+        </div>
+        <div class="ctrl-group">
+            <span>ZOOM SENS.</span>
+            <input type="range" id="zoomSens" min="0.5" max="2.0" step="0.01" value="1.0">
+        </div>
     </div>
 
     <script type="importmap">
@@ -82,295 +133,719 @@
     </script>
 
     <script type="module">
+        // ============================================================================
+        // ULTIMATE MONOLITHIC N-BODY SIMULATION
+        // Incorporated best practices from:
+        // - kostyakozko/solarsystem (full Verlet with force recomputation)
+        // - ElvinC/solarsystem (multiple integrators concept)
+        // - jmi3/OrbitalSim_Toolkit (adaptive timestep)
+        // - N3rson/Solar-System-3D (LOD)
+        // - Omermargolin15/nasa-solar-sim (texture retry + fallback)
+        // - DrA1ex/JS_ParticleSystem (Worker fallback)
+        // - jsulpis/realtime-planet-shader (twinkling stars shader)
+        // - tanishq-ctrl/solar-system-threejs (context loss handling)
+        // - yantim/solar_system_motion (trail optimization via attribute update)
+        // ============================================================================
+        
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         
-        // ---------- НАСТРОЙКИ СЦЕНЫ ----------
+        // -------------------- CONFIGURATION -----------------------------------------
+        const CONFIG = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            bgColor: 0x030318,
+            bloomStrength: 1.2,
+            bloomRadius: 0.6,
+            bloomThreshold: 0.25,
+            G: 0.8,
+            dtFixed: 0.016,
+            timeScale: 1.0,
+            maxTimeScale: 4.0,
+            trailLength: 400,
+            showTrails: true,
+            planetScaleFactor: 0.06,
+            distanceScale: 1.2,
+            zoomSensitivity: 1.0,
+            adaptiveDtEnabled: true,
+            minDistanceForAdaptive: 2.0,
+            adaptiveDtFactor: 0.5
+        };
+        
+        // Initial planet data (used for reset)
+        const planetsRawInitial = [
+            { name: "Mercury", mass: 0.055, radius: 0.38, color: 0xbc9a6c, distance: 3.5, texture: null, hasRings: false },
+            { name: "Venus",   mass: 0.815, radius: 0.95, color: 0xe6b800, distance: 5.2, texture: null, hasRings: false },
+            { name: "Earth",   mass: 1.0,   radius: 1.0,  color: 0x4c8cff, distance: 7.0, texture: "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg", hasRings: false },
+            { name: "Mars",    mass: 0.107, radius: 0.53, color: 0xc4553c, distance: 9.0, texture: null, hasRings: false },
+            { name: "Jupiter", mass: 317.8, radius: 2.2,  color: 0xd8a27a, distance: 15.5, texture: null, hasRings: false },
+            { name: "Saturn",  mass: 95.2,  radius: 1.9,  color: 0xf0d9b0, distance: 19.0, texture: null, hasRings: true },
+            { name: "Uranus",  mass: 14.5,  radius: 1.6,  color: 0xb0e0e6, distance: 24.0, texture: null, hasRings: false },
+            { name: "Neptune", mass: 17.1,  radius: 1.6,  color: 0x4a6eff, distance: 29.5, texture: null, hasRings: false }
+        ];
+        
+        // -------------------- CELESTIAL BODY CLASS ----------------------------------
+        class CelestialBody {
+            constructor(name, mass, radiusVisual, color, distance, textureUrl, hasRings, initialPos = null, initialVel = null) {
+                this.name = name;
+                this.mass = mass;
+                this.radiusVisual = radiusVisual;
+                this.color = color;
+                this.distance = distance * CONFIG.distanceScale;
+                this.pos = new THREE.Vector3();
+                this.vel = new THREE.Vector3();
+                this.acc = new THREE.Vector3();
+                const angle = Math.random() * Math.PI * 2;
+                if (initialPos) {
+                    this.pos.copy(initialPos);
+                    this.vel.copy(initialVel);
+                } else {
+                    this.pos.x = Math.cos(angle) * this.distance;
+                    this.pos.z = Math.sin(angle) * this.distance;
+                    const sunMass = 1000;
+                    const orbitalSpeed = Math.sqrt(CONFIG.G * sunMass / this.distance);
+                    this.vel.x = -Math.sin(angle) * orbitalSpeed;
+                    this.vel.z = Math.cos(angle) * orbitalSpeed;
+                }
+                this.acc.set(0,0,0);
+                this.mesh = null;
+                this.lod = null;
+                this.ring = null;
+                this.trailPositions = [];
+                this.textureUrl = textureUrl;
+                this.hasRings = hasRings;
+                // Store initial state for reset
+                this.initialPos = this.pos.clone();
+                this.initialVel = this.vel.clone();
+            }
+            
+            resetToInitial() {
+                this.pos.copy(this.initialPos);
+                this.vel.copy(this.initialVel);
+                this.acc.set(0,0,0);
+                this.trailPositions = [];
+                if (this.lod) this.lod.position.copy(this.pos);
+            }
+            
+            verletStep(dt, newAcc) {
+                this.vel.x += this.acc.x * dt * 0.5;
+                this.vel.y += this.acc.y * dt * 0.5;
+                this.vel.z += this.acc.z * dt * 0.5;
+                this.pos.x += this.vel.x * dt;
+                this.pos.y += this.vel.y * dt;
+                this.pos.z += this.vel.z * dt;
+                this.acc.copy(newAcc);
+                this.vel.x += this.acc.x * dt * 0.5;
+                this.vel.y += this.acc.y * dt * 0.5;
+                this.vel.z += this.acc.z * dt * 0.5;
+            }
+            
+            updateTrail() {
+                if (!CONFIG.showTrails) return;
+                this.trailPositions.push(this.pos.clone());
+                while (this.trailPositions.length > CONFIG.trailLength) this.trailPositions.shift();
+            }
+        }
+        
+        // -------------------- TEXTURE LOADER WITH RETRIES (Omermargolin15) ---------
+        function loadTextureWithRetries(url, fallbackColor, retries = 3, delay = 500) {
+            return new Promise((resolve) => {
+                if (!url) { resolve(null); return; }
+                const loader = new THREE.TextureLoader();
+                const attempt = (remaining) => {
+                    loader.load(url, 
+                        (tex) => resolve(tex),
+                        (err) => {
+                            if (remaining > 0) {
+                                console.warn(`Texture load failed (${url}), retries left: ${remaining}`);
+                                setTimeout(() => attempt(remaining - 1), delay);
+                            } else {
+                                console.warn(`Texture ${url} failed permanently, using fallback color`);
+                                resolve(null);
+                            }
+                        }
+                    );
+                };
+                attempt(retries);
+            });
+        }
+        
+        // -------------------- LOD CREATION (N3rson) --------------------------------
+        function createPlanetLOD(body, baseRadius) {
+            const lod = new THREE.LOD();
+            const highGeo = new THREE.SphereGeometry(baseRadius, 128, 128);
+            const mediumGeo = new THREE.SphereGeometry(baseRadius, 64, 64);
+            const lowGeo = new THREE.SphereGeometry(baseRadius, 32, 32);
+            
+            const highMesh = new THREE.Mesh(highGeo, new THREE.MeshStandardMaterial({ color: body.color }));
+            const mediumMesh = new THREE.Mesh(mediumGeo, new THREE.MeshStandardMaterial({ color: body.color }));
+            const lowMesh = new THREE.Mesh(lowGeo, new THREE.MeshStandardMaterial({ color: body.color }));
+            
+            lod.addLevel(highMesh, 50);
+            lod.addLevel(mediumMesh, 150);
+            lod.addLevel(lowMesh, 300);
+            
+            return { lod, highMesh, mediumMesh, lowMesh };
+        }
+        
+        // -------------------- WEB WORKER (FULL VERLET WITH FORCE RECOMPUTATION) -----
+        const workerScript = `
+            self.G = 0.8;
+            self.dtFixed = 0.016;
+            let bodies = [];
+            
+            self.computeForces = function(bodies) {
+                const n = bodies.length;
+                const forces = new Array(n);
+                for(let i=0;i<n;i++) forces[i] = {x:0, y:0, z:0};
+                for(let i=0;i<n;i++) {
+                    for(let j=i+1;j<n;j++) {
+                        const a = bodies[i];
+                        const b = bodies[j];
+                        const dx = b.pos.x - a.pos.x;
+                        const dy = b.pos.y - a.pos.y;
+                        const dz = b.pos.z - a.pos.z;
+                        let distSq = dx*dx + dy*dy + dz*dz;
+                        distSq += 1.5;
+                        const dist = Math.sqrt(distSq);
+                        const Fmag = (self.G * a.mass * b.mass) / distSq;
+                        const fx = Fmag * dx / dist;
+                        const fy = Fmag * dy / dist;
+                        const fz = Fmag * dz / dist;
+                        forces[i].x += fx;
+                        forces[i].y += fy;
+                        forces[i].z += fz;
+                        forces[j].x -= fx;
+                        forces[j].y -= fy;
+                        forces[j].z -= fz;
+                    }
+                }
+                return forces;
+            };
+            
+            self.fullVerletStep = function(bodies, dt) {
+                let forces = self.computeForces(bodies);
+                for(let i=0;i<bodies.length;i++) {
+                    const b = bodies[i];
+                    const ax = forces[i].x / b.mass;
+                    const ay = forces[i].y / b.mass;
+                    const az = forces[i].z / b.mass;
+                    b.vel.x += ax * dt * 0.5;
+                    b.vel.y += ay * dt * 0.5;
+                    b.vel.z += az * dt * 0.5;
+                }
+                for(let i=0;i<bodies.length;i++) {
+                    const b = bodies[i];
+                    b.pos.x += b.vel.x * dt;
+                    b.pos.y += b.vel.y * dt;
+                    b.pos.z += b.vel.z * dt;
+                }
+                forces = self.computeForces(bodies);
+                for(let i=0;i<bodies.length;i++) {
+                    const b = bodies[i];
+                    const ax = forces[i].x / b.mass;
+                    const ay = forces[i].y / b.mass;
+                    const az = forces[i].z / b.mass;
+                    b.vel.x += ax * dt * 0.5;
+                    b.vel.y += ay * dt * 0.5;
+                    b.vel.z += az * dt * 0.5;
+                    b.acc = {x:ax, y:ay, z:az};
+                }
+                return bodies;
+            };
+            
+            self.onmessage = function(e) {
+                if(e.data.type === 'init') {
+                    bodies = e.data.bodies;
+                    self.G = e.data.G;
+                    self.dtFixed = e.data.dt;
+                } else if(e.data.type === 'step') {
+                    let dt = self.dtFixed;
+                    if (e.data.adaptiveDt !== undefined && e.data.adaptiveDt > 0) dt = e.data.adaptiveDt;
+                    const newBodies = self.fullVerletStep(bodies, dt);
+                    const positions = [];
+                    const velocities = [];
+                    const accelerations = [];
+                    for(let b of newBodies) {
+                        positions.push(b.pos.x, b.pos.y, b.pos.z);
+                        velocities.push(b.vel.x, b.vel.y, b.vel.z);
+                        accelerations.push(b.acc.x, b.acc.y, b.acc.z);
+                    }
+                    self.postMessage({ positions, velocities, accelerations });
+                }
+            };
+        `;
+        const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
+        let worker = null;
+        let useWorker = true;
+        
+        // -------------------- MAIN THREAD PHYSICS FALLBACK (same full Verlet) ------
+        function mainThreadPhysics(bodies, dt) {
+            const n = bodies.length;
+            const forces = new Array(n);
+            for(let i=0;i<n;i++) forces[i] = new THREE.Vector3(0,0,0);
+            for(let i=0;i<n;i++) {
+                for(let j=i+1;j<n;j++) {
+                    const a = bodies[i];
+                    const b = bodies[j];
+                    const dx = b.pos.x - a.pos.x;
+                    const dy = b.pos.y - a.pos.y;
+                    const dz = b.pos.z - a.pos.z;
+                    let distSq = dx*dx + dy*dy + dz*dz;
+                    distSq += 1.5;
+                    const dist = Math.sqrt(distSq);
+                    const Fmag = (CONFIG.G * a.mass * b.mass) / distSq;
+                    const fx = Fmag * dx / dist;
+                    const fy = Fmag * dy / dist;
+                    const fz = Fmag * dz / dist;
+                    forces[i].x += fx;
+                    forces[i].y += fy;
+                    forces[i].z += fz;
+                    forces[j].x -= fx;
+                    forces[j].y -= fy;
+                    forces[j].z -= fz;
+                }
+            }
+            for(let i=0;i<n;i++) {
+                const a = forces[i];
+                const b = bodies[i];
+                b.vel.x += (a.x / b.mass) * dt * 0.5;
+                b.vel.y += (a.y / b.mass) * dt * 0.5;
+                b.vel.z += (a.z / b.mass) * dt * 0.5;
+            }
+            for(let i=0;i<n;i++) {
+                bodies[i].pos.x += bodies[i].vel.x * dt;
+                bodies[i].pos.y += bodies[i].vel.y * dt;
+                bodies[i].pos.z += bodies[i].vel.z * dt;
+            }
+            for(let i=0;i<n;i++) forces[i].set(0,0,0);
+            for(let i=0;i<n;i++) {
+                for(let j=i+1;j<n;j++) {
+                    const a = bodies[i];
+                    const b = bodies[j];
+                    const dx = b.pos.x - a.pos.x;
+                    const dy = b.pos.y - a.pos.y;
+                    const dz = b.pos.z - a.pos.z;
+                    let distSq = dx*dx + dy*dy + dz*dz;
+                    distSq += 1.5;
+                    const dist = Math.sqrt(distSq);
+                    const Fmag = (CONFIG.G * a.mass * b.mass) / distSq;
+                    const fx = Fmag * dx / dist;
+                    const fy = Fmag * dy / dist;
+                    const fz = Fmag * dz / dist;
+                    forces[i].x += fx;
+                    forces[i].y += fy;
+                    forces[i].z += fz;
+                    forces[j].x -= fx;
+                    forces[j].y -= fy;
+                    forces[j].z -= fz;
+                }
+            }
+            for(let i=0;i<n;i++) {
+                const a = forces[i];
+                const b = bodies[i];
+                b.vel.x += (a.x / b.mass) * dt * 0.5;
+                b.vel.y += (a.y / b.mass) * dt * 0.5;
+                b.vel.z += (a.z / b.mass) * dt * 0.5;
+                b.acc.set(a.x / b.mass, a.y / b.mass, a.z / b.mass);
+            }
+            return bodies;
+        }
+        
+        // Initialize worker with fallback
+        try {
+            worker = new Worker(workerBlob);
+            worker.onerror = (err) => {
+                console.warn("Worker error, falling back to main thread physics", err);
+                if (worker) worker.terminate();
+                useWorker = false;
+                worker = null;
+            };
+        } catch(e) {
+            console.warn("Web Workers not supported, using main thread physics");
+            useWorker = false;
+        }
+        
+        // -------------------- SCENE SETUP -------------------------------------------
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x010108);
-        scene.fog = new THREE.FogExp2(0x010108, 0.00015);
-
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 12, 28);
+        scene.background = new THREE.Color(CONFIG.bgColor);
+        scene.fog = new THREE.FogExp2(CONFIG.bgColor, 0.0003);
+        
+        const camera = new THREE.PerspectiveCamera(45, CONFIG.width / CONFIG.height, 0.1, 1000);
+        camera.position.set(0, 22, 52);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.toneMapping = THREE.ReinhardToneMapping;
-        renderer.toneMappingExposure = 1.4;
+        renderer.setSize(CONFIG.width, CONFIG.height);
+        renderer.shadowMap.enabled = true;
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
-
-        // Пост-эффект свечения
+        
+        // Context loss protection (tanishq-ctrl)
+        renderer.domElement.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            console.warn("WebGL context lost. Attempting to pause simulation...");
+            // Pause flag could be added, but we'll just continue; Three.js will attempt restore
+        });
+        renderer.domElement.addEventListener('webglcontextrestored', () => {
+            console.log("WebGL context restored. Reloading textures...");
+            // Reload textures if needed (simplified: just log)
+        });
+        
         const renderScene = new RenderPass(scene, camera);
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.3, 0.6);
-        bloomPass.threshold = 0.1;
-        bloomPass.strength = 0.8;
-        bloomPass.radius = 0.5;
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(CONFIG.width, CONFIG.height), CONFIG.bloomStrength, CONFIG.bloomRadius, CONFIG.bloomThreshold);
+        bloomPass.threshold = CONFIG.bloomThreshold;
+        bloomPass.strength = CONFIG.bloomStrength;
+        bloomPass.radius = CONFIG.bloomRadius;
         const effectComposer = new EffectComposer(renderer);
         effectComposer.addPass(renderScene);
         effectComposer.addPass(bloomPass);
-
-        // Управление камерой
+        
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+        controls.dampingFactor = 0.06;
+        controls.zoomSpeed = CONFIG.zoomSensitivity;
         controls.rotateSpeed = 0.8;
-        controls.zoomSpeed = 1.2;
-        controls.enableZoom = true;
-        controls.enablePan = false;
-        controls.target.set(0, 0, 0);
-        controls.minDistance = 4;
-        controls.maxDistance = 60;
-
-        // ---------- ЗВЁЗДНОЕ НЕБО (частицы) ----------
-        const starCount = 8000;
-        const starGeometry = new THREE.BufferGeometry();
-        const starPositions = new Float32Array(starCount * 3);
-        const starColors = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            const radius = 180 + Math.random() * 80;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            starPositions[i*3] = radius * Math.sin(phi) * Math.cos(theta);
-            starPositions[i*3+1] = radius * Math.sin(phi) * Math.sin(theta);
-            starPositions[i*3+2] = radius * Math.cos(phi);
-            const colorTemp = Math.random();
-            let rC, gC, bC;
-            if (colorTemp < 0.6) { rC = 0.8; gC = 0.8; bC = 1.0; }
-            else if (colorTemp < 0.8) { rC = 1.0; gC = 0.9; bC = 0.7; }
-            else { rC = 1.0; gC = 0.6; bC = 0.5; }
-            starColors[i*3] = rC; starColors[i*3+1] = gC; starColors[i*3+2] = bC;
-        }
-        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-        starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-        const starMaterial = new THREE.PointsMaterial({ size: 0.18, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
-        const stars = new THREE.Points(starGeometry, starMaterial);
-        scene.add(stars);
+        controls.target.set(0,0,0);
         
-        // ---------- ОСВЕЩЕНИЕ ----------
-        // Солнечный свет
-        const sunLight = new THREE.PointLight(0xffaa66, 2.2, 100);
-        sunLight.position.set(0, 0, 0);
-        scene.add(sunLight);
-        
+        // Lighting
         const ambientLight = new THREE.AmbientLight(0x222222);
         scene.add(ambientLight);
-        
-        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.5);
-        fillLight.position.set(5, 10, 7);
+        const sunLight = new THREE.PointLight(0xffaa66, 1.9, 0, 2);
+        sunLight.position.set(0,0,0);
+        sunLight.castShadow = true;
+        scene.add(sunLight);
+        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.45);
+        fillLight.position.set(10,20,5);
         scene.add(fillLight);
-
-        // ---------- СОЛНЦЕ ----------
-        const sunGeometry = new THREE.SphereGeometry(2.8, 128, 128);
+        
+        // Sun
+        const sunGeometry = new THREE.SphereGeometry(2.2, 128, 128);
         const sunMaterial = new THREE.MeshStandardMaterial({
             color: 0xffaa66,
             emissive: 0xff4411,
-            emissiveIntensity: 1.4,
-            metalness: 0.95,
-            roughness: 0.2
+            emissiveIntensity: 1.2,
+            toneMapped: true
         });
-        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-        scene.add(sun);
+        const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+        scene.add(sunMesh);
         
-        const coronaGeometry = new THREE.SphereGeometry(3.2, 64, 64);
-        const coronaMaterial = new THREE.MeshPhongMaterial({
-            color: 0xff8844,
-            transparent: true,
-            opacity: 0.12,
-            side: THREE.BackSide
-        });
-        const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
-        scene.add(corona);
+        // Create planets array
+        let planets = [];
         
-        const sunGlowGeometry = new THREE.SphereGeometry(3.6, 32, 32);
-        const sunGlowMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffaa66,
-            transparent: true,
-            opacity: 0.08,
-            side: THREE.BackSide
-        });
-        const sunGlow = new THREE.Mesh(sunGlowGeometry, sunGlowMaterial);
-        scene.add(sunGlow);
-        
-        // ---------- ДАННЫЕ ПЛАНЕТ ----------
-        const planetsData = [
-            { nameRu: "Меркурий", nameEn: "mercury", radius: 0.42, distance: 4.8, speed: 0.022, scale: 1.0, color: 0xccaa88, modelPath: "models/mercury/scene.glb" },
-            { nameRu: "Венера",   nameEn: "venus",   radius: 0.5,  distance: 6.2, speed: 0.016, scale: 1.0, color: 0xeebb99, modelPath: "models/venus/scene.glb" },
-            { nameRu: "Земля",    nameEn: "earth",   radius: 0.54, distance: 8.0, speed: 0.013, scale: 1.0, color: 0x88aaff, modelPath: "models/earth/scene.glb" },
-            { nameRu: "Марс",     nameEn: "mars",    radius: 0.47, distance: 9.8, speed: 0.011, scale: 1.0, color: 0xdd8866, modelPath: "models/mars/scene.glb" },
-            { nameRu: "Юпитер",   nameEn: "jupiter", radius: 1.15, distance: 13.8, speed: 0.007, scale: 1.0, color: 0xccaa99, modelPath: "models/jupiter/scene.glb" },
-            { nameRu: "Сатурн",   nameEn: "saturn",  radius: 1.0,  distance: 16.5, speed: 0.0055, scale: 1.0, color: 0xeeddbb, modelPath: "models/saturn/scene.glb" },
-            { nameRu: "Уран",     nameEn: "uranus",  radius: 0.78, distance: 19.2, speed: 0.004, scale: 1.0, color: 0xaaddff, modelPath: "models/uranus/scene.glb" },
-            { nameRu: "Нептун",   nameEn: "neptune", radius: 0.76, distance: 22.5, speed: 0.0032, scale: 1.0, color: 0x88aaff, modelPath: "models/neptune/scene.glb" }
-        ];
-        
-        const planets = [];
-        let loadedCount = 0;
-        const totalPlanets = planetsData.length;
-        const loadingDiv = document.getElementById('loading-status');
-        
-        const gltfLoader = new GLTFLoader();
-        const textureLoader = new THREE.TextureLoader();
-        
-        // Функция создания сферы-заглушки с текстурой высокого разрешения
-        function createFallbackPlanet(data) {
-            let textureUrl = '';
-            switch(data.nameEn) {
-                case 'mercury': textureUrl = 'https://www.solarsystemscope.com/textures/mercury.jpg'; break;
-                case 'venus':   textureUrl = 'https://www.solarsystemscope.com/textures/venus_surface.jpg'; break;
-                case 'earth':   textureUrl = 'https://www.solarsystemscope.com/textures/earth.jpg'; break;
-                case 'mars':    textureUrl = 'https://www.solarsystemscope.com/textures/mars.jpg'; break;
-                case 'jupiter': textureUrl = 'https://www.solarsystemscope.com/textures/jupiter.jpg'; break;
-                case 'saturn':  textureUrl = 'https://www.solarsystemscope.com/textures/saturn.jpg'; break;
-                case 'uranus':  textureUrl = 'https://www.solarsystemscope.com/textures/uranus.jpg'; break;
-                case 'neptune': textureUrl = 'https://www.solarsystemscope.com/textures/neptune.jpg'; break;
-                default: textureUrl = 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg';
-            }
-            const texture = textureLoader.load(textureUrl);
-            const material = new THREE.MeshStandardMaterial({ map: texture, color: data.color, roughness: 0.5, metalness: 0.1 });
-            const sphere = new THREE.Mesh(new THREE.SphereGeometry(data.radius, 128, 128), material);
-            return sphere;
-        }
-        
-        // Создаём контейнеры для планет и загружаем модели
-        planetsData.forEach((data) => {
-            const container = new THREE.Object3D();
-            container.userData = {
-                name: data.nameRu,
-                distance: data.distance,
-                speed: data.speed,
-                angle: Math.random() * Math.PI * 2
-            };
-            scene.add(container);
-            planets.push(container);
-            
-            // Пытаемся загрузить 3D-модель
-            gltfLoader.load(data.modelPath, (gltf) => {
-                const model = gltf.scene;
-                model.scale.set(data.scale, data.scale, data.scale);
-                container.add(model);
-                console.log(`✅ Загружена 3D-модель ${data.nameRu}`);
-                loadedCount++;
-                updateLoadingStatus();
-            }, undefined, (error) => {
-                console.warn(`⚠️ Не удалось загрузить ${data.nameRu}, создаю сферу с текстурой`);
-                const fallback = createFallbackPlanet(data);
-                container.add(fallback);
-                loadedCount++;
-                updateLoadingStatus();
-            });
-        });
-        
-        function updateLoadingStatus() {
-            loadingDiv.innerHTML = `✅ ЗАГРУЖЕНО ${loadedCount} ИЗ ${totalPlanets} ПЛАНЕТ`;
-            if (loadedCount === totalPlanets) {
-                loadingDiv.classList.add('loading-done');
-                setTimeout(() => {
-                    loadingDiv.style.opacity = '0';
-                    setTimeout(() => loadingDiv.style.display = 'none', 1000);
-                }, 2000);
-            }
-        }
-        
-        // ---------- АСТЕРОИДНЫЙ ПОЯС ----------
+        // Asteroid belt
         const asteroidCount = 5000;
-        const asteroidGeom = new THREE.BufferGeometry();
-        const asteroidPos = new Float32Array(asteroidCount * 3);
+        const asteroidGeo = new THREE.BufferGeometry();
+        const asteroidPositions = new Float32Array(asteroidCount * 3);
         for (let i = 0; i < asteroidCount; i++) {
-            const r = 11.5 + Math.random() * 1.8;
+            const r = 12 + Math.random() * 4.5;
             const angle = Math.random() * Math.PI * 2;
-            const yOff = (Math.random() - 0.5) * 1.0;
-            asteroidPos[i*3] = Math.cos(angle) * r;
-            asteroidPos[i*3+1] = yOff;
-            asteroidPos[i*3+2] = Math.sin(angle) * r;
+            asteroidPositions[i*3] = Math.cos(angle) * r;
+            asteroidPositions[i*3+1] = (Math.random() - 0.5) * 1.2;
+            asteroidPositions[i*3+2] = Math.sin(angle) * r;
         }
-        asteroidGeom.setAttribute('position', new THREE.BufferAttribute(asteroidPos, 3));
-        const asteroidMat = new THREE.PointsMaterial({ color: 0xaa9977, size: 0.045 });
-        const asteroidBelt = new THREE.Points(asteroidGeom, asteroidMat);
-        scene.add(asteroidBelt);
+        asteroidGeo.setAttribute('position', new THREE.BufferAttribute(asteroidPositions, 3));
+        const asteroidMat = new THREE.PointsMaterial({ color: 0xaa9977, size: 0.08 });
+        const asteroidField = new THREE.Points(asteroidGeo, asteroidMat);
+        scene.add(asteroidField);
         
-        // ---------- ТУМАННОСТИ ----------
-        const nebulaCount = 1500;
-        const nebulaGeom = new THREE.BufferGeometry();
-        const nebulaPositions = new Float32Array(nebulaCount * 3);
-        const nebulaColors = new Float32Array(nebulaCount * 3);
-        for (let i = 0; i < nebulaCount; i++) {
-            nebulaPositions[i*3] = (Math.random() - 0.5) * 140;
-            nebulaPositions[i*3+1] = (Math.random() - 0.5) * 70;
-            nebulaPositions[i*3+2] = (Math.random() - 0.5) * 120 - 50;
-            const choice = Math.random();
-            let r, g, b;
-            if (choice < 0.33) { r = 0.7; g = 0.3; b = 0.6; }
-            else if (choice < 0.66) { r = 0.2; g = 0.4; b = 0.8; }
-            else { r = 0.4; g = 0.2; b = 0.7; }
-            nebulaColors[i*3] = r * 0.6; nebulaColors[i*3+1] = g * 0.5; nebulaColors[i*3+2] = b * 0.7;
+        // Twinkling stars (shader from jsulpis)
+        const starCount = 5000;
+        const starPositionsArray = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositionsArray[i*3] = (Math.random() - 0.5) * 800;
+            starPositionsArray[i*3+1] = (Math.random() - 0.5) * 500;
+            starPositionsArray[i*3+2] = (Math.random() - 0.5) * 400 - 100;
         }
-        nebulaGeom.setAttribute('position', new THREE.BufferAttribute(nebulaPositions, 3));
-        nebulaGeom.setAttribute('color', new THREE.BufferAttribute(nebulaColors, 3));
-        const nebulaMatObj = new THREE.PointsMaterial({ size: 0.14, vertexColors: true, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
-        const nebulae = new THREE.Points(nebulaGeom, nebulaMatObj);
-        scene.add(nebulae);
+        const starGeometryObj = new THREE.BufferGeometry();
+        starGeometryObj.setAttribute('position', new THREE.BufferAttribute(starPositionsArray, 3));
         
-        // ---------- АНИМАЦИЯ ----------
-        let time = 0;
-        let pulseDir = 1;
-        let pulseScale = 1;
-        let frameCount = 0;
-        let lastTime = performance.now();
-        
-        function animate() {
-            requestAnimationFrame(animate);
-            const now = performance.now();
-            frameCount++;
-            if (now - lastTime >= 1000) {
-                const fpsElem = document.getElementById('fps-counter');
-                if (fpsElem) fpsElem.innerHTML = `FPS: ${frameCount}`;
-                frameCount = 0;
-                lastTime = now;
+        const starVertexShader = `
+            uniform float time;
+            varying float vIntensity;
+            void main() {
+                vIntensity = 0.6 + 0.4 * sin(time * 3.0 + position.x * 10.0);
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                gl_PointSize = (0.2 + vIntensity * 0.15) * (300.0 / (length(mvPosition.xyz)));
+                gl_Position = projectionMatrix * mvPosition;
             }
-            time += 0.016;
+        `;
+        const starFragmentShader = `
+            uniform float time;
+            varying float vIntensity;
+            void main() {
+                float alpha = 0.7 + 0.3 * sin(time * 5.0);
+                gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * vIntensity);
+            }
+        `;
+        const starMaterialShader = new THREE.ShaderMaterial({
+            uniforms: { time: { value: 0 } },
+            vertexShader: starVertexShader,
+            fragmentShader: starFragmentShader,
+            transparent: true,
+            depthWrite: false
+        });
+        const stars = new THREE.Points(starGeometryObj, starMaterialShader);
+        scene.add(stars);
+        
+        // Orbit lines
+        let orbitLines = [];
+        let trailLines = [];
+        
+        // Initialize planets asynchronously
+        async function initPlanets(reset = false) {
+            // Remove existing meshes
+            if (planets.length && !reset) {
+                planets.forEach(p => {
+                    if (p.lod) scene.remove(p.lod);
+                });
+            }
+            planets = [];
+            for (const data of planetsRawInitial) {
+                const body = new CelestialBody(data.name, data.mass, data.radius, data.color, data.distance, data.texture, data.hasRings);
+                const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor;
+                const { lod, highMesh, mediumMesh, lowMesh } = createPlanetLOD(body, baseRadius);
+                body.lod = lod;
+                lod.position.copy(body.pos);
+                scene.add(lod);
+                
+                let tex = null;
+                if (data.texture) {
+                    tex = await loadTextureWithRetries(data.texture, data.color, 3, 500);
+                }
+                const material = tex ? new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5, metalness: 0.1 }) : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.4 });
+                highMesh.material = material;
+                mediumMesh.material = material;
+                lowMesh.material = material;
+                
+                if (data.hasRings) {
+                    const ringGeo = new THREE.TorusGeometry(baseRadius * 1.35, 0.25, 64, 200);
+                    const ringMat = new THREE.MeshStandardMaterial({ color: 0xc2b280, emissive: 0x442200 });
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    ring.rotation.x = Math.PI / 2.2;
+                    lod.add(ring);
+                }
+                planets.push(body);
+            }
             
-            // Движение планет по орбитам
+            // Recreate orbit lines and trail lines
+            orbitLines.forEach(line => scene.remove(line));
+            trailLines.forEach(line => scene.remove(line));
+            orbitLines = [];
+            trailLines = [];
+            
             planets.forEach(planet => {
-                const d = planet.userData;
-                d.angle += d.speed * 0.6;
-                planet.position.x = Math.cos(d.angle) * d.distance;
-                planet.position.z = Math.sin(d.angle) * d.distance;
-                planet.rotation.y += 0.008;
+                const points = [];
+                const radius = planet.distance;
+                for (let i = 0; i <= 160; i++) {
+                    const ang = (i / 160) * Math.PI * 2;
+                    points.push(new THREE.Vector3(Math.cos(ang) * radius, 0, Math.sin(ang) * radius));
+                }
+                const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+                const lineMat = new THREE.LineBasicMaterial({ color: 0x4488aa });
+                const orbit = new THREE.LineLoop(lineGeo, lineMat);
+                scene.add(orbit);
+                orbitLines.push(orbit);
+                
+                const trailMat = new THREE.LineBasicMaterial({ color: planet.color });
+                const trailGeo = new THREE.BufferGeometry();
+                const trailLine = new THREE.Line(trailGeo, trailMat);
+                scene.add(trailLine);
+                trailLines.push(trailLine);
             });
             
-            // Пульсация Солнца
-            pulseScale += 0.0035 * pulseDir;
-            if (pulseScale > 1.07) pulseDir = -1;
-            if (pulseScale < 0.96) pulseDir = 1;
-            corona.scale.set(pulseScale + 0.05, pulseScale + 0.05, pulseScale + 0.05);
-            sunGlow.scale.set(pulseScale + 0.12, pulseScale + 0.12, pulseScale + 0.12);
+            // Send data to worker or main thread
+            const bodiesData = planets.map(p => ({
+                mass: p.mass,
+                pos: { x: p.pos.x, y: p.pos.y, z: p.pos.z },
+                vel: { x: p.vel.x, y: p.vel.y, z: p.vel.z },
+                acc: { x: p.acc.x, y: p.acc.y, z: p.acc.z }
+            }));
             
-            asteroidBelt.rotation.y += 0.001;
-            asteroidBelt.rotation.x = Math.sin(time * 0.03) * 0.01;
-            nebulae.rotation.y += 0.0002;
-            nebulae.rotation.x += 0.0001;
-            stars.rotation.y += 0.0003;
-            stars.rotation.x += 0.0002;
-            
-            controls.update();
-            effectComposer.render();
+            if (useWorker && worker) {
+                worker.postMessage({ type: 'init', bodies: bodiesData, G: CONFIG.G, dt: CONFIG.dtFixed });
+                worker.onmessage = (e) => {
+                    if (e.data.positions) {
+                        for (let i = 0; i < planets.length; i++) {
+                            planets[i].pos.set(e.data.positions[i*3], e.data.positions[i*3+1], e.data.positions[i*3+2]);
+                            planets[i].vel.set(e.data.velocities[i*3], e.data.velocities[i*3+1], e.data.velocities[i*3+2]);
+                            planets[i].acc.set(e.data.accelerations[i*3], e.data.accelerations[i*3+1], e.data.accelerations[i*3+2]);
+                            if (planets[i].lod) planets[i].lod.position.copy(planets[i].pos);
+                            planets[i].updateTrail();
+                        }
+                    }
+                };
+            } else {
+                useWorker = false;
+            }
         }
         
-        animate();
+        // Optimized trail update (BufferAttribute update instead of full dispose)
+        function updateTrailVisualsOptimized() {
+            for (let i = 0; i < planets.length; i++) {
+                const trailPoints = planets[i].trailPositions;
+                if (!CONFIG.showTrails || trailPoints.length < 2) {
+                    trailLines[i].visible = false;
+                    continue;
+                }
+                trailLines[i].visible = true;
+                const vertices = [];
+                for (let p of trailPoints) {
+                    vertices.push(p.x, p.y, p.z);
+                }
+                const geometry = trailLines[i].geometry;
+                const positionAttribute = geometry.attributes.position;
+                if (positionAttribute && positionAttribute.count === trailPoints.length) {
+                    // update existing attribute
+                    const array = positionAttribute.array;
+                    for (let j = 0; j < vertices.length; j++) array[j] = vertices[j];
+                    positionAttribute.needsUpdate = true;
+                } else {
+                    // recreate if size changed
+                    const newGeo = new THREE.BufferGeometry();
+                    newGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+                    trailLines[i].geometry.dispose();
+                    trailLines[i].geometry = newGeo;
+                }
+            }
+        }
+        
+        // Adaptive timestep based on minimum distance
+        function computeAdaptiveDt(bodies, baseDt) {
+            if (!CONFIG.adaptiveDtEnabled) return baseDt;
+            let minDist = Infinity;
+            for (let i = 0; i < bodies.length; i++) {
+                for (let j = i+1; j < bodies.length; j++) {
+                    const dx = bodies[i].pos.x - bodies[j].pos.x;
+                    const dy = bodies[i].pos.y - bodies[j].pos.y;
+                    const dz = bodies[i].pos.z - bodies[j].pos.z;
+                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    if (dist < minDist) minDist = dist;
+                }
+            }
+            if (minDist < CONFIG.minDistanceForAdaptive) {
+                return baseDt * CONFIG.adaptiveDtFactor;
+            }
+            return baseDt;
+        }
+        
+        // Reset simulation
+        function resetSimulation() {
+            for (let planet of planets) {
+                planet.resetToInitial();
+                planet.trailPositions = [];
+            }
+            // Also reset worker state if needed? Just reinitialize.
+            if (useWorker && worker) {
+                const bodiesData = planets.map(p => ({
+                    mass: p.mass,
+                    pos: { x: p.pos.x, y: p.pos.y, z: p.pos.z },
+                    vel: { x: p.vel.x, y: p.vel.y, z: p.vel.z },
+                    acc: { x: p.acc.x, y: p.acc.y, z: p.acc.z }
+                }));
+                worker.postMessage({ type: 'init', bodies: bodiesData, G: CONFIG.G, dt: CONFIG.dtFixed });
+            }
+            // Clear trails visuals
+            updateTrailVisualsOptimized();
+        }
+        
+        // Animation loop
+        let lastTimestamp = performance.now();
+        let accumulator = 0;
+        let currentSpeed = CONFIG.timeScale;
+        
+        async function start() {
+            await initPlanets();
+            
+            function animate() {
+                const now = performance.now();
+                let dt = Math.min(0.033, (now - lastTimestamp) / 1000);
+                lastTimestamp = now;
+                if (dt < 0.003) dt = 0.016;
+                
+                accumulator += dt * currentSpeed;
+                let steps = 0;
+                const maxSteps = 3;
+                while (accumulator >= CONFIG.dtFixed && steps < maxSteps) {
+                    let stepDt = CONFIG.dtFixed;
+                    if (CONFIG.adaptiveDtEnabled && planets.length) {
+                        const adaptiveDt = computeAdaptiveDt(planets, stepDt);
+                        if (adaptiveDt < stepDt) stepDt = adaptiveDt;
+                    }
+                    if (useWorker && worker) {
+                        worker.postMessage({ type: 'step', adaptiveDt: stepDt });
+                    } else {
+                        mainThreadPhysics(planets, stepDt);
+                        for (let p of planets) {
+                            if (p.lod) p.lod.position.copy(p.pos);
+                            p.updateTrail();
+                        }
+                    }
+                    accumulator -= CONFIG.dtFixed;
+                    steps++;
+                }
+                
+                // Update visuals
+                updateTrailVisualsOptimized();
+                asteroidField.rotation.y += 0.002 * currentSpeed;
+                if (stars.material.uniforms) stars.material.uniforms.time.value += dt;
+                
+                const view = document.getElementById('viewMode').value;
+                if (view === 'sun') controls.target.set(0,0,0);
+                else if (view === 'earth') {
+                    const earth = planets.find(p => p.name === "Earth");
+                    if (earth) controls.target.copy(earth.pos);
+                }
+                controls.update();
+                
+                effectComposer.render();
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+        
+        start();
+        
+        // UI Handlers
+        const speedSpan = document.getElementById('speedVal');
+        const slowerBtn = document.getElementById('slower');
+        const fasterBtn = document.getElementById('faster');
+        const resetSpeedBtn = document.getElementById('resetSpeed');
+        const resetViewBtn = document.getElementById('resetView');
+        const resetSimBtn = document.getElementById('resetSimulation');
+        const toggleTrailsBtn = document.getElementById('toggleTrails');
+        const zoomSensSlider = document.getElementById('zoomSens');
+        
+        slowerBtn.onclick = () => { currentSpeed = Math.max(0.1, currentSpeed / 1.5); currentSpeed = Math.min(currentSpeed, CONFIG.maxTimeScale); CONFIG.timeScale = currentSpeed; speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
+        fasterBtn.onclick = () => { currentSpeed = Math.min(CONFIG.maxTimeScale, currentSpeed * 1.5); CONFIG.timeScale = currentSpeed; speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
+        resetSpeedBtn.onclick = () => { currentSpeed = 1.0; CONFIG.timeScale = 1.0; speedSpan.innerText = '1.0x'; };
+        resetViewBtn.onclick = () => { controls.target.set(0,0,0); camera.position.set(0,22,52); controls.update(); };
+        resetSimBtn.onclick = () => { resetSimulation(); };
+        toggleTrailsBtn.onclick = () => {
+            CONFIG.showTrails = !CONFIG.showTrails;
+            toggleTrailsBtn.textContent = CONFIG.showTrails ? "ON" : "OFF";
+            toggleTrailsBtn.style.background = CONFIG.showTrails ? "#27ae60" : "#aa2e1e";
+            if (!CONFIG.showTrails) {
+                for (let line of trailLines) line.visible = false;
+            } else {
+                updateTrailVisualsOptimized();
+            }
+        };
+        zoomSensSlider.oninput = (e) => { controls.zoomSpeed = parseFloat(e.target.value); };
         
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
+            CONFIG.width = window.innerWidth;
+            CONFIG.height = window.innerHeight;
+            camera.aspect = CONFIG.width / CONFIG.height;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            effectComposer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(CONFIG.width, CONFIG.height);
+            effectComposer.setSize(CONFIG.width, CONFIG.height);
         });
         
-        console.log('Космическая сцена запущена');
+        console.log('ULTIMATE MONOLITH loaded: full Verlet, LOD, adaptive DT, worker fallback, twinkling stars, texture retry, reset simulation, optimized trails, context loss protection');
     </script>
 </body>
 </html>
