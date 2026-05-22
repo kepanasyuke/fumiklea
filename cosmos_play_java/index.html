@@ -3,75 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Solar System Ultimate | 40+ New Bodies | Real Star Catalog | Nebula | Comets | Dwarf Planets</title>
+    <title>Солнечная система | Реальные галактики OpenNGC + звёзды HYG | Исправленный фокус</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; background-color: black; }
         #info {
             position: absolute; top: 20px; left: 20px; color: white;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
-            padding: 12px 24px; border-radius: 12px; pointer-events: none;
-            z-index: 10; font-size: 14px; border-left: 4px solid #ffaa44;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+            padding: 8px 16px; border-radius: 8px; pointer-events: none;
+            z-index: 10; font-size: 12px; border-left: 3px solid #ffaa44;
+            font-family: monospace;
         }
         #controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-            padding: 15px 25px; border-radius: 16px; color: white;
-            display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            padding: 10px 20px; border-radius: 40px; color: white;
+            display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between;
             align-items: center; z-index: 20; font-family: monospace;
-            font-size: 14px; pointer-events: auto; border-top: 1px solid #ffaa44;
+            font-size: 13px; pointer-events: auto; border-top: 1px solid #ffaa44;
         }
-        .ctrl-group { display: flex; gap: 12px; background: rgba(30,30,40,0.7);
-            padding: 8px 16px; border-radius: 40px; align-items: center; }
-        button { background: #2c3e50; border: none; color: white; padding: 6px 16px;
+        .ctrl-group { display: flex; gap: 10px; background: rgba(30,30,40,0.6);
+            padding: 6px 14px; border-radius: 40px; align-items: center; }
+        button { background: #2c3e50; border: none; color: white; padding: 5px 14px;
             border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: bold; }
         button:hover { background: #e67e22; transform: scale(1.02); }
         select { background: #1e2a36; color: white; border: 1px solid #e67e22;
-            padding: 6px 12px; border-radius: 30px; cursor: pointer; }
-        input[type="range"] { width: 140px; cursor: pointer; background: #e67e22;
+            padding: 5px 12px; border-radius: 30px; cursor: pointer; max-width: 260px; }
+        input[type="range"] { width: 130px; cursor: pointer; background: #e67e22;
             height: 3px; border-radius: 3px; }
         .gui-wrapper { position: absolute; top: 20px; right: 20px; z-index: 30; }
-        @media (max-width: 800px) { #controls { flex-direction: column; align-items: stretch; gap: 8px; }
+        @media (max-width: 800px) { #controls { flex-direction: column; align-items: stretch; gap: 8px; border-radius: 16px; }
             .ctrl-group { justify-content: space-between; } .gui-wrapper { display: none; } }
+        #loading {
+            position: absolute; bottom: 50px; left: 20px; color: #ffaa66;
+            background: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 20px;
+            font-size: 11px; font-family: monospace; z-index: 15; pointer-events: none;
+        }
     </style>
 </head>
 <body>
 <div id="info">
-    <strong>ULTIMATE SOLAR SYSTEM | Keplerian Orbits + 40+ New Bodies + Real Star Catalog + Nebula + Comets</strong><br>
-    Dwarf planets | Large moons | 20k asteroids | 100k stars | Dynamic origin | Logarithmic depth
+    <strong>СОЛНЕЧНАЯ СИСТЕМА | РЕАЛЬНЫЕ ГАЛАКТИКИ (OpenNGC) + ЗВЁЗДЫ HYG</strong><br>
+    Фиксированная сфера | Фокус на любую галактику | Оптимизировано
 </div>
 <div id="controls">
     <div class="ctrl-group">
-        <span>SPEED:</span>
+        <span>СКОРОСТЬ:</span>
         <button id="slower">−</button>
         <span id="speedVal">1.0x</span>
         <button id="faster">+</button>
-        <button id="resetSpeed" style="background:#aa2e1e;">RESET</button>
+        <button id="resetSpeed" style="background:#aa2e1e;">СБРОС</button>
+    </div>
+    <div class="ctrl-group" id="focusGroup">
+        <span>ЦЕЛЬ:</span>
+        <select id="targetSelect"></select>
+        <button id="resetView">СБРОС КАМЕРЫ</button>
+        <button id="resetSimulation" style="background:#e67e22;">СБРОС СИМУЛЯЦИИ</button>
     </div>
     <div class="ctrl-group">
-        <span>CAMERA:</span>
-        <select id="viewMode">
-            <option value="free">Free Orbit</option>
-            <option value="sun">Follow Sun</option>
-            <option value="earth">Follow Earth</option>
-        </select>
-        <button id="resetView">RESET VIEW</button>
-        <button id="resetSimulation" style="background:#e67e22;">RESET SIMULATION</button>
+        <span>СЛЕДЫ:</span>
+        <button id="toggleTrails" style="background:#27ae60;">ВКЛ</button>
     </div>
     <div class="ctrl-group">
-        <span>TRAILS:</span>
-        <button id="toggleTrails" style="background:#27ae60;">ON</button>
-    </div>
-    <div class="ctrl-group">
-        <span>ZOOM SENS.</span>
-        <input type="range" id="zoomSens" min="0.5" max="2.0" step="0.01" value="1.0">
+        <span>ЧУВСТВ. ЗУМА:</span>
+        <input type="range" id="zoomSens" min="0.3" max="2.0" step="0.01" value="1.0">
     </div>
 </div>
 <div class="gui-wrapper" id="gui-wrapper"></div>
+<div id="loading">Загрузка каталогов...</div>
 
 <script type="importmap">
-    { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                   "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/",
-                   "lil-gui": "https://unpkg.com/lil-gui@0.16.0/dist/lil-gui.esm.min.js" } }
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/",
+            "lil-gui": "https://unpkg.com/lil-gui@0.16.0/dist/lil-gui.esm.min.js"
+        }
+    }
 </script>
 
 <script type="module">
@@ -80,102 +87,85 @@
     import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
     import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
     import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
     import GUI from 'lil-gui';
 
-    // ========== КОНФИГУРАЦИЯ ==========
+    // ========== БЛОК 1: ИМПОРТЫ, КОНФИГУРАЦИЯ, ДАННЫЕ НЕБЕСНЫХ ТЕЛ ==========
     const CONFIG = {
         width: window.innerWidth, height: window.innerHeight, bgColor: 0x030318,
-        bloomStrength: 1.2, bloomRadius: 0.6, bloomThreshold: 0.25,
-        G: 0.8, dtFixed: 0.016, timeScale: 1.0, maxTimeScale: 4.0,
-        trailLength: 400, showTrails: true, planetScaleFactor: 0.06, distanceScale: 1.2,
+        bloomStrength: 0.85, bloomRadius: 0.6, bloomThreshold: 0.35,
+        G: 0.8, softeningSq: 0.5, dtFixed: 0.01, timeScale: 1.0, maxTimeScale: 4.0,
+        trailLength: 250, showTrails: true, planetScaleFactor: 0.07, distanceScale: 1.2,
         zoomSensitivity: 1.0, adaptiveDtEnabled: true,
-        minDistanceForAdaptive: 2.0, adaptiveDtFactor: 0.5,
-        softeningSq: 0.5, maxSpeed: 50.0,
         quality: 'balanced',
-        useLogarithmicDepth: true,
-        useDynamicOrigin: true
+        useLogarithmicDepth: true, useDynamicOrigin: false,
+        showConstellationLabels: true, showStars: true, showDeepSky: true,
+        cameraFar: 5000
     };
 
-    // Настройки качества
     const qualitySettings = {
-        performance: { planetSegments: 32, shadowMapSize: 256, starCount: 20000, asteroidCount: 8000, bloomStrength: 0.5, dustParticles: 2000 },
-        balanced:   { planetSegments: 48, shadowMapSize: 512, starCount: 50000, asteroidCount: 15000, bloomStrength: 1.0, dustParticles: 5000 },
-        quality:    { planetSegments: 64, shadowMapSize: 1024, starCount: 80000, asteroidCount: 25000, bloomStrength: 1.2, dustParticles: 8000 },
-        cinematic:  { planetSegments: 128, shadowMapSize: 2048, starCount: 120000, asteroidCount: 40000, bloomStrength: 1.5, dustParticles: 12000 }
+        performance: { planetSegments: 32, shadowMapSize: 256, asteroidCount: 5000, bloomStrength: 0.5, dustParticles: 2000, starCount: 8000, galaxyCount: 80 },
+        balanced:   { planetSegments: 48, shadowMapSize: 512, asteroidCount: 10000, bloomStrength: 0.85, dustParticles: 5000, starCount: 15000, galaxyCount: 150 },
+        quality:    { planetSegments: 64, shadowMapSize: 1024, asteroidCount: 20000, bloomStrength: 0.9, dustParticles: 8000, starCount: 30000, galaxyCount: 200 },
+        cinematic:  { planetSegments: 128, shadowMapSize: 2048, asteroidCount: 30000, bloomStrength: 1.0, dustParticles: 8000, starCount: 60000, galaxyCount: 250 }
     };
 
-    // ----- 1. Планеты (кеплеровы элементы) -----
     const planetsKepler = [
-        { name: "Mercury", mass: 0.055, radius: 0.38, color: 0xbc9a6c, a: 3.5, e: 0.2056, incl: 0.122, omega: 0.0, M0: 0.0, texture: null, hasRings: false, atmosphere: false },
-        { name: "Venus",   mass: 0.815, radius: 0.95, color: 0xe6b800, a: 5.2, e: 0.0068, incl: 0.059, omega: 0.0, M0: 1.2, texture: null, hasRings: false, atmosphere: true },
-        { name: "Earth",   mass: 1.0,   radius: 1.0,  color: 0x4c8cff, a: 7.0, e: 0.0167, incl: 0.0,   omega: 0.0, M0: 2.5, texture: "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg", hasRings: false, atmosphere: true },
-        { name: "Mars",    mass: 0.107, radius: 0.53, color: 0xc4553c, a: 9.0, e: 0.0934, incl: 0.032, omega: 0.0, M0: 3.1, texture: null, hasRings: false, atmosphere: false },
-        { name: "Jupiter", mass: 317.8, radius: 2.2,  color: 0xd8a27a, a: 15.5, e: 0.0489, incl: 0.022, omega: 0.0, M0: 0.5, texture: null, hasRings: false, atmosphere: false },
-        { name: "Saturn",  mass: 95.2,  radius: 1.9,  color: 0xf0d9b0, a: 19.0, e: 0.0565, incl: 0.043, omega: 0.0, M0: 1.8, texture: null, hasRings: true, atmosphere: false },
-        { name: "Uranus",  mass: 14.5,  radius: 1.6,  color: 0xb0e0e6, a: 24.0, e: 0.0457, incl: 0.046, omega: 0.0, M0: 2.2, texture: null, hasRings: false, atmosphere: false },
-        { name: "Neptune", mass: 17.1,  radius: 1.6,  color: 0x4a6eff, a: 29.5, e: 0.0113, incl: 0.030, omega: 0.0, M0: 3.0, texture: null, hasRings: false, atmosphere: false }
+        { name: "Меркурий", mass: 0.055, radius: 0.38, color: 0xbc9a6c, a: 3.5, e: 0.2056, incl: 0.122, omega: 0.0, M0: 0.0, rings: false, atmosphere: false },
+        { name: "Венера",   mass: 0.815, radius: 0.95, color: 0xe6b800, a: 5.2, e: 0.0068, incl: 0.059, omega: 0.0, M0: 1.2, rings: false, atmosphere: true },
+        { name: "Земля",    mass: 1.0,   radius: 1.0,  color: 0x4c8cff, a: 7.0, e: 0.0167, incl: 0.0,   omega: 0.0, M0: 2.5, rings: false, atmosphere: true },
+        { name: "Марс",     mass: 0.107, radius: 0.53, color: 0xc4553c, a: 9.0, e: 0.0934, incl: 0.032, omega: 0.0, M0: 3.1, rings: false, atmosphere: false },
+        { name: "Юпитер",   mass: 317.8, radius: 2.2,  color: 0xd8a27a, a: 15.5, e: 0.0489, incl: 0.022, omega: 0.0, M0: 0.5, rings: false, atmosphere: false },
+        { name: "Сатурн",   mass: 95.2,  radius: 1.9,  color: 0xf0d9b0, a: 19.0, e: 0.0565, incl: 0.043, omega: 0.0, M0: 1.8, rings: true,  atmosphere: false },
+        { name: "Уран",     mass: 14.5,  radius: 1.6,  color: 0xb0e0e6, a: 24.0, e: 0.0457, incl: 0.046, omega: 0.0, M0: 2.2, rings: false, atmosphere: false },
+        { name: "Нептун",   mass: 17.1,  radius: 1.6,  color: 0x4a6eff, a: 29.5, e: 0.0113, incl: 0.030, omega: 0.0, M0: 3.0, rings: false, atmosphere: false }
     ];
 
-    // ----- 2. Карликовые планеты и ТНО (транснептуновые объекты) -----
     const dwarfPlanetsData = [
-        { name: "Ceres",   mass: 0.00015, radius: 0.32, color: 0xaa9977, a: 2.77, e: 0.079, incl: 0.106, omega: 0.0, M0: 0.0 },
-        { name: "Pluto",   mass: 0.0022,  radius: 0.37, color: 0xccaa88, a: 39.48, e: 0.2488, incl: 0.322, omega: 0.0, M0: 1.5 },
-        { name: "Haumea",  mass: 0.0007,  radius: 0.31, color: 0xbbaa99, a: 43.22, e: 0.196, incl: 0.492, omega: 0.0, M0: 2.1 },
-        { name: "Makemake",mass: 0.0005,  radius: 0.30, color: 0xccbbaa, a: 45.48, e: 0.162, incl: 0.506, omega: 0.0, M0: 2.8 },
-        { name: "Eris",    mass: 0.0028,  radius: 0.38, color: 0xddccbb, a: 67.86, e: 0.442, incl: 0.771, omega: 0.0, M0: 3.5 }
+        { name: "Церера",   radius: 0.32, color: 0xaa9977, a: 2.77, e: 0.079, incl: 0.106, M0: 0.0 },
+        { name: "Плутон",   radius: 0.37, color: 0xccaa88, a: 39.48, e: 0.2488, incl: 0.322, M0: 1.5 },
+        { name: "Хаумеа",   radius: 0.31, color: 0xbbaa99, a: 43.22, e: 0.196, incl: 0.492, M0: 2.1 },
+        { name: "Макемаке", radius: 0.30, color: 0xccbbaa, a: 45.48, e: 0.162, incl: 0.506, M0: 2.8 },
+        { name: "Эрида",    radius: 0.38, color: 0xddccbb, a: 67.86, e: 0.442, incl: 0.771, M0: 3.5 }
     ];
 
-    // ----- 3. Крупные спутники (для Юпитера и Сатурна, пока как отдельные объекты с кеплеровыми орбитами вокруг планет) -----
-    // Для упрощения добавим их как независимые тела с очень малыми массами, вращающиеся вокруг Солнца, но на расстояниях планет.
-    // Более корректно было бы сделать иерархию, но для визуального эффекта достаточно.
-    const majorMoonsData = [
-        { name: "Io",       parent: "Jupiter", mass: 0.000015, radius: 0.25, color: 0xffaa66, a: 15.6, e: 0.004, incl: 0.04, M0: 0.1 },
-        { name: "Europa",   parent: "Jupiter", mass: 0.000014, radius: 0.24, color: 0xaaffcc, a: 15.7, e: 0.009, incl: 0.05, M0: 2.3 },
-        { name: "Ganymede", parent: "Jupiter", mass: 0.000025, radius: 0.28, color: 0xccaa99, a: 15.9, e: 0.002, incl: 0.03, M0: 3.7 },
-        { name: "Callisto", parent: "Jupiter", mass: 0.000018, radius: 0.27, color: 0xaa8866, a: 16.2, e: 0.007, incl: 0.06, M0: 4.2 },
-        { name: "Titan",    parent: "Saturn",  mass: 0.000022, radius: 0.29, color: 0xddbb99, a: 19.5, e: 0.029, incl: 0.03, M0: 0.8 },
-        { name: "Rhea",     parent: "Saturn",  mass: 0.000005, radius: 0.20, color: 0xccaa88, a: 19.3, e: 0.001, incl: 0.02, M0: 1.9 },
-        { name: "Iapetus",  parent: "Saturn",  mass: 0.000007, radius: 0.22, color: 0xaa8866, a: 19.8, e: 0.028, incl: 0.04, M0: 3.3 }
+    const moonsData = [
+        { name: "Ио",       radius: 0.25, color: 0xffaa66, a: 15.6, e: 0.004, incl: 0.04, M0: 0.1 },
+        { name: "Европа",   radius: 0.24, color: 0xaaffcc, a: 15.7, e: 0.009, incl: 0.05, M0: 2.3 },
+        { name: "Ганимед",  radius: 0.28, color: 0xccaa99, a: 15.9, e: 0.002, incl: 0.03, M0: 3.7 },
+        { name: "Каллисто", radius: 0.27, color: 0xaa8866, a: 16.2, e: 0.007, incl: 0.06, M0: 4.2 },
+        { name: "Титан",    radius: 0.29, color: 0xddbb99, a: 19.5, e: 0.029, incl: 0.03, M0: 0.8 },
+        { name: "Рея",      radius: 0.20, color: 0xccaa88, a: 19.3, e: 0.001, incl: 0.02, M0: 1.9 },
+        { name: "Япет",     radius: 0.22, color: 0xaa8866, a: 19.8, e: 0.028, incl: 0.04, M0: 3.3 }
     ];
 
-    // ----- 4. Кометы (уже были, расширим) -----
     const cometsData = [
-        { name: "Halley",   mass: 0.00001, radius: 0.18, color: 0xccaa88, a: 17.8, e: 0.967, incl: 0.322, M0: 0.0 },
-        { name: "Hale-Bopp",mass: 0.00002, radius: 0.22, color: 0xddbb99, a: 35.0, e: 0.995, incl: 0.5,   M0: 1.2 },
-        { name: "Encke",    mass: 0.000005,radius: 0.14, color: 0xaa8866, a: 2.2,  e: 0.847, incl: 0.1,   M0: 2.5 },
-        { name: "Tempel-1", mass: 0.000008,radius: 0.16, color: 0xbb9977, a: 3.1,  e: 0.519, incl: 0.17,  M0: 3.8 }
+        { name: "Галлея",    radius: 0.18, color: 0xccaa88, a: 17.8, e: 0.967, incl: 0.322, M0: 0.0, tail: true },
+        { name: "Хейла-Боппа", radius: 0.22, color: 0xddbb99, a: 35.0, e: 0.995, incl: 0.5,   M0: 1.2, tail: true },
+        { name: "Энке",      radius: 0.14, color: 0xaa8866, a: 2.2,  e: 0.847, incl: 0.1,   M0: 2.5, tail: true },
+        { name: "Темпеля-1", radius: 0.16, color: 0xbb9977, a: 3.1,  e: 0.519, incl: 0.17,  M0: 3.8, tail: true }
     ];
 
-    // ========== КЛАСС НЕБЕСНОГО ТЕЛА (КЕПЛЕРОВА ОРБИТА) ==========
-    class CelestialBody {
-        constructor(data) {
+    // ========== БЛОК 2: КЛАСС BODY, ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+    class Body {
+        constructor(data, scaleFactor = 1.0) {
             this.name = data.name;
-            this.mass = data.mass;
-            this.radiusVisual = data.radius;
+            this.radius = data.radius;
             this.color = data.color;
             this.a = data.a * CONFIG.distanceScale;
             this.e = data.e;
             this.incl = data.incl;
-            this.omega = data.omega || 0;
             this.M0 = data.M0 || 0;
-            this.simTime = 0;
             this.pos = new THREE.Vector3();
-            this.vel = new THREE.Vector3();
-            this.acc = new THREE.Vector3();
             this.mesh = null;
-            this.lod = null;
-            this.ring = null;
-            this.atmosphereMesh = null;
+            this.tailSystem = null;
+            this.hasTail = data.tail || false;
             this.trailPositions = [];
-            this.textureUrl = data.texture || null;
-            this.hasRings = data.hasRings || false;
-            this.atmosphere = data.atmosphere || false;
-            this.updateKeplerian(0);
+            this.scaleFactor = scaleFactor;
+            this.updatePosition(0);
             this.initialPos = this.pos.clone();
-            this.initialVel = this.vel.clone();
         }
-        
-        updateKeplerian(dt) {
+        updatePosition(dt) {
             const GM = 1000;
             const n = Math.sqrt(GM / Math.pow(this.a, 3));
             const M = this.M0 + n * dt;
@@ -183,85 +173,83 @@
             for (let i = 0; i < 6; i++) {
                 const delta = E - this.e * Math.sin(E) - M;
                 const der = 1 - this.e * Math.cos(E);
+                if (Math.abs(der) < 1e-8) break;
                 E -= delta / der;
             }
             const cosE = Math.cos(E);
             const sinE = Math.sin(E);
             const x0 = this.a * (cosE - this.e);
-            const y0 = this.a * Math.sqrt(1 - this.e*this.e) * sinE;
-            const cosOmega = Math.cos(this.omega);
-            const sinOmega = Math.sin(this.omega);
-            const x1 = x0 * cosOmega - y0 * sinOmega;
-            const y1 = x0 * sinOmega + y0 * cosOmega;
-            this.pos.set(x1, 0, y1);
-            const vx = -this.a * sinE / (1 - this.e*cosE) * n * this.a;
-            const vy = this.a * Math.sqrt(1-this.e*this.e) * cosE / (1 - this.e*cosE) * n * this.a;
-            this.vel.set(vx, 0, vy);
+            const y0 = this.a * Math.sqrt(1 - this.e * this.e) * sinE;
+            this.pos.set(x0, 0, y0);
         }
-        
-        resetToInitial() {
-            this.updateKeplerian(0);
-            this.trailPositions = [];
-            if (this.lod) this.lod.position.copy(this.pos);
-        }
-        
-        updateTrail() {
-            if (!CONFIG.showTrails) return;
-            this.trailPositions.push(this.pos.clone());
-            while (this.trailPositions.length > CONFIG.trailLength) this.trailPositions.shift();
-        }
-    }
-
-    // Класс кометы с хвостом
-    class Comet extends CelestialBody {
-        constructor(data) {
-            super(data);
-            this.tailSystem = null;
-        }
-        createTail(scene) {
-            const count = 80;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(count*3);
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({ color: this.color, size: 0.06, transparent: true, opacity: 0.6 });
-            this.tailSystem = new THREE.Points(geometry, material);
-            scene.add(this.tailSystem);
+        createMesh(scene, segments) {
+            const geometry = new THREE.SphereGeometry(this.radius * CONFIG.planetScaleFactor * this.scaleFactor, segments, segments);
+            const material = new THREE.MeshStandardMaterial({ color: this.color, roughness: 0.5, metalness: 0.1 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(this.pos);
+            scene.add(mesh);
+            this.mesh = mesh;
+            if (this.hasTail) {
+                const tailCount = 80;
+                const tailGeom = new THREE.BufferGeometry();
+                const tailPos = new Float32Array(tailCount * 3);
+                tailGeom.setAttribute('position', new THREE.BufferAttribute(tailPos, 3));
+                const tailMat = new THREE.PointsMaterial({ color: this.color, size: 0.08, transparent: true, opacity: 0.6 });
+                this.tailSystem = new THREE.Points(tailGeom, tailMat);
+                scene.add(this.tailSystem);
+            }
         }
         updateTail() {
             if (!this.tailSystem) return;
             const positions = this.tailSystem.geometry.attributes.position.array;
             for (let i = positions.length - 3; i >= 3; i -= 3) {
-                positions[i] = positions[i-3];
-                positions[i+1] = positions[i-2];
-                positions[i+2] = positions[i-1];
+                positions[i] = positions[i - 3];
+                positions[i + 1] = positions[i - 2];
+                positions[i + 2] = positions[i - 1];
             }
             const dir = this.pos.clone().normalize().negate();
-            positions[0] = this.pos.x + dir.x * 0.5;
-            positions[1] = this.pos.y + dir.y * 0.5;
-            positions[2] = this.pos.z + dir.z * 0.5;
+            positions[0] = this.pos.x + dir.x * 0.6;
+            positions[1] = this.pos.y + dir.y * 0.6;
+            positions[2] = this.pos.z + dir.z * 0.6;
             this.tailSystem.geometry.attributes.position.needsUpdate = true;
+        }
+        updateTrail() {
+            if (!CONFIG.showTrails) return;
+            this.trailPositions.push(this.pos.clone());
+            while (this.trailPositions.length > CONFIG.trailLength) this.trailPositions.shift();
+        }
+        reset() {
+            this.updatePosition(0);
+            this.trailPositions = [];
+            if (this.mesh) this.mesh.position.copy(this.pos);
+            if (this.tailSystem) {
+                const posAttr = this.tailSystem.geometry.attributes.position;
+                for (let i = 0; i < posAttr.count; i++) posAttr.setXYZ(i, 0, 0, 0);
+                posAttr.needsUpdate = true;
+            }
         }
     }
 
-    // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
-    function loadTextureWithRetries(url, fallbackColor, retries = 3, delay = 500) {
-        return new Promise((resolve) => {
-            if (!url) { resolve(null); return; }
-            const loader = new THREE.TextureLoader();
-            const attempt = (remaining) => {
-                loader.load(url, (tex) => resolve(tex), (err) => {
-                    if (remaining > 0) setTimeout(() => attempt(remaining-1), delay);
-                    else { console.warn(`Texture ${url} failed`); resolve(null); }
-                });
-            };
-            attempt(retries);
-        });
+    async function loadTextureWithRetries(url, fallbackColor, retries = 3, delay = 500) {
+        if (!url) return null;
+        const loader = new THREE.TextureLoader();
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try { return await loader.loadAsync(url); }
+            catch (e) {
+                if (attempt === retries - 1) {
+                    console.warn(`Текстура ${url} не загружена`);
+                    return null;
+                }
+                await new Promise(r => setTimeout(r, delay));
+            }
+        }
+        return null;
     }
 
     function createPlanetLOD(body, baseRadius, segments) {
         const lod = new THREE.LOD();
         const highGeo = new THREE.SphereGeometry(baseRadius, segments, segments);
-        const mediumGeo = new THREE.SphereGeometry(baseRadius, Math.max(32, segments/2), Math.max(32, segments/2));
+        const mediumGeo = new THREE.SphereGeometry(baseRadius, Math.max(32, Math.floor(segments / 2)), Math.max(32, Math.floor(segments / 2)));
         const lowGeo = new THREE.SphereGeometry(baseRadius, 16, 16);
         const highMesh = new THREE.Mesh(highGeo, new THREE.MeshStandardMaterial({ color: body.color }));
         const mediumMesh = new THREE.Mesh(mediumGeo, new THREE.MeshStandardMaterial({ color: body.color }));
@@ -276,310 +264,343 @@
         const geometry = new THREE.SphereGeometry(radius * 1.02, 64, 64);
         const material = new THREE.ShaderMaterial({
             uniforms: { glowIntensity: { value: intensity } },
-            vertexShader: `varying vec3 vNormal; void main() { vNormal = normalize(normalMatrix * normal); gl_PointSize = 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `uniform float glowIntensity; varying vec3 vNormal; void main() { float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0); vec3 atmosphere = vec3(0.3, 0.6, 1.0) * intensity * glowIntensity; gl_FragColor = vec4(atmosphere, 0.8); }`,
-            transparent: true, side: THREE.BackSide
+            vertexShader: `
+                varying vec3 vNormal;
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    gl_PointSize = 1.0;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float glowIntensity;
+                varying vec3 vNormal;
+                void main() {
+                    float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+                    vec3 atmosphere = vec3(0.3, 0.6, 1.0) * intensity * glowIntensity;
+                    gl_FragColor = vec4(atmosphere, 0.8);
+                }
+            `,
+            transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending
         });
         return new THREE.Mesh(geometry, material);
     }
 
-    // ========== СЦЕНА, РЕНДЕРИНГ ==========
+    // ========== БЛОК 3: СЦЕНА, КАМЕРА, РЕНДЕРЕРЫ, ОСВЕЩЕНИЕ, ГРУППЫ ==========
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(CONFIG.bgColor);
     scene.fog = new THREE.FogExp2(CONFIG.bgColor, 0.0003);
-    
-    const camera = new THREE.PerspectiveCamera(45, CONFIG.width/CONFIG.height, 0.01, 2000);
+    const camera = new THREE.PerspectiveCamera(45, CONFIG.width / CONFIG.height, 0.1, CONFIG.cameraFar);
     camera.position.set(0, 22, 52);
-    
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: CONFIG.useLogarithmicDepth });
     renderer.setSize(CONFIG.width, CONFIG.height);
     renderer.shadowMap.enabled = true;
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
-    
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(CONFIG.width, CONFIG.height);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(labelRenderer.domElement);
     const effectComposer = new EffectComposer(renderer);
     effectComposer.addPass(new RenderPass(scene, camera));
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(CONFIG.width, CONFIG.height), CONFIG.bloomStrength, CONFIG.bloomRadius, CONFIG.bloomThreshold);
     effectComposer.addPass(bloomPass);
-    
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.zoomSpeed = CONFIG.zoomSensitivity;
-    controls.target.set(0,0,0);
-    
-    // Освещение
-    const ambientLight = new THREE.AmbientLight(0x222222);
-    scene.add(ambientLight);
+    controls.enableDamping = true; controls.dampingFactor = 0.06; controls.zoomSpeed = CONFIG.zoomSensitivity;
+    controls.minDistance = 0.5; controls.maxDistance = CONFIG.cameraFar;
+    controls.target.set(0, 0, 0);
+    const ambientLight = new THREE.AmbientLight(0x222222); scene.add(ambientLight);
     const sunLight = new THREE.PointLight(0xffaa66, 1.9, 0, 2);
-    sunLight.position.set(0,0,0);
+    sunLight.position.set(0, 0, 0);
     sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
     scene.add(sunLight);
     const fillLight = new THREE.DirectionalLight(0x88aaff, 0.45);
-    fillLight.position.set(10,20,5);
+    fillLight.position.set(10, 20, 5);
     scene.add(fillLight);
-    
-    // Солнце
-    const sunGeo = new THREE.SphereGeometry(2.2, 128, 128);
-    const sunMat = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4411, emissiveIntensity: 1.2 });
-    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    const sunGeometry = new THREE.SphereGeometry(2.2, 128, 128);
+    const sunMaterial = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4411, emissiveIntensity: 1.2, toneMapped: true });
+    const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sunMesh);
-    
-    let planets = [];
-    let dwarfPlanets = [];
-    let moons = [];
-    let comets = [];
-    let orbitLines = [], trailLines = [];
-    let asteroidField, asteroidField2, starsField, starsNearField, dustParticles;
-    
-    // ========== ГЕНЕРАЦИЯ МАССИВОВ ОБЪЕКТОВ ==========
-    async function initAllBodies() {
-        // 1. Планеты
-        for (const data of planetsKepler) {
-            const body = new CelestialBody(data);
-            const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor;
-            const segments = qualitySettings[CONFIG.quality].planetSegments;
-            const { lod, highMesh, mediumMesh, lowMesh } = createPlanetLOD(body, baseRadius, segments);
-            body.lod = lod;
-            lod.position.copy(body.pos);
-            scene.add(lod);
-            let tex = data.texture ? await loadTextureWithRetries(data.texture, data.color, 3, 500) : null;
-            const mat = tex ? new THREE.MeshStandardMaterial({ map: tex, roughness:0.5, metalness:0.1 }) : new THREE.MeshStandardMaterial({ color: data.color, roughness:0.4 });
-            highMesh.material = mat; mediumMesh.material = mat; lowMesh.material = mat;
-            if(data.hasRings) {
-                const ringGeo = new THREE.TorusGeometry(baseRadius*1.35, 0.25, 64, 200);
-                const ringMat = new THREE.MeshStandardMaterial({ color:0xc2b280, emissive:0x442200 });
-                const ring = new THREE.Mesh(ringGeo, ringMat);
-                ring.rotation.x = Math.PI/2.2;
-                lod.add(ring);
+
+    let planets = [], dwarfPlanets = [], moons = [], comets = [], orbitLines = [], trailLines = [];
+    let asteroidField = null, asteroidField2 = null, asteroidField3 = null, dustParticles = null, constellationLabels = [];
+    let deepSkyGroup = null, starsPoints = null, starsBufferGeometry = null;
+
+    // ========== БЛОК 4 (ИСПРАВЛЕННЫЙ): ЗАГРУЗКА ЗВЁЗД (HYG) И ГАЛАКТИК (OPENGNC) ==========
+    async function loadRealStars() {
+        if (starsPoints) scene.remove(starsPoints);
+        if (starsBufferGeometry) starsBufferGeometry.dispose();
+        const loadingDiv = document.getElementById('loading');
+        if (loadingDiv) loadingDiv.textContent = 'Загрузка звёзд...';
+        try {
+            const response = await fetch('https://cdn.jsdelivr.net/gh/spacejack/space3d@master/data/hygdata_v3.json');
+            if (!response.ok) throw new Error('HYG catalog not available');
+            const starsData = await response.json();
+            const maxStars = qualitySettings[CONFIG.quality].starCount;
+            const positions = [];
+            const colors = [];
+            for (let i = 0; i < starsData.length && positions.length / 3 < maxStars; i++) {
+                const star = starsData[i];
+                const mag = star.mag;
+                if (mag === undefined || mag > 6.5) continue;
+                if (!star.x || !star.y || !star.z) continue;
+                const scale = 2.5;
+                const x = star.x * scale, y = star.y * scale, z = star.z * scale;
+                const intensity = Math.max(0.3, 1.2 - (mag + 1.5) / 6);
+                let hue = 0.55;
+                if (star.ci !== undefined && !isNaN(star.ci)) {
+                    hue = 0.55 + star.ci * 0.15;
+                    hue = Math.min(0.65, Math.max(0.05, hue));
+                } else {
+                    hue = 0.55 + Math.random() * 0.15;
+                }
+                const color = new THREE.Color().setHSL(hue, 1.0, 0.5 + intensity * 0.3);
+                positions.push(x, y, z);
+                colors.push(color.r, color.g, color.b);
             }
-            if(data.atmosphere) {
-                const atmo = createAtmosphere(baseRadius, 0.4);
-                body.atmosphereMesh = atmo;
-                lod.add(atmo);
+            starsBufferGeometry = new THREE.BufferGeometry();
+            starsBufferGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+            starsBufferGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+            const material = new THREE.PointsMaterial({ size: 0.35, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending });
+            starsPoints = new THREE.Points(starsBufferGeometry, material);
+            starsPoints.frustumCulled = false;
+            scene.add(starsPoints);
+            console.log(`Звёзды: загружено ${positions.length / 3} шт.`);
+        } catch(e) { console.warn('HYG error', e); }
+        finally { if (loadingDiv) loadingDiv.textContent = 'Загрузка галактик...'; }
+    }
+
+    async function loadDeepSkyObjects() {
+        if (deepSkyGroup) {
+            scene.remove(deepSkyGroup);
+            deepSkyGroup.children.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            });
+        }
+        deepSkyGroup = new THREE.Group();
+        const targetSelect = document.getElementById('targetSelect');
+        // Сохраняем текущее выбранное значение
+        const currentValue = targetSelect ? targetSelect.value : null;
+        // Очищаем старые опции галактик (оставляем только Солнце и планеты/спутники/кометы)
+        const baseCount = 1 + planetsKepler.length + dwarfPlanetsData.length + moonsData.length + cometsData.length;
+        while (targetSelect.options.length > baseCount) {
+            targetSelect.remove(baseCount);
+        }
+        window.deepSpaceTargets = [];
+        const loadingDiv = document.getElementById('loading');
+        try {
+            const response = await fetch('https://raw.githubusercontent.com/mgckind/OpenNGC/master/OpenNGC.json');
+            if (!response.ok) throw new Error('OpenNGC not available');
+            const data = await response.json();
+            const DEEP_RADIUS = 900;
+            const maxGalaxies = qualitySettings[CONFIG.quality].galaxyCount;
+            let added = 0;
+            for (const obj of data) {
+                if (added >= maxGalaxies) break;
+                if (!obj.Type || !['Gx', 'Neb', 'Gb', 'Gc', 'Cl'].includes(obj.Type)) continue;
+                const ra = parseFloat(obj.RA);
+                const dec = parseFloat(obj.Dec);
+                if (isNaN(ra) || isNaN(dec)) continue;
+                const mag = parseFloat(obj.Mag);
+                if (!isNaN(mag) && mag > 13) continue;
+                const raRad = ra * Math.PI / 12;
+                const decRad = dec * Math.PI / 180;
+                const x = DEEP_RADIUS * Math.cos(decRad) * Math.cos(raRad);
+                const y = DEEP_RADIUS * Math.sin(decRad);
+                const z = DEEP_RADIUS * Math.cos(decRad) * Math.sin(raRad);
+                let size = 2.5;
+                if (!isNaN(mag)) size = Math.min(5.0, Math.max(1.2, (13 - mag) / 4));
+                let color, emissiveIntensity;
+                if (obj.Type === 'Gx') { color = 0xffccaa; emissiveIntensity = 0.7; }
+                else if (obj.Type === 'Neb') { color = 0x88aaff; emissiveIntensity = 0.5; }
+                else { color = 0xaaccff; emissiveIntensity = 0.4; }
+                if (!isNaN(mag)) emissiveIntensity = Math.min(1.2, Math.max(0.3, emissiveIntensity + (13 - mag) / 20));
+                const material = new THREE.MeshStandardMaterial({
+                    color, emissive: color, emissiveIntensity,
+                    transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending
+                });
+                const mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 24, 24), material);
+                mesh.position.set(x, y, z);
+                deepSkyGroup.add(mesh);
+                added++;
+                if (obj.Name && obj.Type === 'Gx') {
+                    const opt = document.createElement('option');
+                    opt.value = obj.Name;
+                    opt.textContent = obj.Name;
+                    targetSelect.appendChild(opt);
+                    window.deepSpaceTargets.push({ name: obj.Name, mesh: mesh });
+                }
+            }
+            console.log(`Deep Sky: загружено ${added} объектов`);
+        } catch(e) { console.warn('OpenNGC error', e); }
+        finally {
+            if (loadingDiv) {
+                loadingDiv.textContent = 'Готово';
+                setTimeout(() => {
+                    loadingDiv.style.opacity = '0';
+                    setTimeout(() => loadingDiv.style.display = 'none', 1000);
+                }, 2000);
+            }
+        }
+        deepSkyGroup.frustumCulled = false;
+        scene.add(deepSkyGroup);
+        // Восстанавливаем выбранное значение, если оно было и ещё существует
+        if (currentValue && targetSelect && [...targetSelect.options].some(opt => opt.value === currentValue)) {
+            targetSelect.value = currentValue;
+        }
+    }
+
+    // ========== БЛОК 5: ИНИЦИАЛИЗАЦИЯ ТЕЛ, ОРБИТ, ТРЕЙЛОВ, НАЗВАНИЙ СОЗВЕЗДИЙ ==========
+    function initBodies() {
+        const allOld = [...planets, ...dwarfPlanets, ...moons, ...comets];
+        allOld.forEach(obj => {
+            if (obj.mesh) scene.remove(obj.mesh);
+            if (obj.tailSystem) scene.remove(obj.tailSystem);
+            if (obj.lod) scene.remove(obj.lod);
+        });
+        planets = []; dwarfPlanets = []; moons = []; comets = [];
+        const segments = qualitySettings[CONFIG.quality].planetSegments;
+        planetsKepler.forEach(data => {
+            const body = new Body(data, 1.0);
+            body.createMesh(scene, segments);
+            if (data.rings) {
+                const ringGeo = new THREE.TorusGeometry(body.radius * CONFIG.planetScaleFactor * 1.35, 0.25, 64, 200);
+                const ringMat = new THREE.MeshStandardMaterial({ color: 0xc2b280 });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                body.mesh.add(ring);
+            }
+            if (data.atmosphere) {
+                const atmos = createAtmosphere(body.radius * CONFIG.planetScaleFactor, 0.4);
+                body.mesh.add(atmos);
             }
             planets.push(body);
-        }
-        
-        // 2. Карликовые планеты
-        for (const data of dwarfPlanetsData) {
-            const body = new CelestialBody(data);
-            const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor * 0.8;
-            const geometry = new THREE.SphereGeometry(baseRadius, 32, 32);
-            const material = new THREE.MeshStandardMaterial({ color: data.color, roughness:0.6 });
-            const mesh = new THREE.Mesh(geometry, material);
-            body.mesh = mesh;
-            mesh.position.copy(body.pos);
-            scene.add(mesh);
+        });
+        dwarfPlanetsData.forEach(data => {
+            const body = new Body({ ...data, mass: 0, a: data.a, e: data.e, incl: data.incl, M0: data.M0 }, 0.8);
+            body.createMesh(scene, 32);
             dwarfPlanets.push(body);
-        }
-        
-        // 3. Спутники (как отдельные тела)
-        for (const data of majorMoonsData) {
-            const body = new CelestialBody(data);
-            const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor * 0.6;
-            const geometry = new THREE.SphereGeometry(baseRadius, 24, 24);
-            const material = new THREE.MeshStandardMaterial({ color: data.color, roughness:0.5 });
-            const mesh = new THREE.Mesh(geometry, material);
-            body.mesh = mesh;
-            mesh.position.copy(body.pos);
-            scene.add(mesh);
+        });
+        moonsData.forEach(data => {
+            const body = new Body({ ...data, mass: 0, a: data.a, e: data.e, incl: data.incl, M0: data.M0 }, 0.6);
+            body.createMesh(scene, 24);
             moons.push(body);
-        }
-        
-        // 4. Кометы
-        for (const data of cometsData) {
-            const comet = new Comet(data);
-            const baseRadius = comet.radiusVisual * CONFIG.planetScaleFactor * 0.6;
-            const geometry = new THREE.SphereGeometry(baseRadius, 24, 24);
-            const material = new THREE.MeshStandardMaterial({ color: data.color, emissive: 0x442200 });
-            const mesh = new THREE.Mesh(geometry, material);
-            comet.mesh = mesh;
-            mesh.position.copy(comet.pos);
-            scene.add(mesh);
-            comet.createTail(scene);
-            comets.push(comet);
-        }
-        
-        // 5. Орбитальные линии для планет и карликовых планет
-        const allOrbitBodies = [...planets, ...dwarfPlanets];
-        allOrbitBodies.forEach(body => {
+        });
+        cometsData.forEach(data => {
+            const body = new Body({ ...data, mass: 0, a: data.a, e: data.e, incl: data.incl, M0: data.M0 }, 0.6);
+            body.createMesh(scene, 24);
+            body.hasTail = true;
+            comets.push(body);
+        });
+        const allBodies = [...planets, ...dwarfPlanets, ...moons, ...comets];
+        orbitLines.forEach(line => scene.remove(line));
+        orbitLines = [];
+        allBodies.forEach(body => {
             const points = [];
-            const a = body.a;
-            const e = body.e;
-            const steps = 200;
-            for (let i=0; i<=steps; i++) {
-                const theta = 2*Math.PI * i/steps;
-                const r = a * (1 - e*e) / (1 + e * Math.cos(theta));
-                const x = r * Math.cos(theta);
-                const z = r * Math.sin(theta);
-                points.push(new THREE.Vector3(x, 0, z));
+            const a = body.a, e = body.e;
+            for (let i = 0; i <= 200; i++) {
+                const theta = 2 * Math.PI * i / 200;
+                const r = a * (1 - e * e) / (1 + e * Math.cos(theta));
+                points.push(new THREE.Vector3(r * Math.cos(theta), 0, r * Math.sin(theta)));
             }
-            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-            const lineMat = new THREE.LineBasicMaterial({ color: 0x4488aa, polygonOffset: true, polygonOffsetFactor: 1 });
-            const orbit = new THREE.LineLoop(lineGeo, lineMat);
+            const orbit = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0x4488aa }));
             scene.add(orbit);
             orbitLines.push(orbit);
         });
-        
-        // Трейлы (только для планет, чтобы не перегружать)
+        trailLines.forEach(line => scene.remove(line));
+        trailLines = [];
         planets.forEach(planet => {
             const trailLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: planet.color }));
             scene.add(trailLine);
             trailLines.push(trailLine);
         });
     }
-    
-    // ========== АСТЕРОИДНЫЕ ПОЯСА (20 000+ частиц) ==========
-    function createAsteroidBelts(quality) {
-        if (asteroidField) scene.remove(asteroidField);
-        if (asteroidField2) scene.remove(asteroidField2);
-        const count = qualitySettings[quality].asteroidCount;
-        // Внутренний пояс (между Марсом и Юпитером)
-        const geo1 = new THREE.BufferGeometry();
-        const pos1 = new Float32Array(count * 3);
-        for (let i=0; i<count; i++) {
-            const r = 11 + Math.random() * 5;
-            const angle = Math.random() * Math.PI * 2;
-            const yOff = (Math.random() - 0.5) * 1.2;
-            pos1[i*3] = Math.cos(angle) * r;
-            pos1[i*3+1] = yOff;
-            pos1[i*3+2] = Math.sin(angle) * r;
-        }
-        geo1.setAttribute('position', new THREE.BufferAttribute(pos1,3));
-        asteroidField = new THREE.Points(geo1, new THREE.PointsMaterial({ color: 0xaa9977, size: 0.05 }));
-        scene.add(asteroidField);
-        
-        // Внешний пояс Койпера (разреженный)
-        const count2 = Math.floor(count * 0.7);
-        const geo2 = new THREE.BufferGeometry();
-        const pos2 = new Float32Array(count2 * 3);
-        for (let i=0; i<count2; i++) {
-            const r = 38 + Math.random() * 12;
-            const angle = Math.random() * Math.PI * 2;
-            const yOff = (Math.random() - 0.5) * 2.5;
-            pos2[i*3] = Math.cos(angle) * r;
-            pos2[i*3+1] = yOff;
-            pos2[i*3+2] = Math.sin(angle) * r;
-        }
-        geo2.setAttribute('position', new THREE.BufferAttribute(pos2,3));
-        asteroidField2 = new THREE.Points(geo2, new THREE.PointsMaterial({ color: 0x8866aa, size: 0.08 }));
-        scene.add(asteroidField2);
+
+    function addConstellationNames() {
+        constellationLabels.forEach(label => scene.remove(label));
+        constellationLabels = [];
+        const extraConstellations = [
+            { name: "Андромеда", pos: [-60, 20, -280], color: "#ffaa88" },
+            { name: "Водолей",   pos: [30, -10, -260], color: "#88aaff" },
+            { name: "Овен",      pos: [50, 15, -270], color: "#aaccff" },
+            { name: "Возничий",  pos: [70, 30, -290], color: "#ffccaa" },
+            { name: "Волопас",   pos: [10, 25, -250], color: "#ffddbb" },
+            { name: "Кассиопея", pos: [-30, 40, -300], color: "#ffdd99" },
+            { name: "Цефей",     pos: [-50, 35, -310], color: "#ffcc88" },
+            { name: "Лебедь",    pos: [-10, 30, -290], color: "#aaccff" },
+            { name: "Дракон",    pos: [-40, 45, -320], color: "#aaffaa" },
+            { name: "Близнецы",  pos: [45, 20, -280], color: "#aaffaa" },
+            { name: "Геркулес",  pos: [-5, 25, -285], color: "#ffccaa" },
+            { name: "Лев",       pos: [35, 15, -275], color: "#ffaa77" },
+            { name: "Лира",      pos: [-15, 35, -295], color: "#ffccaa" },
+            { name: "Змееносец", pos: [20, 10, -265], color: "#aaffcc" },
+            { name: "Орион",     pos: [55, -5, -270], color: "#ffaa66" },
+            { name: "Пегас",     pos: [-20, 15, -275], color: "#aaccff" },
+            { name: "Персей",    pos: [-10, 25, -290], color: "#ffdd99" },
+            { name: "Рыбы",      pos: [10, -5, -255], color: "#88ccff" },
+            { name: "Стрелец",   pos: [45, -25, -245], color: "#ffaa88" },
+            { name: "Скорпион",  pos: [60, -35, -240], color: "#ff8866" },
+            { name: "Телец",     pos: [50, 10, -275], color: "#ffcc99" },
+            { name: "Б. Медведица", pos: [-25, 30, -300], color: "#88aaff" },
+            { name: "Дева",      pos: [30, -5, -260], color: "#ffaa77" }
+        ];
+        extraConstellations.forEach(c => {
+            const div = document.createElement('div');
+            div.textContent = c.name;
+            div.style.color = c.color;
+            div.style.fontSize = '13px';
+            div.style.fontWeight = 'bold';
+            div.style.fontFamily = 'monospace';
+            div.style.textShadow = '0 0 3px black';
+            div.style.backgroundColor = 'transparent';
+            div.style.border = 'none';
+            div.style.padding = '0';
+            div.style.whiteSpace = 'nowrap';
+            const label = new CSS2DObject(div);
+            label.position.copy(c.pos);
+            scene.add(label);
+            constellationLabels.push(label);
+        });
     }
-    
-    // ========== ЗВЁЗДЫ: РЕАЛЬНЫЙ КАТАЛОГ (генерация 80k+ частиц с цветом) ==========
-    function createStarField(quality) {
-        if (starsField) scene.remove(starsField);
-        const count = qualitySettings[quality].starCount;
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(count * 3);
-        const colors = new Float32Array(count * 3);
-        // Имитация распределения звёзд на сфере (случайные направления, разные цвета)
-        for (let i=0; i<count; i++) {
-            // Сферические координаты
-            const radius = 500 + Math.random() * 300;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            const x = radius * Math.sin(phi) * Math.cos(theta);
-            const y = radius * Math.sin(phi) * Math.sin(theta);
-            const z = radius * Math.cos(phi);
-            positions[i*3] = x;
-            positions[i*3+1] = y;
-            positions[i*3+2] = z;
-            // Цвет от белого до красновато-голубого
-            const color = new THREE.Color().setHSL(0.05 + Math.random()*0.15, 0.8, 0.5 + Math.random()*0.4);
-            colors[i*3] = color.r;
-            colors[i*3+1] = color.g;
-            colors[i*3+2] = color.b;
-        }
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        const material = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.9 });
-        starsField = new THREE.Points(geometry, material);
-        scene.add(starsField);
-    }
-    
-    // ========== МЕРЦАЮЩИЕ БЛИЖНИЕ ЗВЁЗДЫ (дополнительный слой) ==========
-    function createNearStars(quality) {
-        if (starsNearField) scene.remove(starsNearField);
-        const count = Math.floor(qualitySettings[quality].starCount / 3);
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(count * 3);
-        for (let i=0; i<count; i++) {
-            positions[i*3] = (Math.random() - 0.5) * 400;
-            positions[i*3+1] = (Math.random() - 0.5) * 300;
-            positions[i*3+2] = (Math.random() - 0.5) * 200 - 50;
-        }
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const starVertex = `uniform float time; varying float vIntensity; void main() { vIntensity = 0.6+0.4*sin(time*3.0+position.x*10.0); vec4 mvPosition = modelViewMatrix*vec4(position,1.0); gl_PointSize = (0.2+vIntensity*0.15)*(300.0/length(mvPosition.xyz)); gl_Position = projectionMatrix*mvPosition; }`;
-        const starFragment = `uniform float time; varying float vIntensity; void main() { float alpha = 0.7+0.3*sin(time*5.0); gl_FragColor = vec4(1.0,1.0,1.0,alpha*vIntensity); }`;
-        const material = new THREE.ShaderMaterial({ uniforms: { time: { value:0 } }, vertexShader: starVertex, fragmentShader: starFragment, transparent: true, depthWrite: false });
-        starsNearField = new THREE.Points(geometry, material);
-        scene.add(starsNearField);
-    }
-    
-    // ========== КОСМИЧЕСКАЯ ПЫЛЬ ==========
-    function createDust(quality) {
-        if (dustParticles) scene.remove(dustParticles);
-        const count = qualitySettings[quality].dustParticles;
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(count * 3);
-        for (let i=0; i<count; i++) {
-            positions[i*3] = (Math.random() - 0.5) * 300;
-            positions[i*3+1] = (Math.random() - 0.5) * 300;
-            positions[i*3+2] = (Math.random() - 0.5) * 200 - 50;
-        }
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const material = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.03, transparent: true, opacity: 0.4 });
-        dustParticles = new THREE.Points(geometry, material);
-        scene.add(dustParticles);
-    }
-    
-    // ========== ТУМАННОСТИ И ГАЛАКТИКИ (Skybox + дополнительные сферы) ==========
-    function addNebulae() {
-        // Skybox с галактикой
-        const cubeTexLoader = new THREE.CubeTextureLoader();
-        cubeTexLoader.setPath('https://threejs.org/examples/textures/cube/SwedishRoyal/');
-        const skyboxTex = cubeTexLoader.load(['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg']);
-        scene.background = skyboxTex;
-        
-        // Дополнительная туманность – вращающаяся сфера с текстурой
-        const nebulaTex = new THREE.TextureLoader().load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'); // временно, позже заменить
-        const nebulaGeo = new THREE.SphereGeometry(550, 64, 64);
-        const nebulaMat = new THREE.MeshBasicMaterial({ map: nebulaTex, side: THREE.BackSide, transparent: true, opacity: 0.15 });
-        const nebulaSphere = new THREE.Mesh(nebulaGeo, nebulaMat);
-        scene.add(nebulaSphere);
-        // Сохраним для анимации
-        window.nebulaSphere = nebulaSphere;
-    }
-    
-    // ========== ОБНОВЛЕНИЕ ФИЗИКИ И ПОЗИЦИЙ ==========
-    let simTime = 0;
-    let currentSpeed = CONFIG.timeScale;
-    
+
+    // ========== БЛОК 6 (ИСПРАВЛЕННЫЙ): АНИМАЦИЯ, ФИЗИКА, АСТЕРОИДЫ, ПЫЛЬ, СБРОС, ФОКУС, ЗАПУСК ==========
+    let simTime = 0, currentSpeed = CONFIG.timeScale, showOrbits = true;
+    let lastTime = performance.now(), accumulator = 0, globalTime = 0;
+
     function updateAllPositions(dt) {
         simTime += dt * currentSpeed;
-        const bodies = [...planets, ...dwarfPlanets, ...moons, ...comets];
-        for (let body of bodies) {
-            body.updateKeplerian(simTime);
-            if (body.mesh) body.mesh.position.copy(body.pos);
-            if (body.lod) body.lod.position.copy(body.pos);
-            if (body.tailSystem) body.updateTail();
-            body.updateTrail();
+        const all = [...planets, ...dwarfPlanets, ...moons, ...comets];
+        for (let b of all) {
+            b.updatePosition(simTime);
+            if (b.mesh) b.mesh.position.copy(b.pos);
+            if (b.lod) b.lod.position.copy(b.pos);
+            if (b.tailSystem) b.updateTail();
+            b.updateTrail();
         }
     }
-    
+
     function updateTrailVisuals() {
-        for (let i=0; i<planets.length; i++) {
-            const points = planets[i].trailPositions;
-            if (!CONFIG.showTrails || points.length<2) { trailLines[i].visible = false; continue; }
+        for (let i = 0; i < planets.length; i++) {
+            const pts = planets[i].trailPositions;
+            if (!CONFIG.showTrails || pts.length < 2) {
+                if (trailLines[i]) trailLines[i].visible = false;
+                continue;
+            }
+            if (!trailLines[i]) continue;
             trailLines[i].visible = true;
-            const vertices = points.flatMap(p => [p.x, p.y, p.z]);
+            const vertices = [];
+            for (let p of pts) vertices.push(p.x, p.y, p.z);
             const geom = trailLines[i].geometry;
             const posAttr = geom.attributes.position;
-            if (posAttr && posAttr.count === points.length) {
+            if (posAttr && posAttr.count === pts.length) {
                 const arr = posAttr.array;
-                for (let j=0; j<vertices.length; j++) arr[j] = vertices[j];
+                for (let j = 0; j < vertices.length; j++) arr[j] = vertices[j];
                 posAttr.needsUpdate = true;
             } else {
                 const newGeo = new THREE.BufferGeometry();
@@ -589,18 +610,122 @@
             }
         }
     }
-    
+
     function resetSimulation() {
         simTime = 0;
         const all = [...planets, ...dwarfPlanets, ...moons, ...comets];
-        for (let b of all) b.resetToInitial();
-        for (let i=0; i<trailLines.length; i++) {
-            trailLines[i].geometry.dispose();
-            trailLines[i].geometry = new THREE.BufferGeometry();
+        for (let b of all) b.reset();
+        for (let i = 0; i < trailLines.length; i++) {
+            if (trailLines[i]) {
+                trailLines[i].geometry.dispose();
+                trailLines[i].geometry = new THREE.BufferGeometry();
+            }
         }
         updateTrailVisuals();
+        controls.target.set(0, 0, 0);
+        camera.position.set(0, 22, 52);
+        controls.update();
     }
-    
+
+    function focusOn(targetName) {
+        if (targetName === 'Солнце') {
+            controls.target.set(0, 0, 0);
+            camera.position.set(0, 22, 52);
+            controls.update();
+            return;
+        }
+        const allBodies = [...planets, ...dwarfPlanets, ...moons, ...comets];
+        let targetObj = allBodies.find(b => b.name === targetName);
+        let targetPosition = null;
+        if (targetObj) {
+            if (targetObj.mesh) targetPosition = targetObj.mesh.position;
+            else if (targetObj.pos) targetPosition = targetObj.pos;
+        }
+        if (!targetPosition && window.deepSpaceTargets) {
+            const ds = window.deepSpaceTargets.find(d => d.name === targetName);
+            if (ds && ds.mesh) {
+                targetPosition = ds.mesh.position;
+                targetObj = ds.mesh;
+            }
+        }
+        if (targetPosition) {
+            controls.target.copy(targetPosition);
+            const distance = Math.min(50, Math.max(15, targetPosition.length() * 0.25));
+            const dir = new THREE.Vector3(1, 1, 1).normalize();
+            camera.position.copy(targetPosition.clone().add(dir.multiplyScalar(distance)));
+            controls.update();
+        } else {
+            console.warn(`Объект "${targetName}" не найден или не имеет позиции`);
+        }
+    }
+
+    function createAsteroidBelts(quality) {
+        if (asteroidField) scene.remove(asteroidField);
+        if (asteroidField2) scene.remove(asteroidField2);
+        if (asteroidField3) scene.remove(asteroidField3);
+        const count = qualitySettings[quality].asteroidCount;
+        const geo1 = new THREE.BufferGeometry();
+        const pos1 = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+            const r = 11 + Math.random() * 5;
+            const angle = Math.random() * Math.PI * 2;
+            const yOff = (Math.random() - 0.5) * 1.2;
+            pos1[i * 3] = Math.cos(angle) * r;
+            pos1[i * 3 + 1] = yOff;
+            pos1[i * 3 + 2] = Math.sin(angle) * r;
+        }
+        geo1.setAttribute('position', new THREE.BufferAttribute(pos1, 3));
+        asteroidField = new THREE.Points(geo1, new THREE.PointsMaterial({ color: 0xaa9977, size: 0.05 }));
+        asteroidField.frustumCulled = false;
+        scene.add(asteroidField);
+        const count2 = Math.floor(count * 0.7);
+        const geo2 = new THREE.BufferGeometry();
+        const pos2 = new Float32Array(count2 * 3);
+        for (let i = 0; i < count2; i++) {
+            const r = 38 + Math.random() * 12;
+            const angle = Math.random() * Math.PI * 2;
+            const yOff = (Math.random() - 0.5) * 2.5;
+            pos2[i * 3] = Math.cos(angle) * r;
+            pos2[i * 3 + 1] = yOff;
+            pos2[i * 3 + 2] = Math.sin(angle) * r;
+        }
+        geo2.setAttribute('position', new THREE.BufferAttribute(pos2, 3));
+        asteroidField2 = new THREE.Points(geo2, new THREE.PointsMaterial({ color: 0x8866aa, size: 0.08 }));
+        asteroidField2.frustumCulled = false;
+        scene.add(asteroidField2);
+        const count3 = Math.floor(count * 0.4);
+        const geo3 = new THREE.BufferGeometry();
+        const pos3 = new Float32Array(count3 * 3);
+        for (let i = 0; i < count3; i++) {
+            const r = 150 + Math.random() * 50;
+            const angle = Math.random() * Math.PI * 2;
+            const yOff = (Math.random() - 0.5) * 15;
+            pos3[i * 3] = Math.cos(angle) * r;
+            pos3[i * 3 + 1] = yOff;
+            pos3[i * 3 + 2] = Math.sin(angle) * r;
+        }
+        geo3.setAttribute('position', new THREE.BufferAttribute(pos3, 3));
+        asteroidField3 = new THREE.Points(geo3, new THREE.PointsMaterial({ color: 0x6688aa, size: 0.12 }));
+        asteroidField3.frustumCulled = false;
+        scene.add(asteroidField3);
+    }
+
+    function createDust(quality) {
+        if (dustParticles) scene.remove(dustParticles);
+        const count = qualitySettings[quality].dustParticles;
+        const geom = new THREE.BufferGeometry();
+        const pos = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+            pos[i * 3] = (Math.random() - 0.5) * 300;
+            pos[i * 3 + 1] = (Math.random() - 0.5) * 300;
+            pos[i * 3 + 2] = (Math.random() - 0.5) * 200 - 50;
+        }
+        geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        dustParticles = new THREE.Points(geom, new THREE.PointsMaterial({ color: 0x88aaff, size: 0.03, transparent: true, opacity: 0.4 }));
+        dustParticles.frustumCulled = false;
+        scene.add(dustParticles);
+    }
+
     function applyQuality(level) {
         CONFIG.quality = level;
         const q = qualitySettings[level];
@@ -608,136 +733,164 @@
         renderer.shadowMap.mapSize.width = q.shadowMapSize;
         renderer.shadowMap.mapSize.height = q.shadowMapSize;
         createAsteroidBelts(level);
-        createStarField(level);
-        createNearStars(level);
         createDust(level);
     }
-    
-    // ========== ДИНАМИЧЕСКИЙ ORIGIN (устранение дрожания) ==========
-    let originShift = new THREE.Vector3();
-    function updateDynamicOrigin() {
-        if (!CONFIG.useDynamicOrigin) {
-            originShift.set(0,0,0);
-            return;
-        }
-        const view = document.getElementById('viewMode').value;
-        let target = null;
-        if (view === 'sun') target = { pos: new THREE.Vector3(0,0,0) };
-        else if (view === 'earth') target = planets.find(p => p.name === "Earth");
-        if (target) {
-            originShift.copy(target.pos);
-            controls.target.copy(originShift);
-        } else {
-            originShift.set(0,0,0);
-        }
-    }
-    
-    function applyOriginShift() {
-        const allMeshes = [
-            ...planets.map(p => p.lod || p.mesh),
-            ...dwarfPlanets.map(p => p.mesh),
-            ...moons.map(m => m.mesh),
-            ...comets.map(c => c.mesh),
-            sunMesh,
-            ...orbitLines,
-            ...trailLines,
-            asteroidField, asteroidField2, starsField, starsNearField, dustParticles
-        ].filter(x => x);
-        for (let obj of allMeshes) obj.position.sub(originShift);
-        if (window.nebulaSphere) window.nebulaSphere.position.sub(originShift);
-    }
-    
-    function revertOriginShift() {
-        const allMeshes = [
-            ...planets.map(p => p.lod || p.mesh),
-            ...dwarfPlanets.map(p => p.mesh),
-            ...moons.map(m => m.mesh),
-            ...comets.map(c => c.mesh),
-            sunMesh,
-            ...orbitLines,
-            ...trailLines,
-            asteroidField, asteroidField2, starsField, starsNearField, dustParticles
-        ].filter(x => x);
-        for (let obj of allMeshes) obj.position.add(originShift);
-        if (window.nebulaSphere) window.nebulaSphere.position.add(originShift);
-    }
-    
-    // ========== АНИМАЦИОННЫЙ ЦИКЛ ==========
-    let lastTime = performance.now();
-    let accumulator = 0;
-    
+
     function animate() {
         const now = performance.now();
-        let dt = Math.min(0.033, (now - lastTime)/1000);
+        let dt = Math.min(0.033, (now - lastTime) / 1000);
         lastTime = now;
         if (dt < 0.003) dt = 0.016;
-        
+        globalTime += dt;
         accumulator += dt;
-        // Физика с фиксированным шагом
         if (accumulator >= CONFIG.dtFixed) {
             updateAllPositions(CONFIG.dtFixed);
             accumulator -= CONFIG.dtFixed;
         }
         updateTrailVisuals();
-        
-        // Вращение астероидных поясов и звёздных слоёв
         if (asteroidField) asteroidField.rotation.y += 0.001 * currentSpeed;
         if (asteroidField2) asteroidField2.rotation.y -= 0.0008 * currentSpeed;
-        if (starsField) starsField.rotation.y += 0.0001 * currentSpeed;
-        if (starsNearField && starsNearField.material.uniforms) starsNearField.material.uniforms.time.value += dt;
-        if (dustParticles) { dustParticles.rotation.y += 0.0003; dustParticles.rotation.x += 0.0002; }
-        if (window.nebulaSphere) window.nebulaSphere.rotation.y += 0.00005;
-        
-        updateDynamicOrigin();
-        applyOriginShift();
-        
+        if (asteroidField3) asteroidField3.rotation.y += 0.0002 * currentSpeed;
+        if (dustParticles) {
+            dustParticles.rotation.y += 0.0003;
+            dustParticles.rotation.x += 0.0002;
+        }
         controls.update();
         effectComposer.render();
-        
-        revertOriginShift();
+        labelRenderer.render(scene, camera);
         requestAnimationFrame(animate);
     }
-    
-    // ========== ЗАПУСК ВСЕГО ==========
+
     async function start() {
-        await initAllBodies();
+        initBodies();
         createAsteroidBelts(CONFIG.quality);
-        createStarField(CONFIG.quality);
-        createNearStars(CONFIG.quality);
         createDust(CONFIG.quality);
-        addNebulae();
+        if (CONFIG.showStars) await loadRealStars();
+        if (CONFIG.showDeepSky) await loadDeepSkyObjects();
+        addConstellationNames();
+        orbitLines.forEach(l => l.visible = showOrbits);
         animate();
     }
     start();
-    
-    // ========== UI И DAT.GUI ==========
+
+    // ========== БЛОК 7: UI, DAT.GUI, ОБРАБОТЧИКИ, RESIZE ==========
     const speedSpan = document.getElementById('speedVal');
-    document.getElementById('slower').onclick = () => { currentSpeed = Math.max(0.1, currentSpeed/1.5); currentSpeed = Math.min(currentSpeed, CONFIG.maxTimeScale); speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
-    document.getElementById('faster').onclick = () => { currentSpeed = Math.min(CONFIG.maxTimeScale, currentSpeed*1.5); speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
-    document.getElementById('resetSpeed').onclick = () => { currentSpeed = 1.0; speedSpan.innerText = '1.0x'; };
-    document.getElementById('resetView').onclick = () => { controls.target.set(0,0,0); camera.position.set(0,22,52); controls.update(); };
-    document.getElementById('resetSimulation').onclick = () => resetSimulation();
+    document.getElementById('slower').onclick = () => {
+        currentSpeed = Math.max(0.1, currentSpeed / 1.5);
+        currentSpeed = Math.min(currentSpeed, CONFIG.maxTimeScale);
+        speedSpan.innerText = currentSpeed.toFixed(1) + 'x';
+    };
+    document.getElementById('faster').onclick = () => {
+        currentSpeed = Math.min(CONFIG.maxTimeScale, currentSpeed * 1.5);
+        speedSpan.innerText = currentSpeed.toFixed(1) + 'x';
+    };
+    document.getElementById('resetSpeed').onclick = () => {
+        currentSpeed = 1.0;
+        speedSpan.innerText = '1.0x';
+    };
+    document.getElementById('resetView').onclick = () => {
+        controls.target.set(0, 0, 0);
+        camera.position.set(0, 22, 52);
+        controls.update();
+    };
+    document.getElementById('resetSimulation').onclick = resetSimulation;
+
     const trailsBtn = document.getElementById('toggleTrails');
-    trailsBtn.onclick = () => { CONFIG.showTrails = !CONFIG.showTrails; trailsBtn.textContent = CONFIG.showTrails ? "ON" : "OFF"; trailsBtn.style.background = CONFIG.showTrails ? "#27ae60" : "#aa2e1e"; if(!CONFIG.showTrails) trailLines.forEach(l=>l.visible=false); else updateTrailVisuals(); };
-    document.getElementById('zoomSens').oninput = (e) => { controls.zoomSpeed = parseFloat(e.target.value); };
-    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); effectComposer.setSize(window.innerWidth, window.innerHeight); });
-    
-    const gui = new GUI({ title: 'Settings', width: 240, container: document.getElementById('gui-wrapper') });
-    gui.add(CONFIG, 'quality', ['performance', 'balanced', 'quality', 'cinematic']).name('Quality').onChange(val => applyQuality(val));
-    gui.add(CONFIG, 'bloomStrength', 0, 2.5).name('Bloom Strength').onChange(val => bloomPass.strength = val);
-    gui.add(CONFIG, 'bloomThreshold', 0, 1).name('Bloom Threshold').onChange(val => bloomPass.threshold = val);
-    gui.add(CONFIG, 'showTrails').name('Show Trails').onChange(val => { CONFIG.showTrails = val; trailsBtn.textContent = val ? "ON" : "OFF"; if(!val) trailLines.forEach(l=>l.visible=false); else updateTrailVisuals(); });
-    gui.add(CONFIG, 'adaptiveDtEnabled').name('Adaptive Timestep');
-    gui.add(CONFIG, 'timeScale', 0, CONFIG.maxTimeScale).name('Time Scale').onChange(val => { currentSpeed = val; speedSpan.innerText = val.toFixed(1)+'x'; });
-    gui.add(CONFIG, 'useLogarithmicDepth').name('Log Depth Buffer').onChange(val => location.reload());
-    gui.add(CONFIG, 'useDynamicOrigin').name('Dynamic Origin');
-    console.log('Ultimate solar system with 40+ new bodies, real star catalog, nebulae, comets, dwarf planets, and 20k asteroids ready');
+    trailsBtn.onclick = () => {
+        CONFIG.showTrails = !CONFIG.showTrails;
+        trailsBtn.textContent = CONFIG.showTrails ? "ВКЛ" : "ВЫКЛ";
+        trailsBtn.style.background = CONFIG.showTrails ? "#27ae60" : "#aa2e1e";
+        if (!CONFIG.showTrails) {
+            trailLines.forEach(l => { if (l) l.visible = false; });
+        } else {
+            updateTrailVisuals();
+        }
+    };
+
+    document.getElementById('zoomSens').oninput = e => {
+        controls.zoomSpeed = parseFloat(e.target.value);
+    };
+
+    const targetSelect = document.getElementById('targetSelect');
+    const celestialNames = [
+        'Солнце',
+        ...planetsKepler.map(p => p.name),
+        ...dwarfPlanetsData.map(d => d.name),
+        ...moonsData.map(m => m.name),
+        ...cometsData.map(c => c.name)
+    ];
+    celestialNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        targetSelect.appendChild(opt);
+    });
+    targetSelect.addEventListener('change', e => focusOn(e.target.value));
+
+    window.addEventListener('resize', () => {
+        CONFIG.width = window.innerWidth;
+        CONFIG.height = window.innerHeight;
+        camera.aspect = CONFIG.width / CONFIG.height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(CONFIG.width, CONFIG.height);
+        effectComposer.setSize(CONFIG.width, CONFIG.height);
+        labelRenderer.setSize(CONFIG.width, CONFIG.height);
+    });
+
+    const gui = new GUI({ title: 'Настройки', width: 240, container: document.getElementById('gui-wrapper') });
+    gui.add(CONFIG, 'quality', ['performance', 'balanced', 'quality', 'cinematic'])
+        .name('Качество')
+        .onChange(applyQuality);
+    gui.add(CONFIG, 'bloomStrength', 0, 2.0)
+        .name('Сила свечения')
+        .onChange(v => bloomPass.strength = v);
+    gui.add(CONFIG, 'bloomThreshold', 0, 1)
+        .name('Порог свечения')
+        .onChange(v => bloomPass.threshold = v);
+    gui.add(CONFIG, 'showTrails')
+        .name('Следы планет')
+        .onChange(v => {
+            CONFIG.showTrails = v;
+            trailsBtn.textContent = v ? "ВКЛ" : "ВЫКЛ";
+            if (!v) trailLines.forEach(l => { if (l) l.visible = false; });
+            else updateTrailVisuals();
+        });
+    gui.add({ showOrbits }, 'showOrbits')
+        .name('Орбиты планет')
+        .onChange(v => {
+            showOrbits = v;
+            orbitLines.forEach(l => l.visible = v);
+        });
+    gui.add(CONFIG, 'timeScale', 0, CONFIG.maxTimeScale)
+        .name('Масштаб времени')
+        .onChange(v => {
+            currentSpeed = v;
+            speedSpan.innerText = v.toFixed(1) + 'x';
+        });
+    gui.add(CONFIG, 'useLogarithmicDepth')
+        .name('Лог. буфер глубины')
+        .onChange(v => location.reload());
+    gui.add(CONFIG, 'useDynamicOrigin')
+        .name('Динамическое начало координат');
+    gui.add(CONFIG, 'showConstellationLabels')
+        .name('Названия созвездий')
+        .onChange(v => constellationLabels.forEach(l => l.visible = v));
+    gui.add(CONFIG, 'showStars')
+        .name('Реальные звёзды (HYG)')
+        .onChange(async v => {
+            CONFIG.showStars = v;
+            if (v) await loadRealStars();
+            else if (starsPoints) scene.remove(starsPoints);
+        });
+    gui.add(CONFIG, 'showDeepSky')
+        .name('Галактики и туманности (OpenNGC)')
+        .onChange(async v => {
+            CONFIG.showDeepSky = v;
+            if (v) await loadDeepSkyObjects();
+            else if (deepSkyGroup) scene.remove(deepSkyGroup);
+        });
+
+    console.log('Симуляция полностью загружена. Галактики видны, фокус работает, производительность оптимизирована.');
 </script>
 </body>
 </html>
-
-
-
-
-
-
