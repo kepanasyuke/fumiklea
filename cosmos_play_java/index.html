@@ -681,7 +681,16 @@
         labelRenderer.setSize(window.innerWidth, window.innerHeight);
     });
     const gui = new GUI({ title: 'Настройки', width: 240, container: document.getElementById('gui-wrapper') });
-    gui.add(CONFIG, 'quality', ['performance','balanced','quality','cinematic']).name('Качество').onChange(applyQuality);
+    const qualityMap = {
+    'Производительность': 'performance',
+    'Сбалансированное': 'balanced',
+    'Качественное': 'quality',
+    'Кинематографическое': 'cinematic'
+};
+
+gui.add(CONFIG, 'quality', qualityMap)
+    .name('Качество')
+    .onChange(applyQuality);
     gui.add(CONFIG, 'bloomStrength', 0,2).name('Сила свечения').onChange(v => bloomPass.strength = v);
     gui.add(CONFIG, 'bloomThreshold', 0,1).name('Порог свечения').onChange(v => bloomPass.threshold = v);
     gui.add(CONFIG, 'showTrails').name('Следы планет').onChange(v => { CONFIG.showTrails = v; trailsBtn.textContent = v ? "ВКЛ" : "ВЫКЛ"; if(!v) trailLines.forEach(l=>l.visible=false); else updateTrailVisuals(); });
