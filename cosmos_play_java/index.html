@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Солнечная система | HYG + OpenNGC | Рабочие ссылки</title>
+    <title>Солнечная система | Анимированный глубокий космос | Мерцающие галактики + пыль</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; background-color: black; }
         #info {
@@ -42,8 +42,8 @@
 </head>
 <body>
 <div id="info">
-    <strong>СОЛНЕЧНАЯ СИСТЕМА | HYG (звёзды) + OpenNGC (галактики)</strong><br>
-    Прямые CSV-ссылки | Фокус на любую галактику | Оптимизировано
+    <strong>СОЛНЕЧНАЯ СИСТЕМА | HYG (звёзды) + OpenNGC (галактики) | Анимированный Deep Space</strong><br>
+    Мерцание галактик | Вращение звёзд | Космическая пыль | Орбиты можно отключить
 </div>
 <div id="controls">
     <div class="ctrl-group">
@@ -147,7 +147,7 @@
         { name: "Темпеля-1", radius: 0.16, color: 0xbb9977, a: 3.1,  e: 0.519, incl: 0.17,  M0: 3.8, tail: true }
     ];
 
-    // ========== 2. КЛАСС BODY ==========
+    // ========== 2. КЛАСС BODY (Кеплеровы орбиты, трейлы, хвосты) ==========
     class Body {
         constructor(data, scaleFactor = 1.0) {
             this.name = data.name;
@@ -360,7 +360,7 @@
         } catch(e) { console.warn('HYG error', e); }
     }
 
-    // ========== 5. ЗАГРУЗКА ГАЛАКТИК (OpenNGC CSV) ==========
+    // ========== 5. ЗАГРУЗКА ГАЛАКТИК (OpenNGC CSV) С ДОБАВЛЕНИЕМ ПАРАМЕТРОВ ДЛЯ АНИМАЦИИ ==========
     async function loadDeepSkyObjects() {
         if (deepSkyGroup) scene.remove(deepSkyGroup);
         deepSkyGroup = new THREE.Group();
@@ -411,6 +411,12 @@
                 });
                 const mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 24, 24), material);
                 mesh.position.set(x, y, z);
+                // СОХРАНЯЕМ ПАРАМЕТРЫ ДЛЯ АНИМАЦИИ МЕРЦАНИЯ
+                mesh.userData = {
+                    baseIntensity: emissiveIntensity,
+                    pulseSpeed: 0.3 + Math.random() * 1.2,
+                    phase: Math.random() * Math.PI * 2
+                };
                 deepSkyGroup.add(mesh);
                 added++;
                 const name = cols[nameIdx]?.trim();
@@ -503,7 +509,6 @@
             { name: "Андромеда", pos: [-60, 20, -280], color: "#ffaa88" },
             { name: "Орион", pos: [55, -5, -270], color: "#ffaa66" },
             { name: "Большая Медведица", pos: [-25, 30, -300], color: "#88aaff" },
-            // ... можно добавить ещё
         ];
         extraConstellations.forEach(c => {
             const div = document.createElement('div');
@@ -524,7 +529,7 @@
         });
     }
 
-    // ========== 7. АСТЕРОИДНЫЕ ПОЯСА, ПЫЛЬ ==========
+    // ========== 7. АСТЕРОИДНЫЕ ПОЯСА, ПЫЛЬ, КОСМИЧЕСКАЯ ПЫЛЬ ==========
     function createAsteroidBelts(quality) {
         if (asteroidField) scene.remove(asteroidField);
         if (asteroidField2) scene.remove(asteroidField2);
@@ -539,7 +544,7 @@
         geo1.setAttribute('position', new THREE.BufferAttribute(pos1, 3));
         asteroidField = new THREE.Points(geo1, new THREE.PointsMaterial({ color: 0xaa9977, size: 0.05 }));
         asteroidField.frustumCulled = false; scene.add(asteroidField);
-        // Добавьте аналогично второй и третий пояса (для краткости опущены, но можно восстановить)
+        // Для краткости остальные пояса опущены – можно добавить по аналогии
     }
 
     function createDust(quality) {
@@ -557,6 +562,30 @@
         dustParticles.frustumCulled = false; scene.add(dustParticles);
     }
 
+    // НОВАЯ ФУНКЦИЯ: КОСМИЧЕСКАЯ ПЫЛЬ (отдельный слой вращающихся частиц)
+    function createSpaceDust() {
+        const dustCount = 8000;
+        const dustGeometry = new THREE.BufferGeometry();
+        const dustPositions = new Float32Array(dustCount * 3);
+        for (let i = 0; i < dustCount; i++) {
+            dustPositions[i*3] = (Math.random() - 0.5) * 500;
+            dustPositions[i*3+1] = (Math.random() - 0.5) * 500;
+            dustPositions[i*3+2] = (Math.random() - 0.5) * 300;
+        }
+        dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+        const dustMaterial = new THREE.PointsMaterial({
+            color: 0x88aaff,
+            size: 0.05,
+            transparent: true,
+            opacity: 0.4,
+            blending: THREE.AdditiveBlending
+        });
+        const dustParticlesObj = new THREE.Points(dustGeometry, dustMaterial);
+        dustParticlesObj.userData = { speedX: 0.0002, speedY: 0.0001 };
+        scene.add(dustParticlesObj);
+        return dustParticlesObj;
+    }
+
     function applyQuality(level) {
         CONFIG.quality = level;
         const q = qualitySettings[level];
@@ -567,9 +596,10 @@
         createDust(level);
     }
 
-    // ========== 8. ФИЗИКА, АНИМАЦИЯ, УПРАВЛЕНИЕ ==========
+    // ========== 8. ФИЗИКА, АНИМАЦИЯ, УПРАВЛЕНИЕ С ДОБАВЛЕННЫМИ ЭФФЕКТАМИ ==========
     let simTime = 0, currentSpeed = CONFIG.timeScale, showOrbits = true;
     let lastTime = performance.now(), accumulator = 0;
+    let spaceDust = null; // для вращения пыли
 
     function updateAllPositions(dt) {
         simTime += dt * currentSpeed;
@@ -631,6 +661,7 @@
         }
     }
 
+    // АНИМАЦИОННЫЙ ЦИКЛ С АНИМАЦИЕЙ ГЛУБОКОГО КОСМОСА
     function animate() {
         const now = performance.now();
         let dt = Math.min(0.033, (now - lastTime) / 1000);
@@ -643,6 +674,32 @@
         updateTrailVisuals();
         if (asteroidField) asteroidField.rotation.y += 0.001 * currentSpeed;
         if (dustParticles) { dustParticles.rotation.y += 0.0003; dustParticles.rotation.x += 0.0002; }
+
+        // ----- АНИМАЦИЯ ГЛУБОКОГО КОСМОСА (МЕРЦАНИЕ ГАЛАКТИК + ВРАЩЕНИЕ ГРУППЫ) -----
+        if (deepSkyGroup) {
+            // Вращение всей группы галактик
+            deepSkyGroup.rotation.y += 0.0002 * currentSpeed;
+            const time = performance.now() * 0.001;
+            deepSkyGroup.children.forEach(child => {
+                if (child.isMesh && child.material && child.userData.baseIntensity) {
+                    const intensity = child.userData.baseIntensity *
+                        (0.7 + 0.3 * Math.sin(time * child.userData.pulseSpeed + child.userData.phase));
+                    child.material.emissiveIntensity = intensity;
+                }
+            });
+        }
+
+        // Вращение звёздного поля
+        if (starsPoints) {
+            starsPoints.rotation.y += 0.0001 * currentSpeed;
+        }
+
+        // Вращение космической пыли
+        if (spaceDust) {
+            spaceDust.rotation.y += 0.0003;
+            spaceDust.rotation.x += 0.0001;
+        }
+
         controls.update();
         effectComposer.render();
         labelRenderer.render(scene, camera);
@@ -653,6 +710,7 @@
         initBodies();
         createAsteroidBelts(CONFIG.quality);
         createDust(CONFIG.quality);
+        spaceDust = createSpaceDust();  // добавляем космическую пыль
         if (CONFIG.showStars) await loadRealStars();
         if (CONFIG.showDeepSky) await loadDeepSkyObjects();
         addConstellationNames();
@@ -661,7 +719,7 @@
     }
     start();
 
-    // ========== 9. UI, DAT.GUI ==========
+    // ========== 9. UI, DAT.GUI С РУССКИМИ НАЗВАНИЯМИ ==========
     const speedSpan = document.getElementById('speedVal');
     document.getElementById('slower').onclick = () => { currentSpeed = Math.max(0.1, currentSpeed/1.5); currentSpeed = Math.min(currentSpeed, CONFIG.maxTimeScale); speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
     document.getElementById('faster').onclick = () => { currentSpeed = Math.min(CONFIG.maxTimeScale, currentSpeed*1.5); speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
@@ -682,15 +740,12 @@
     });
     const gui = new GUI({ title: 'Настройки', width: 240, container: document.getElementById('gui-wrapper') });
     const qualityMap = {
-    'Производительность': 'performance',
-    'Сбалансированное': 'balanced',
-    'Качественное': 'quality',
-    'Кинематографическое': 'cinematic'
-};
-
-gui.add(CONFIG, 'quality', qualityMap)
-    .name('Качество')
-    .onChange(applyQuality);
+        'Производительность': 'performance',
+        'Сбалансированное': 'balanced',
+        'Качественное': 'quality',
+        'Кинематографическое': 'cinematic'
+    };
+    gui.add(CONFIG, 'quality', qualityMap).name('Качество').onChange(applyQuality);
     gui.add(CONFIG, 'bloomStrength', 0,2).name('Сила свечения').onChange(v => bloomPass.strength = v);
     gui.add(CONFIG, 'bloomThreshold', 0,1).name('Порог свечения').onChange(v => bloomPass.threshold = v);
     gui.add(CONFIG, 'showTrails').name('Следы планет').onChange(v => { CONFIG.showTrails = v; trailsBtn.textContent = v ? "ВКЛ" : "ВЫКЛ"; if(!v) trailLines.forEach(l=>l.visible=false); else updateTrailVisuals(); });
@@ -701,7 +756,7 @@ gui.add(CONFIG, 'quality', qualityMap)
     gui.add(CONFIG, 'showConstellationLabels').name('Названия созвездий').onChange(v => constellationLabels.forEach(l => l.visible = v));
     gui.add(CONFIG, 'showStars').name('Реальные звёзды (HYG)').onChange(async v => { CONFIG.showStars = v; if(v) await loadRealStars(); else if(starsPoints) scene.remove(starsPoints); });
     gui.add(CONFIG, 'showDeepSky').name('Галактики и туманности (OpenNGC)').onChange(async v => { CONFIG.showDeepSky = v; if(v) await loadDeepSkyObjects(); else if(deepSkyGroup) scene.remove(deepSkyGroup); });
-    console.log('Симуляция загружена. Используются рабочие ссылки на CSV-каталоги HYG и OpenNGC.');
+    console.log('Симуляция загружена. Добавлены эффекты: мерцание галактик, вращение звёзд, космическая пыль.');
 </script>
 </body>
 </html>
