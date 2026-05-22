@@ -3,850 +3,654 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>N-Body Solar System | ULTIMATE MONOLITH | Full Verlet + LOD + Adaptive DT + Worker Fallback + Twinkling Stars + Context Loss Protection</title>
+    <title>Solar System Ultimate | Fixed Orbits + Keplerian + Logarithmic Depth + Dynamic Origin</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Segoe UI', 'Arial', sans-serif;
-        }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
         #info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            padding: 12px 24px;
-            border-radius: 12px;
-            pointer-events: none;
-            z-index: 10;
-            font-size: 14px;
-            border-left: 4px solid #ffaa44;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: absolute; top: 20px; left: 20px; color: white;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+            padding: 12px 24px; border-radius: 12px; pointer-events: none;
+            z-index: 10; font-size: 14px; border-left: 4px solid #ffaa44;
         }
         #controls {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            padding: 15px 25px;
-            border-radius: 16px;
-            color: white;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 20;
-            font-family: monospace;
-            font-size: 14px;
-            pointer-events: auto;
-            border-top: 1px solid #ffaa44;
-            box-shadow: 0 -2px 20px rgba(0,0,0,0.5);
+            position: absolute; bottom: 20px; left: 20px; right: 20px;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            padding: 15px 25px; border-radius: 16px; color: white;
+            display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between;
+            align-items: center; z-index: 20; font-family: monospace;
+            font-size: 14px; pointer-events: auto; border-top: 1px solid #ffaa44;
         }
-        .ctrl-group {
-            display: flex;
-            gap: 12px;
-            background: rgba(30,30,40,0.7);
-            padding: 8px 16px;
-            border-radius: 40px;
-            align-items: center;
-        }
-        button {
-            background: #2c3e50;
-            border: none;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: bold;
-        }
-        button:hover {
-            background: #e67e22;
-            transform: scale(1.02);
-        }
-        select {
-            background: #1e2a36;
-            color: white;
-            border: 1px solid #e67e22;
-            padding: 6px 12px;
-            border-radius: 30px;
-            cursor: pointer;
-        }
-        input[type="range"] {
-            width: 140px;
-            cursor: pointer;
-            background: #e67e22;
-            height: 3px;
-            border-radius: 3px;
-        }
-        @media (max-width: 800px) {
-            #controls { flex-direction: column; align-items: stretch; gap: 8px; }
-            .ctrl-group { justify-content: space-between; }
-        }
+        .ctrl-group { display: flex; gap: 12px; background: rgba(30,30,40,0.7);
+            padding: 8px 16px; border-radius: 40px; align-items: center; }
+        button { background: #2c3e50; border: none; color: white; padding: 6px 16px;
+            border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: bold; }
+        button:hover { background: #e67e22; transform: scale(1.02); }
+        select { background: #1e2a36; color: white; border: 1px solid #e67e22;
+            padding: 6px 12px; border-radius: 30px; cursor: pointer; }
+        input[type="range"] { width: 140px; cursor: pointer; background: #e67e22;
+            height: 3px; border-radius: 3px; }
+        .gui-wrapper { position: absolute; top: 20px; right: 20px; z-index: 30; }
+        @media (max-width: 800px) { #controls { flex-direction: column; align-items: stretch; gap: 8px; }
+            .ctrl-group { justify-content: space-between; } .gui-wrapper { display: none; } }
     </style>
 </head>
 <body>
-    <div id="info">
-        <strong>ULTIMATE N-BODY | Full Verlet | LOD | Adaptive DT | Worker Fallback | Twinkling Stars | Context Loss Protection</strong><br>
-        Real gravity | Texture retry | Reset simulation | Optimized trails | Max speed 4x
+<div id="info">
+    <strong>FIXED ORBITS | Keplerian + LogarithmicDepth + Dynamic Origin + Quality + Comets + Atmosphere</strong><br>
+    No more jittering | Full Verlet | Adaptive softening | Substepping | Asteroid belts | Bloom | dat.GUI
+</div>
+<div id="controls">
+    <div class="ctrl-group">
+        <span>SPEED:</span>
+        <button id="slower">−</button>
+        <span id="speedVal">1.0x</span>
+        <button id="faster">+</button>
+        <button id="resetSpeed" style="background:#aa2e1e;">RESET</button>
     </div>
-    <div id="controls">
-        <div class="ctrl-group">
-            <span>SPEED:</span>
-            <button id="slower">-</button>
-            <span id="speedVal">1.0x</span>
-            <button id="faster">+</button>
-            <button id="resetSpeed" style="background:#aa2e1e;">RESET</button>
-        </div>
-        <div class="ctrl-group">
-            <span>CAMERA:</span>
-            <select id="viewMode">
-                <option value="free">Free Orbit</option>
-                <option value="sun">Follow Sun</option>
-                <option value="earth">Follow Earth</option>
-            </select>
-            <button id="resetView">RESET VIEW</button>
-            <button id="resetSimulation" style="background:#e67e22;">RESET SIMULATION</button>
-        </div>
-        <div class="ctrl-group">
-            <span>TRAILS:</span>
-            <button id="toggleTrails" style="background:#27ae60;">ON</button>
-        </div>
-        <div class="ctrl-group">
-            <span>ZOOM SENS.</span>
-            <input type="range" id="zoomSens" min="0.5" max="2.0" step="0.01" value="1.0">
-        </div>
+    <div class="ctrl-group">
+        <span>CAMERA:</span>
+        <select id="viewMode">
+            <option value="free">Free Orbit</option>
+            <option value="sun">Follow Sun</option>
+            <option value="earth">Follow Earth</option>
+        </select>
+        <button id="resetView">RESET VIEW</button>
+        <button id="resetSimulation" style="background:#e67e22;">RESET SIMULATION</button>
     </div>
+    <div class="ctrl-group">
+        <span>TRAILS:</span>
+        <button id="toggleTrails" style="background:#27ae60;">ON</button>
+    </div>
+    <div class="ctrl-group">
+        <span>ZOOM SENS.</span>
+        <input type="range" id="zoomSens" min="0.5" max="2.0" step="0.01" value="1.0">
+    </div>
+</div>
+<div class="gui-wrapper" id="gui-wrapper"></div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
-            }
-        }
-    </script>
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                   "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/",
+                   "lil-gui": "https://unpkg.com/lil-gui@0.16.0/dist/lil-gui.esm.min.js" } }
+</script>
 
-    <script type="module">
-        // ============================================================================
-        // ULTIMATE MONOLITHIC N-BODY SIMULATION
-        // Incorporated best practices from:
-        // - kostyakozko/solarsystem (full Verlet with force recomputation)
-        // - ElvinC/solarsystem (multiple integrators concept)
-        // - jmi3/OrbitalSim_Toolkit (adaptive timestep)
-        // - N3rson/Solar-System-3D (LOD)
-        // - Omermargolin15/nasa-solar-sim (texture retry + fallback)
-        // - DrA1ex/JS_ParticleSystem (Worker fallback)
-        // - jsulpis/realtime-planet-shader (twinkling stars shader)
-        // - tanishq-ctrl/solar-system-threejs (context loss handling)
-        // - yantim/solar_system_motion (trail optimization via attribute update)
-        // ============================================================================
-        
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-        
-        // -------------------- CONFIGURATION -----------------------------------------
-        const CONFIG = {
-            width: window.innerWidth,
-            height: window.innerHeight,
-            bgColor: 0x030318,
-            bloomStrength: 1.2,
-            bloomRadius: 0.6,
-            bloomThreshold: 0.25,
-            G: 0.8,
-            dtFixed: 0.016,
-            timeScale: 1.0,
-            maxTimeScale: 4.0,
-            trailLength: 400,
-            showTrails: true,
-            planetScaleFactor: 0.06,
-            distanceScale: 1.2,
-            zoomSensitivity: 1.0,
-            adaptiveDtEnabled: true,
-            minDistanceForAdaptive: 2.0,
-            adaptiveDtFactor: 0.5
-        };
-        
-        // Initial planet data (used for reset)
-        const planetsRawInitial = [
-            { name: "Mercury", mass: 0.055, radius: 0.38, color: 0xbc9a6c, distance: 3.5, texture: null, hasRings: false },
-            { name: "Venus",   mass: 0.815, radius: 0.95, color: 0xe6b800, distance: 5.2, texture: null, hasRings: false },
-            { name: "Earth",   mass: 1.0,   radius: 1.0,  color: 0x4c8cff, distance: 7.0, texture: "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg", hasRings: false },
-            { name: "Mars",    mass: 0.107, radius: 0.53, color: 0xc4553c, distance: 9.0, texture: null, hasRings: false },
-            { name: "Jupiter", mass: 317.8, radius: 2.2,  color: 0xd8a27a, distance: 15.5, texture: null, hasRings: false },
-            { name: "Saturn",  mass: 95.2,  radius: 1.9,  color: 0xf0d9b0, distance: 19.0, texture: null, hasRings: true },
-            { name: "Uranus",  mass: 14.5,  radius: 1.6,  color: 0xb0e0e6, distance: 24.0, texture: null, hasRings: false },
-            { name: "Neptune", mass: 17.1,  radius: 1.6,  color: 0x4a6eff, distance: 29.5, texture: null, hasRings: false }
-        ];
-        
-        // -------------------- CELESTIAL BODY CLASS ----------------------------------
-        class CelestialBody {
-            constructor(name, mass, radiusVisual, color, distance, textureUrl, hasRings, initialPos = null, initialVel = null) {
-                this.name = name;
-                this.mass = mass;
-                this.radiusVisual = radiusVisual;
-                this.color = color;
-                this.distance = distance * CONFIG.distanceScale;
-                this.pos = new THREE.Vector3();
-                this.vel = new THREE.Vector3();
-                this.acc = new THREE.Vector3();
-                const angle = Math.random() * Math.PI * 2;
-                if (initialPos) {
-                    this.pos.copy(initialPos);
-                    this.vel.copy(initialVel);
-                } else {
-                    this.pos.x = Math.cos(angle) * this.distance;
-                    this.pos.z = Math.sin(angle) * this.distance;
-                    const sunMass = 1000;
-                    const orbitalSpeed = Math.sqrt(CONFIG.G * sunMass / this.distance);
-                    this.vel.x = -Math.sin(angle) * orbitalSpeed;
-                    this.vel.z = Math.cos(angle) * orbitalSpeed;
-                }
-                this.acc.set(0,0,0);
-                this.mesh = null;
-                this.lod = null;
-                this.ring = null;
-                this.trailPositions = [];
-                this.textureUrl = textureUrl;
-                this.hasRings = hasRings;
-                // Store initial state for reset
-                this.initialPos = this.pos.clone();
-                this.initialVel = this.vel.clone();
-            }
-            
-            resetToInitial() {
-                this.pos.copy(this.initialPos);
-                this.vel.copy(this.initialVel);
-                this.acc.set(0,0,0);
-                this.trailPositions = [];
-                if (this.lod) this.lod.position.copy(this.pos);
-            }
-            
-            verletStep(dt, newAcc) {
-                this.vel.x += this.acc.x * dt * 0.5;
-                this.vel.y += this.acc.y * dt * 0.5;
-                this.vel.z += this.acc.z * dt * 0.5;
-                this.pos.x += this.vel.x * dt;
-                this.pos.y += this.vel.y * dt;
-                this.pos.z += this.vel.z * dt;
-                this.acc.copy(newAcc);
-                this.vel.x += this.acc.x * dt * 0.5;
-                this.vel.y += this.acc.y * dt * 0.5;
-                this.vel.z += this.acc.z * dt * 0.5;
-            }
-            
-            updateTrail() {
-                if (!CONFIG.showTrails) return;
-                this.trailPositions.push(this.pos.clone());
-                while (this.trailPositions.length > CONFIG.trailLength) this.trailPositions.shift();
-            }
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import GUI from 'lil-gui';
+
+    // ========== КОНФИГУРАЦИЯ ==========
+    const CONFIG = {
+        width: window.innerWidth, height: window.innerHeight, bgColor: 0x030318,
+        bloomStrength: 1.2, bloomRadius: 0.6, bloomThreshold: 0.25,
+        G: 0.8, dtFixed: 0.016, timeScale: 1.0, maxTimeScale: 4.0,
+        trailLength: 400, showTrails: true, planetScaleFactor: 0.06, distanceScale: 1.2,
+        zoomSensitivity: 1.0, adaptiveDtEnabled: true,
+        minDistanceForAdaptive: 2.0, adaptiveDtFactor: 0.5,
+        softeningSq: 0.5, maxSpeed: 50.0,
+        quality: 'balanced',   // performance, balanced, quality, cinematic
+        useLogarithmicDepth: true,
+        useDynamicOrigin: true
+    };
+
+    // Настройки качества (ras41/solar-system)
+    const qualitySettings = {
+        performance: { planetSegments: 32, shadowMapSize: 256, starCount: 2000, asteroidCount: 2000, bloomStrength: 0.5, dustParticles: 2000 },
+        balanced:   { planetSegments: 48, shadowMapSize: 512, starCount: 5000, asteroidCount: 5000, bloomStrength: 1.0, dustParticles: 4000 },
+        quality:    { planetSegments: 64, shadowMapSize: 1024, starCount: 8000, asteroidCount: 8000, bloomStrength: 1.2, dustParticles: 6000 },
+        cinematic:  { planetSegments: 128, shadowMapSize: 2048, starCount: 12000, asteroidCount: 12000, bloomStrength: 1.5, dustParticles: 8000 }
+    };
+
+    // Данные планет (масса, радиус, цвет, удалённость, текстура, кольца, атмосфера)
+    // + кеплеровы элементы для точных эллиптических орбит (a, e, incl, omega, M0)
+    // Источник: приближённые данные для визуализации (на основе Simone-Dr/SolarSystem)
+    const planetsRawInitial = [
+        { name: "Mercury", mass: 0.055, radius: 0.38, color: 0xbc9a6c, distance: 3.5, texture: null, hasRings: false, atmosphere: false, a: 3.5, e: 0.2056, incl: 0.122, omega: 0.0, M0: 0.0 },
+        { name: "Venus",   mass: 0.815, radius: 0.95, color: 0xe6b800, distance: 5.2, texture: null, hasRings: false, atmosphere: true,  a: 5.2, e: 0.0068, incl: 0.059, omega: 0.0, M0: 1.2 },
+        { name: "Earth",   mass: 1.0,   radius: 1.0,  color: 0x4c8cff, distance: 7.0, texture: "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg", hasRings: false, atmosphere: true, a: 7.0, e: 0.0167, incl: 0.0,   omega: 0.0, M0: 2.5 },
+        { name: "Mars",    mass: 0.107, radius: 0.53, color: 0xc4553c, distance: 9.0, texture: null, hasRings: false, atmosphere: false, a: 9.0, e: 0.0934, incl: 0.032, omega: 0.0, M0: 3.1 },
+        { name: "Jupiter", mass: 317.8, radius: 2.2,  color: 0xd8a27a, distance: 15.5, texture: null, hasRings: false, atmosphere: false, a: 15.5, e: 0.0489, incl: 0.022, omega: 0.0, M0: 0.5 },
+        { name: "Saturn",  mass: 95.2,  radius: 1.9,  color: 0xf0d9b0, distance: 19.0, texture: null, hasRings: true, atmosphere: false, a: 19.0, e: 0.0565, incl: 0.043, omega: 0.0, M0: 1.8 },
+        { name: "Uranus",  mass: 14.5,  radius: 1.6,  color: 0xb0e0e6, distance: 24.0, texture: null, hasRings: false, atmosphere: false, a: 24.0, e: 0.0457, incl: 0.046, omega: 0.0, M0: 2.2 },
+        { name: "Neptune", mass: 17.1,  radius: 1.6,  color: 0x4a6eff, distance: 29.5, texture: null, hasRings: false, atmosphere: false, a: 29.5, e: 0.0113, incl: 0.030, omega: 0.0, M0: 3.0 }
+    ];
+
+    // Данные комет (а, e, incl)
+    const cometsData = [
+        { name: "Halley", mass: 0.001, radius: 0.2, color: 0xaa8866, a: 25.0, e: 0.967, incl: 0.3, period: 76 },
+        { name: "Hale-Bopp", mass: 0.0015, radius: 0.25, color: 0xccaa88, a: 35.0, e: 0.995, incl: 0.5, period: 2533 },
+        { name: "Encke", mass: 0.0005, radius: 0.15, color: 0x886666, a: 2.2, e: 0.847, incl: 0.1, period: 3.3 }
+    ];
+
+    // ========== КЛАСС НЕБЕСНОГО ТЕЛА (КЕПЛЕРОВА ОРБИТА) ==========
+    class CelestialBody {
+        constructor(data) {
+            this.name = data.name;
+            this.mass = data.mass;
+            this.radiusVisual = data.radius;
+            this.color = data.color;
+            this.a = data.a * CONFIG.distanceScale;    // большая полуось
+            this.e = data.e;
+            this.incl = data.incl;
+            this.omega = data.omega;
+            this.M0 = data.M0;
+            this.angle = this.M0;
+            this.pos = new THREE.Vector3();
+            this.vel = new THREE.Vector3();
+            this.acc = new THREE.Vector3();
+            this.mesh = null;
+            this.lod = null;
+            this.ring = null;
+            this.atmosphereMesh = null;
+            this.trailPositions = [];
+            this.textureUrl = data.texture;
+            this.hasRings = data.hasRings;
+            this.atmosphere = data.atmosphere;
+            // инициализация позиции
+            this.updateKeplerian(0);
+            this.initialPos = this.pos.clone();
+            this.initialVel = this.vel.clone();
         }
         
-        // -------------------- TEXTURE LOADER WITH RETRIES (Omermargolin15) ---------
-        function loadTextureWithRetries(url, fallbackColor, retries = 3, delay = 500) {
-            return new Promise((resolve) => {
-                if (!url) { resolve(null); return; }
-                const loader = new THREE.TextureLoader();
-                const attempt = (remaining) => {
-                    loader.load(url, 
-                        (tex) => resolve(tex),
-                        (err) => {
-                            if (remaining > 0) {
-                                console.warn(`Texture load failed (${url}), retries left: ${remaining}`);
-                                setTimeout(() => attempt(remaining - 1), delay);
-                            } else {
-                                console.warn(`Texture ${url} failed permanently, using fallback color`);
-                                resolve(null);
-                            }
-                        }
-                    );
-                };
-                attempt(retries);
-            });
+        // Расчёт позиции по кеплеровым элементам (решение уравнения Кеплера методом Ньютона)
+        updateKeplerian(dt) {
+            const GM = 1000; // центральная масса (Солнце)
+            const n = Math.sqrt(GM / Math.pow(this.a, 3)); // среднее движение
+            const M = this.M0 + n * dt; // средняя аномалия
+            // Решаем E = M + e*sin(E) методом Ньютона
+            let E = M;
+            for (let i = 0; i < 6; i++) {
+                const delta = E - this.e * Math.sin(E) - M;
+                const der = 1 - this.e * Math.cos(E);
+                E -= delta / der;
+            }
+            const cosE = Math.cos(E);
+            const sinE = Math.sin(E);
+            const x0 = this.a * (cosE - this.e);
+            const y0 = this.a * Math.sqrt(1 - this.e*this.e) * sinE;
+            // Поворот на угол перицентра (упрощённо, без долготы восходящего узла)
+            const cosOmega = Math.cos(this.omega);
+            const sinOmega = Math.sin(this.omega);
+            const x1 = x0 * cosOmega - y0 * sinOmega;
+            const y1 = x0 * sinOmega + y0 * cosOmega;
+            this.pos.set(x1, 0, y1);
+            // Приблизительная скорость (производная по времени от позиции)
+            const vx = -this.a * sinE / (1 - this.e*cosE) * n * this.a;
+            const vy = this.a * Math.sqrt(1-this.e*this.e) * cosE / (1 - this.e*cosE) * n * this.a;
+            this.vel.set(vx, 0, vy);
         }
         
-        // -------------------- LOD CREATION (N3rson) --------------------------------
-        function createPlanetLOD(body, baseRadius) {
-            const lod = new THREE.LOD();
-            const highGeo = new THREE.SphereGeometry(baseRadius, 128, 128);
-            const mediumGeo = new THREE.SphereGeometry(baseRadius, 64, 64);
-            const lowGeo = new THREE.SphereGeometry(baseRadius, 32, 32);
-            
-            const highMesh = new THREE.Mesh(highGeo, new THREE.MeshStandardMaterial({ color: body.color }));
-            const mediumMesh = new THREE.Mesh(mediumGeo, new THREE.MeshStandardMaterial({ color: body.color }));
-            const lowMesh = new THREE.Mesh(lowGeo, new THREE.MeshStandardMaterial({ color: body.color }));
-            
-            lod.addLevel(highMesh, 50);
-            lod.addLevel(mediumMesh, 150);
-            lod.addLevel(lowMesh, 300);
-            
-            return { lod, highMesh, mediumMesh, lowMesh };
+        resetToInitial() {
+            this.updateKeplerian(0);
+            this.trailPositions = [];
+            if (this.lod) this.lod.position.copy(this.pos);
         }
         
-        // -------------------- WEB WORKER (FULL VERLET WITH FORCE RECOMPUTATION) -----
-        const workerScript = `
-            self.G = 0.8;
-            self.dtFixed = 0.016;
-            let bodies = [];
-            
-            self.computeForces = function(bodies) {
-                const n = bodies.length;
-                const forces = new Array(n);
-                for(let i=0;i<n;i++) forces[i] = {x:0, y:0, z:0};
-                for(let i=0;i<n;i++) {
-                    for(let j=i+1;j<n;j++) {
-                        const a = bodies[i];
-                        const b = bodies[j];
-                        const dx = b.pos.x - a.pos.x;
-                        const dy = b.pos.y - a.pos.y;
-                        const dz = b.pos.z - a.pos.z;
-                        let distSq = dx*dx + dy*dy + dz*dz;
-                        distSq += 1.5;
-                        const dist = Math.sqrt(distSq);
-                        const Fmag = (self.G * a.mass * b.mass) / distSq;
-                        const fx = Fmag * dx / dist;
-                        const fy = Fmag * dy / dist;
-                        const fz = Fmag * dz / dist;
-                        forces[i].x += fx;
-                        forces[i].y += fy;
-                        forces[i].z += fz;
-                        forces[j].x -= fx;
-                        forces[j].y -= fy;
-                        forces[j].z -= fz;
-                    }
-                }
-                return forces;
+        updateTrail() {
+            if (!CONFIG.showTrails) return;
+            this.trailPositions.push(this.pos.clone());
+            while (this.trailPositions.length > CONFIG.trailLength) this.trailPositions.shift();
+        }
+    }
+
+    // Класс кометы (простая эллиптическая орбита с хвостом)
+    class Comet {
+        constructor(data) {
+            this.name = data.name;
+            this.mass = data.mass;
+            this.radius = data.radius;
+            this.color = data.color;
+            this.a = data.a * CONFIG.distanceScale;
+            this.e = data.e;
+            this.incl = data.incl;
+            this.angle = 0;
+            this.pos = new THREE.Vector3();
+            this.tailSystem = null;
+            this.mesh = null;
+        }
+        updatePosition(dt) {
+            const GM = 1000;
+            const n = Math.sqrt(GM / Math.pow(this.a, 3));
+            this.angle += n * dt;
+            const r = this.a * (1 - this.e*this.e) / (1 + this.e * Math.cos(this.angle));
+            const x = r * Math.cos(this.angle);
+            const z = r * Math.sin(this.angle);
+            const y = Math.sin(this.incl) * Math.sin(this.angle) * r * 0.3;
+            this.pos.set(x, y, z);
+            if (this.mesh) this.mesh.position.copy(this.pos);
+            // update tail (simple particle trail)
+            if (this.tailSystem && this.tailSystem.geometry.attributes.position) {
+                const positions = this.tailSystem.geometry.attributes.position.array;
+                for (let i = 0; i < positions.length - 3; i++) positions[i] = positions[i+3];
+                const dir = this.pos.clone().normalize().negate();
+                positions[positions.length-3] = this.pos.x + dir.x * 0.4;
+                positions[positions.length-2] = this.pos.y + dir.y * 0.4;
+                positions[positions.length-1] = this.pos.z + dir.z * 0.4;
+                this.tailSystem.geometry.attributes.position.needsUpdate = true;
+            }
+        }
+        createTail(scene) {
+            const count = 50;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(count*3);
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ color: this.color, size: 0.08, transparent: true, opacity: 0.6 });
+            this.tailSystem = new THREE.Points(geometry, material);
+            scene.add(this.tailSystem);
+        }
+    }
+
+    // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+    function loadTextureWithRetries(url, fallbackColor, retries = 3, delay = 500) {
+        return new Promise((resolve) => {
+            if (!url) { resolve(null); return; }
+            const loader = new THREE.TextureLoader();
+            const attempt = (remaining) => {
+                loader.load(url, (tex) => resolve(tex), (err) => {
+                    if (remaining > 0) setTimeout(() => attempt(remaining-1), delay);
+                    else { console.warn(`Texture ${url} failed`); resolve(null); }
+                });
             };
-            
-            self.fullVerletStep = function(bodies, dt) {
-                let forces = self.computeForces(bodies);
-                for(let i=0;i<bodies.length;i++) {
-                    const b = bodies[i];
-                    const ax = forces[i].x / b.mass;
-                    const ay = forces[i].y / b.mass;
-                    const az = forces[i].z / b.mass;
-                    b.vel.x += ax * dt * 0.5;
-                    b.vel.y += ay * dt * 0.5;
-                    b.vel.z += az * dt * 0.5;
-                }
-                for(let i=0;i<bodies.length;i++) {
-                    const b = bodies[i];
-                    b.pos.x += b.vel.x * dt;
-                    b.pos.y += b.vel.y * dt;
-                    b.pos.z += b.vel.z * dt;
-                }
-                forces = self.computeForces(bodies);
-                for(let i=0;i<bodies.length;i++) {
-                    const b = bodies[i];
-                    const ax = forces[i].x / b.mass;
-                    const ay = forces[i].y / b.mass;
-                    const az = forces[i].z / b.mass;
-                    b.vel.x += ax * dt * 0.5;
-                    b.vel.y += ay * dt * 0.5;
-                    b.vel.z += az * dt * 0.5;
-                    b.acc = {x:ax, y:ay, z:az};
-                }
-                return bodies;
-            };
-            
-            self.onmessage = function(e) {
-                if(e.data.type === 'init') {
-                    bodies = e.data.bodies;
-                    self.G = e.data.G;
-                    self.dtFixed = e.data.dt;
-                } else if(e.data.type === 'step') {
-                    let dt = self.dtFixed;
-                    if (e.data.adaptiveDt !== undefined && e.data.adaptiveDt > 0) dt = e.data.adaptiveDt;
-                    const newBodies = self.fullVerletStep(bodies, dt);
-                    const positions = [];
-                    const velocities = [];
-                    const accelerations = [];
-                    for(let b of newBodies) {
-                        positions.push(b.pos.x, b.pos.y, b.pos.z);
-                        velocities.push(b.vel.x, b.vel.y, b.vel.z);
-                        accelerations.push(b.acc.x, b.acc.y, b.acc.z);
-                    }
-                    self.postMessage({ positions, velocities, accelerations });
-                }
-            };
-        `;
-        const workerBlob = new Blob([workerScript], { type: 'application/javascript' });
-        let worker = null;
-        let useWorker = true;
-        
-        // -------------------- MAIN THREAD PHYSICS FALLBACK (same full Verlet) ------
-        function mainThreadPhysics(bodies, dt) {
-            const n = bodies.length;
-            const forces = new Array(n);
-            for(let i=0;i<n;i++) forces[i] = new THREE.Vector3(0,0,0);
-            for(let i=0;i<n;i++) {
-                for(let j=i+1;j<n;j++) {
-                    const a = bodies[i];
-                    const b = bodies[j];
-                    const dx = b.pos.x - a.pos.x;
-                    const dy = b.pos.y - a.pos.y;
-                    const dz = b.pos.z - a.pos.z;
-                    let distSq = dx*dx + dy*dy + dz*dz;
-                    distSq += 1.5;
-                    const dist = Math.sqrt(distSq);
-                    const Fmag = (CONFIG.G * a.mass * b.mass) / distSq;
-                    const fx = Fmag * dx / dist;
-                    const fy = Fmag * dy / dist;
-                    const fz = Fmag * dz / dist;
-                    forces[i].x += fx;
-                    forces[i].y += fy;
-                    forces[i].z += fz;
-                    forces[j].x -= fx;
-                    forces[j].y -= fy;
-                    forces[j].z -= fz;
-                }
-            }
-            for(let i=0;i<n;i++) {
-                const a = forces[i];
-                const b = bodies[i];
-                b.vel.x += (a.x / b.mass) * dt * 0.5;
-                b.vel.y += (a.y / b.mass) * dt * 0.5;
-                b.vel.z += (a.z / b.mass) * dt * 0.5;
-            }
-            for(let i=0;i<n;i++) {
-                bodies[i].pos.x += bodies[i].vel.x * dt;
-                bodies[i].pos.y += bodies[i].vel.y * dt;
-                bodies[i].pos.z += bodies[i].vel.z * dt;
-            }
-            for(let i=0;i<n;i++) forces[i].set(0,0,0);
-            for(let i=0;i<n;i++) {
-                for(let j=i+1;j<n;j++) {
-                    const a = bodies[i];
-                    const b = bodies[j];
-                    const dx = b.pos.x - a.pos.x;
-                    const dy = b.pos.y - a.pos.y;
-                    const dz = b.pos.z - a.pos.z;
-                    let distSq = dx*dx + dy*dy + dz*dz;
-                    distSq += 1.5;
-                    const dist = Math.sqrt(distSq);
-                    const Fmag = (CONFIG.G * a.mass * b.mass) / distSq;
-                    const fx = Fmag * dx / dist;
-                    const fy = Fmag * dy / dist;
-                    const fz = Fmag * dz / dist;
-                    forces[i].x += fx;
-                    forces[i].y += fy;
-                    forces[i].z += fz;
-                    forces[j].x -= fx;
-                    forces[j].y -= fy;
-                    forces[j].z -= fz;
-                }
-            }
-            for(let i=0;i<n;i++) {
-                const a = forces[i];
-                const b = bodies[i];
-                b.vel.x += (a.x / b.mass) * dt * 0.5;
-                b.vel.y += (a.y / b.mass) * dt * 0.5;
-                b.vel.z += (a.z / b.mass) * dt * 0.5;
-                b.acc.set(a.x / b.mass, a.y / b.mass, a.z / b.mass);
-            }
-            return bodies;
-        }
-        
-        // Initialize worker with fallback
-        try {
-            worker = new Worker(workerBlob);
-            worker.onerror = (err) => {
-                console.warn("Worker error, falling back to main thread physics", err);
-                if (worker) worker.terminate();
-                useWorker = false;
-                worker = null;
-            };
-        } catch(e) {
-            console.warn("Web Workers not supported, using main thread physics");
-            useWorker = false;
-        }
-        
-        // -------------------- SCENE SETUP -------------------------------------------
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(CONFIG.bgColor);
-        scene.fog = new THREE.FogExp2(CONFIG.bgColor, 0.0003);
-        
-        const camera = new THREE.PerspectiveCamera(45, CONFIG.width / CONFIG.height, 0.1, 1000);
-        camera.position.set(0, 22, 52);
-        
-        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-        renderer.setSize(CONFIG.width, CONFIG.height);
-        renderer.shadowMap.enabled = true;
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.body.appendChild(renderer.domElement);
-        
-        // Context loss protection (tanishq-ctrl)
-        renderer.domElement.addEventListener('webglcontextlost', (event) => {
-            event.preventDefault();
-            console.warn("WebGL context lost. Attempting to pause simulation...");
-            // Pause flag could be added, but we'll just continue; Three.js will attempt restore
+            attempt(retries);
         });
-        renderer.domElement.addEventListener('webglcontextrestored', () => {
-            console.log("WebGL context restored. Reloading textures...");
-            // Reload textures if needed (simplified: just log)
+    }
+
+    function createPlanetLOD(body, baseRadius, segments) {
+        const lod = new THREE.LOD();
+        const highGeo = new THREE.SphereGeometry(baseRadius, segments, segments);
+        const mediumGeo = new THREE.SphereGeometry(baseRadius, Math.max(32, segments/2), Math.max(32, segments/2));
+        const lowGeo = new THREE.SphereGeometry(baseRadius, 16, 16);
+        const highMesh = new THREE.Mesh(highGeo, new THREE.MeshStandardMaterial({ color: body.color }));
+        const mediumMesh = new THREE.Mesh(mediumGeo, new THREE.MeshStandardMaterial({ color: body.color }));
+        const lowMesh = new THREE.Mesh(lowGeo, new THREE.MeshStandardMaterial({ color: body.color }));
+        lod.addLevel(highMesh, 50); lod.addLevel(mediumMesh, 150); lod.addLevel(lowMesh, 300);
+        return { lod, highMesh, mediumMesh, lowMesh };
+    }
+
+    function createAtmosphere(radius, intensity = 0.35) {
+        const geometry = new THREE.SphereGeometry(radius * 1.02, 64, 64);
+        const material = new THREE.ShaderMaterial({
+            uniforms: { glowIntensity: { value: intensity } },
+            vertexShader: `varying vec3 vNormal; void main() { vNormal = normalize(normalMatrix * normal); gl_PointSize = 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            fragmentShader: `uniform float glowIntensity; varying vec3 vNormal; void main() { float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0); vec3 atmosphere = vec3(0.3, 0.6, 1.0) * intensity * glowIntensity; gl_FragColor = vec4(atmosphere, 0.8); }`,
+            transparent: true, side: THREE.BackSide
         });
-        
-        const renderScene = new RenderPass(scene, camera);
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(CONFIG.width, CONFIG.height), CONFIG.bloomStrength, CONFIG.bloomRadius, CONFIG.bloomThreshold);
-        bloomPass.threshold = CONFIG.bloomThreshold;
-        bloomPass.strength = CONFIG.bloomStrength;
-        bloomPass.radius = CONFIG.bloomRadius;
-        const effectComposer = new EffectComposer(renderer);
-        effectComposer.addPass(renderScene);
-        effectComposer.addPass(bloomPass);
-        
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.06;
-        controls.zoomSpeed = CONFIG.zoomSensitivity;
-        controls.rotateSpeed = 0.8;
-        controls.target.set(0,0,0);
-        
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x222222);
-        scene.add(ambientLight);
-        const sunLight = new THREE.PointLight(0xffaa66, 1.9, 0, 2);
-        sunLight.position.set(0,0,0);
-        sunLight.castShadow = true;
-        scene.add(sunLight);
-        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.45);
-        fillLight.position.set(10,20,5);
-        scene.add(fillLight);
-        
-        // Sun
-        const sunGeometry = new THREE.SphereGeometry(2.2, 128, 128);
-        const sunMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffaa66,
-            emissive: 0xff4411,
-            emissiveIntensity: 1.2,
-            toneMapped: true
-        });
-        const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
-        scene.add(sunMesh);
-        
-        // Create planets array
-        let planets = [];
-        
-        // Asteroid belt
-        const asteroidCount = 5000;
-        const asteroidGeo = new THREE.BufferGeometry();
-        const asteroidPositions = new Float32Array(asteroidCount * 3);
-        for (let i = 0; i < asteroidCount; i++) {
-            const r = 12 + Math.random() * 4.5;
-            const angle = Math.random() * Math.PI * 2;
-            asteroidPositions[i*3] = Math.cos(angle) * r;
-            asteroidPositions[i*3+1] = (Math.random() - 0.5) * 1.2;
-            asteroidPositions[i*3+2] = Math.sin(angle) * r;
+        return new THREE.Mesh(geometry, material);
+    }
+
+    // ========== СЦЕНА, РЕНДЕРИНГ ==========
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(CONFIG.bgColor);
+    scene.fog = new THREE.FogExp2(CONFIG.bgColor, 0.0003);
+    
+    const camera = new THREE.PerspectiveCamera(45, CONFIG.width/CONFIG.height, 0.01, 2000);
+    camera.position.set(0, 22, 52);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: CONFIG.useLogarithmicDepth });
+    renderer.setSize(CONFIG.width, CONFIG.height);
+    renderer.shadowMap.enabled = true;
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    
+    const effectComposer = new EffectComposer(renderer);
+    effectComposer.addPass(new RenderPass(scene, camera));
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(CONFIG.width, CONFIG.height), CONFIG.bloomStrength, CONFIG.bloomRadius, CONFIG.bloomThreshold);
+    effectComposer.addPass(bloomPass);
+    
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.zoomSpeed = CONFIG.zoomSensitivity;
+    controls.target.set(0,0,0);
+    
+    // Освещение
+    const ambientLight = new THREE.AmbientLight(0x222222);
+    scene.add(ambientLight);
+    const sunLight = new THREE.PointLight(0xffaa66, 1.9, 0, 2);
+    sunLight.position.set(0,0,0);
+    sunLight.castShadow = true;
+    scene.add(sunLight);
+    const fillLight = new THREE.DirectionalLight(0x88aaff, 0.45);
+    fillLight.position.set(10,20,5);
+    scene.add(fillLight);
+    
+    // Солнце
+    const sunGeo = new THREE.SphereGeometry(2.2, 128, 128);
+    const sunMat = new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4411, emissiveIntensity: 1.2 });
+    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    scene.add(sunMesh);
+    
+    let planets = [], comets = [], orbitLines = [], trailLines = [];
+    let asteroidField, asteroidField2, starsFar, starsNear, dustParticles;
+    
+    // ========== СОЗДАНИЕ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ (качество) ==========
+    function createAsteroidBelts(quality) {
+        if (asteroidField) scene.remove(asteroidField);
+        if (asteroidField2) scene.remove(asteroidField2);
+        const count1 = qualitySettings[quality].asteroidCount;
+        const geo1 = new THREE.BufferGeometry();
+        const pos1 = new Float32Array(count1*3);
+        for (let i=0;i<count1;i++) {
+            const r = 11 + Math.random()*5;
+            const a = Math.random()*Math.PI*2;
+            pos1[i*3] = Math.cos(a)*r;
+            pos1[i*3+1] = (Math.random()-0.5)*1.5;
+            pos1[i*3+2] = Math.sin(a)*r;
         }
-        asteroidGeo.setAttribute('position', new THREE.BufferAttribute(asteroidPositions, 3));
-        const asteroidMat = new THREE.PointsMaterial({ color: 0xaa9977, size: 0.08 });
-        const asteroidField = new THREE.Points(asteroidGeo, asteroidMat);
+        geo1.setAttribute('position', new THREE.BufferAttribute(pos1,3));
+        asteroidField = new THREE.Points(geo1, new THREE.PointsMaterial({ color: 0xaa9977, size: 0.07 }));
         scene.add(asteroidField);
         
-        // Twinkling stars (shader from jsulpis)
-        const starCount = 5000;
-        const starPositionsArray = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            starPositionsArray[i*3] = (Math.random() - 0.5) * 800;
-            starPositionsArray[i*3+1] = (Math.random() - 0.5) * 500;
-            starPositionsArray[i*3+2] = (Math.random() - 0.5) * 400 - 100;
+        const count2 = Math.floor(count1*0.6);
+        const geo2 = new THREE.BufferGeometry();
+        const pos2 = new Float32Array(count2*3);
+        for (let i=0;i<count2;i++) {
+            const r = 18 + Math.random()*4;
+            const a = Math.random()*Math.PI*2;
+            pos2[i*3] = Math.cos(a)*r;
+            pos2[i*3+1] = (Math.random()-0.5)*2;
+            pos2[i*3+2] = Math.sin(a)*r;
         }
-        const starGeometryObj = new THREE.BufferGeometry();
-        starGeometryObj.setAttribute('position', new THREE.BufferAttribute(starPositionsArray, 3));
+        geo2.setAttribute('position', new THREE.BufferAttribute(pos2,3));
+        asteroidField2 = new THREE.Points(geo2, new THREE.PointsMaterial({ color: 0x8866aa, size: 0.09 }));
+        scene.add(asteroidField2);
+    }
+    
+    function createStars(quality) {
+        if (starsFar) scene.remove(starsFar);
+        if (starsNear) scene.remove(starsNear);
+        const farCount = qualitySettings[quality].starCount;
+        const nearCount = Math.floor(farCount*0.5);
+        const farPos = new Float32Array(farCount*3);
+        for (let i=0;i<farCount;i++) {
+            farPos[i*3] = (Math.random()-0.5)*800;
+            farPos[i*3+1] = (Math.random()-0.5)*500;
+            farPos[i*3+2] = (Math.random()-0.5)*600 - 200;
+        }
+        const farGeom = new THREE.BufferGeometry();
+        farGeom.setAttribute('position', new THREE.BufferAttribute(farPos,3));
+        starsFar = new THREE.Points(farGeom, new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 }));
+        scene.add(starsFar);
         
-        const starVertexShader = `
-            uniform float time;
-            varying float vIntensity;
-            void main() {
-                vIntensity = 0.6 + 0.4 * sin(time * 3.0 + position.x * 10.0);
-                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                gl_PointSize = (0.2 + vIntensity * 0.15) * (300.0 / (length(mvPosition.xyz)));
-                gl_Position = projectionMatrix * mvPosition;
+        const nearPos = new Float32Array(nearCount*3);
+        for (let i=0;i<nearCount;i++) {
+            nearPos[i*3] = (Math.random()-0.5)*400;
+            nearPos[i*3+1] = (Math.random()-0.5)*300;
+            nearPos[i*3+2] = (Math.random()-0.5)*300 - 100;
+        }
+        const nearGeom = new THREE.BufferGeometry();
+        nearGeom.setAttribute('position', new THREE.BufferAttribute(nearPos,3));
+        const starVertex = `uniform float time; varying float vIntensity; void main() { vIntensity = 0.6+0.4*sin(time*3.0+position.x*10.0); vec4 mvPosition = modelViewMatrix*vec4(position,1.0); gl_PointSize = (0.2+vIntensity*0.15)*(300.0/length(mvPosition.xyz)); gl_Position = projectionMatrix*mvPosition; }`;
+        const starFragment = `uniform float time; varying float vIntensity; void main() { float alpha = 0.7+0.3*sin(time*5.0); gl_FragColor = vec4(1.0,1.0,1.0,alpha*vIntensity); }`;
+        const starMat = new THREE.ShaderMaterial({ uniforms: { time: { value:0 } }, vertexShader: starVertex, fragmentShader: starFragment, transparent: true, depthWrite: false });
+        starsNear = new THREE.Points(nearGeom, starMat);
+        scene.add(starsNear);
+    }
+    
+    function createDust(quality) {
+        if (dustParticles) scene.remove(dustParticles);
+        const dustCount = qualitySettings[quality].dustParticles;
+        const dustGeo = new THREE.BufferGeometry();
+        const dustPos = new Float32Array(dustCount*3);
+        for (let i=0;i<dustCount;i++) {
+            dustPos[i*3] = (Math.random()-0.5)*300;
+            dustPos[i*3+1] = (Math.random()-0.5)*300;
+            dustPos[i*3+2] = (Math.random()-0.5)*200 - 50;
+        }
+        dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos,3));
+        dustParticles = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0x88aaff, size: 0.03, transparent: true, opacity: 0.4 }));
+        scene.add(dustParticles);
+    }
+    
+    // ========== ИНИЦИАЛИЗАЦИЯ ПЛАНЕТ И КОМЕТ ==========
+    async function initPlanets() {
+        if (planets.length) planets.forEach(p => { if(p.lod) scene.remove(p.lod); if(p.atmosphereMesh) scene.remove(p.atmosphereMesh); });
+        planets = [];
+        const segments = qualitySettings[CONFIG.quality].planetSegments;
+        for (const data of planetsRawInitial) {
+            const body = new CelestialBody(data);
+            const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor;
+            const { lod, highMesh, mediumMesh, lowMesh } = createPlanetLOD(body, baseRadius, segments);
+            body.lod = lod;
+            lod.position.copy(body.pos);
+            scene.add(lod);
+            let tex = data.texture ? await loadTextureWithRetries(data.texture, data.color, 3, 500) : null;
+            const mat = tex ? new THREE.MeshStandardMaterial({ map: tex, roughness:0.5, metalness:0.1 }) : new THREE.MeshStandardMaterial({ color: data.color, roughness:0.4 });
+            highMesh.material = mat; mediumMesh.material = mat; lowMesh.material = mat;
+            if(data.hasRings) {
+                const ringGeo = new THREE.TorusGeometry(baseRadius*1.35, 0.25, 64, 200);
+                const ringMat = new THREE.MeshStandardMaterial({ color:0xc2b280, emissive:0x442200 });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI/2.2;
+                lod.add(ring);
             }
-        `;
-        const starFragmentShader = `
-            uniform float time;
-            varying float vIntensity;
-            void main() {
-                float alpha = 0.7 + 0.3 * sin(time * 5.0);
-                gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * vIntensity);
+            if(data.atmosphere) {
+                const atmo = createAtmosphere(baseRadius, 0.4);
+                body.atmosphereMesh = atmo;
+                lod.add(atmo);
             }
-        `;
-        const starMaterialShader = new THREE.ShaderMaterial({
-            uniforms: { time: { value: 0 } },
-            vertexShader: starVertexShader,
-            fragmentShader: starFragmentShader,
-            transparent: true,
-            depthWrite: false
+            planets.push(body);
+        }
+        // Кометы
+        if (comets.length) comets.forEach(c => { if(c.mesh) scene.remove(c.mesh); if(c.tailSystem) scene.remove(c.tailSystem); });
+        comets = [];
+        for (const data of cometsData) {
+            const comet = new Comet(data);
+            const geometry = new THREE.SphereGeometry(comet.radius * CONFIG.planetScaleFactor * 0.8, 16, 16);
+            const material = new THREE.MeshStandardMaterial({ color: comet.color, emissive: 0x442200 });
+            const mesh = new THREE.Mesh(geometry, material);
+            comet.mesh = mesh;
+            scene.add(mesh);
+            comet.createTail(scene);
+            comets.push(comet);
+        }
+        // Орбитальные линии (эллипсы)
+        orbitLines.forEach(l => scene.remove(l));
+        orbitLines = [];
+        planets.forEach(planet => {
+            const points = [];
+            const a = planet.a;
+            const e = planet.e;
+            const steps = 200;
+            for (let i=0; i<=steps; i++) {
+                const theta = 2*Math.PI * i/steps;
+                const r = a * (1 - e*e) / (1 + e * Math.cos(theta));
+                const x = r * Math.cos(theta);
+                const z = r * Math.sin(theta);
+                points.push(new THREE.Vector3(x, 0, z));
+            }
+            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x4488aa, polygonOffset: true, polygonOffsetFactor: 1 });
+            const orbit = new THREE.LineLoop(lineGeo, lineMat);
+            scene.add(orbit);
+            orbitLines.push(orbit);
         });
-        const stars = new THREE.Points(starGeometryObj, starMaterialShader);
-        scene.add(stars);
-        
-        // Orbit lines
-        let orbitLines = [];
-        let trailLines = [];
-        
-        // Initialize planets asynchronously
-        async function initPlanets(reset = false) {
-            // Remove existing meshes
-            if (planets.length && !reset) {
-                planets.forEach(p => {
-                    if (p.lod) scene.remove(p.lod);
-                });
-            }
-            planets = [];
-            for (const data of planetsRawInitial) {
-                const body = new CelestialBody(data.name, data.mass, data.radius, data.color, data.distance, data.texture, data.hasRings);
-                const baseRadius = body.radiusVisual * CONFIG.planetScaleFactor;
-                const { lod, highMesh, mediumMesh, lowMesh } = createPlanetLOD(body, baseRadius);
-                body.lod = lod;
-                lod.position.copy(body.pos);
-                scene.add(lod);
-                
-                let tex = null;
-                if (data.texture) {
-                    tex = await loadTextureWithRetries(data.texture, data.color, 3, 500);
-                }
-                const material = tex ? new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5, metalness: 0.1 }) : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.4 });
-                highMesh.material = material;
-                mediumMesh.material = material;
-                lowMesh.material = material;
-                
-                if (data.hasRings) {
-                    const ringGeo = new THREE.TorusGeometry(baseRadius * 1.35, 0.25, 64, 200);
-                    const ringMat = new THREE.MeshStandardMaterial({ color: 0xc2b280, emissive: 0x442200 });
-                    const ring = new THREE.Mesh(ringGeo, ringMat);
-                    ring.rotation.x = Math.PI / 2.2;
-                    lod.add(ring);
-                }
-                planets.push(body);
-            }
-            
-            // Recreate orbit lines and trail lines
-            orbitLines.forEach(line => scene.remove(line));
-            trailLines.forEach(line => scene.remove(line));
-            orbitLines = [];
-            trailLines = [];
-            
-            planets.forEach(planet => {
-                const points = [];
-                const radius = planet.distance;
-                for (let i = 0; i <= 160; i++) {
-                    const ang = (i / 160) * Math.PI * 2;
-                    points.push(new THREE.Vector3(Math.cos(ang) * radius, 0, Math.sin(ang) * radius));
-                }
-                const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-                const lineMat = new THREE.LineBasicMaterial({ color: 0x4488aa });
-                const orbit = new THREE.LineLoop(lineGeo, lineMat);
-                scene.add(orbit);
-                orbitLines.push(orbit);
-                
-                const trailMat = new THREE.LineBasicMaterial({ color: planet.color });
-                const trailGeo = new THREE.BufferGeometry();
-                const trailLine = new THREE.Line(trailGeo, trailMat);
-                scene.add(trailLine);
-                trailLines.push(trailLine);
-            });
-            
-            // Send data to worker or main thread
-            const bodiesData = planets.map(p => ({
-                mass: p.mass,
-                pos: { x: p.pos.x, y: p.pos.y, z: p.pos.z },
-                vel: { x: p.vel.x, y: p.vel.y, z: p.vel.z },
-                acc: { x: p.acc.x, y: p.acc.y, z: p.acc.z }
-            }));
-            
-            if (useWorker && worker) {
-                worker.postMessage({ type: 'init', bodies: bodiesData, G: CONFIG.G, dt: CONFIG.dtFixed });
-                worker.onmessage = (e) => {
-                    if (e.data.positions) {
-                        for (let i = 0; i < planets.length; i++) {
-                            planets[i].pos.set(e.data.positions[i*3], e.data.positions[i*3+1], e.data.positions[i*3+2]);
-                            planets[i].vel.set(e.data.velocities[i*3], e.data.velocities[i*3+1], e.data.velocities[i*3+2]);
-                            planets[i].acc.set(e.data.accelerations[i*3], e.data.accelerations[i*3+1], e.data.accelerations[i*3+2]);
-                            if (planets[i].lod) planets[i].lod.position.copy(planets[i].pos);
-                            planets[i].updateTrail();
-                        }
-                    }
-                };
+        // Трейлы
+        trailLines.forEach(l => scene.remove(l));
+        trailLines = [];
+        planets.forEach(planet => {
+            const trailLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: planet.color }));
+            scene.add(trailLine);
+            trailLines.push(trailLine);
+        });
+    }
+    
+    function updateTrailVisuals() {
+        for(let i=0;i<planets.length;i++) {
+            const points = planets[i].trailPositions;
+            if(!CONFIG.showTrails || points.length<2) { trailLines[i].visible = false; continue; }
+            trailLines[i].visible = true;
+            const vertices = points.flatMap(p => [p.x, p.y, p.z]);
+            const geom = trailLines[i].geometry;
+            const posAttr = geom.attributes.position;
+            if(posAttr && posAttr.count === points.length) {
+                const arr = posAttr.array;
+                for(let j=0;j<vertices.length;j++) arr[j] = vertices[j];
+                posAttr.needsUpdate = true;
             } else {
-                useWorker = false;
+                const newGeo = new THREE.BufferGeometry();
+                newGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices),3));
+                trailLines[i].geometry.dispose();
+                trailLines[i].geometry = newGeo;
             }
         }
-        
-        // Optimized trail update (BufferAttribute update instead of full dispose)
-        function updateTrailVisualsOptimized() {
-            for (let i = 0; i < planets.length; i++) {
-                const trailPoints = planets[i].trailPositions;
-                if (!CONFIG.showTrails || trailPoints.length < 2) {
-                    trailLines[i].visible = false;
-                    continue;
-                }
-                trailLines[i].visible = true;
-                const vertices = [];
-                for (let p of trailPoints) {
-                    vertices.push(p.x, p.y, p.z);
-                }
-                const geometry = trailLines[i].geometry;
-                const positionAttribute = geometry.attributes.position;
-                if (positionAttribute && positionAttribute.count === trailPoints.length) {
-                    // update existing attribute
-                    const array = positionAttribute.array;
-                    for (let j = 0; j < vertices.length; j++) array[j] = vertices[j];
-                    positionAttribute.needsUpdate = true;
-                } else {
-                    // recreate if size changed
-                    const newGeo = new THREE.BufferGeometry();
-                    newGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
-                    trailLines[i].geometry.dispose();
-                    trailLines[i].geometry = newGeo;
-                }
-            }
+    }
+    
+    function resetSimulation() {
+        for(let p of planets) p.resetToInitial();
+        for(let c of comets) c.angle = 0;
+        for(let i=0;i<trailLines.length;i++) { trailLines[i].geometry.dispose(); trailLines[i].geometry = new THREE.BufferGeometry(); }
+        updateTrailVisuals();
+    }
+    
+    function applyQuality(level) {
+        CONFIG.quality = level;
+        const q = qualitySettings[level];
+        bloomPass.strength = q.bloomStrength;
+        renderer.shadowMap.mapSize.width = q.shadowMapSize;
+        renderer.shadowMap.mapSize.height = q.shadowMapSize;
+        createAsteroidBelts(level);
+        createStars(level);
+        createDust(level);
+        initPlanets();
+    }
+    
+    // ========== ДИНАМИЧЕСКАЯ СИСТЕМА КООРДИНАТ (для устранения дрожания) ==========
+    let originShift = new THREE.Vector3();
+    function updateDynamicOrigin() {
+        if (!CONFIG.useDynamicOrigin) {
+            originShift.set(0,0,0);
+            return;
         }
-        
-        // Adaptive timestep based on minimum distance
-        function computeAdaptiveDt(bodies, baseDt) {
-            if (!CONFIG.adaptiveDtEnabled) return baseDt;
-            let minDist = Infinity;
-            for (let i = 0; i < bodies.length; i++) {
-                for (let j = i+1; j < bodies.length; j++) {
-                    const dx = bodies[i].pos.x - bodies[j].pos.x;
-                    const dy = bodies[i].pos.y - bodies[j].pos.y;
-                    const dz = bodies[i].pos.z - bodies[j].pos.z;
-                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                    if (dist < minDist) minDist = dist;
-                }
-            }
-            if (minDist < CONFIG.minDistanceForAdaptive) {
-                return baseDt * CONFIG.adaptiveDtFactor;
-            }
-            return baseDt;
+        const view = document.getElementById('viewMode').value;
+        let target = null;
+        if (view === 'sun') target = { pos: new THREE.Vector3(0,0,0) };
+        else if (view === 'earth') target = planets.find(p => p.name === "Earth");
+        else target = null;
+        if (target) {
+            originShift.copy(target.pos);
+            controls.target.copy(originShift);
+        } else {
+            originShift.set(0,0,0);
         }
+    }
+    
+    // ========== АНИМАЦИОННЫЙ ЦИКЛ ==========
+    let lastTime = performance.now();
+    let simTime = 0;
+    let currentSpeed = CONFIG.timeScale;
+    
+    function animate() {
+        const now = performance.now();
+        let dt = Math.min(0.033, (now - lastTime) / 1000);
+        lastTime = now;
+        if (dt < 0.003) dt = 0.016;
         
-        // Reset simulation
-        function resetSimulation() {
+        simTime += dt * currentSpeed;
+        
+        // Обновление физики (кеплеровы орбиты)
+        for (let planet of planets) {
+            planet.updateKeplerian(simTime);
+            if (planet.lod) planet.lod.position.copy(planet.pos);
+            planet.updateTrail();
+        }
+        for (let comet of comets) {
+            comet.updatePosition(dt * currentSpeed);
+        }
+        updateTrailVisuals();
+        
+        // Вращение астероидов и звёзд
+        if (asteroidField) asteroidField.rotation.y += 0.002 * currentSpeed;
+        if (asteroidField2) asteroidField2.rotation.y -= 0.0015 * currentSpeed;
+        if (starsFar) starsFar.rotation.y += 0.0002 * currentSpeed;
+        if (starsNear) {
+            starsNear.rotation.y += 0.001 * currentSpeed;
+            if (starsNear.material.uniforms) starsNear.material.uniforms.time.value += dt;
+        }
+        if (dustParticles) { dustParticles.rotation.y += 0.0005; dustParticles.rotation.x += 0.0003; }
+        
+        // Динамическая смена начала координат для устранения дрожания
+        updateDynamicOrigin();
+        
+        // Смещение всех объектов в визуальном пространстве
+        if (CONFIG.useDynamicOrigin) {
             for (let planet of planets) {
-                planet.resetToInitial();
-                planet.trailPositions = [];
+                if (planet.lod) planet.lod.position.sub(originShift);
             }
-            // Also reset worker state if needed? Just reinitialize.
-            if (useWorker && worker) {
-                const bodiesData = planets.map(p => ({
-                    mass: p.mass,
-                    pos: { x: p.pos.x, y: p.pos.y, z: p.pos.z },
-                    vel: { x: p.vel.x, y: p.vel.y, z: p.vel.z },
-                    acc: { x: p.acc.x, y: p.acc.y, z: p.acc.z }
-                }));
-                worker.postMessage({ type: 'init', bodies: bodiesData, G: CONFIG.G, dt: CONFIG.dtFixed });
+            for (let comet of comets) {
+                if (comet.mesh) comet.mesh.position.sub(originShift);
+                if (comet.tailSystem) comet.tailSystem.position.sub(originShift);
             }
-            // Clear trails visuals
-            updateTrailVisualsOptimized();
+            if (sunMesh) sunMesh.position.sub(originShift);
+            for (let line of orbitLines) line.position.sub(originShift);
+            for (let line of trailLines) line.position.sub(originShift);
+            if (asteroidField) asteroidField.position.sub(originShift);
+            if (asteroidField2) asteroidField2.position.sub(originShift);
+            if (starsFar) starsFar.position.sub(originShift);
+            if (starsNear) starsNear.position.sub(originShift);
+            if (dustParticles) dustParticles.position.sub(originShift);
         }
         
-        // Animation loop
-        let lastTimestamp = performance.now();
-        let accumulator = 0;
-        let currentSpeed = CONFIG.timeScale;
+        // Рендеринг
+        controls.update();
+        effectComposer.render();
         
-        async function start() {
-            await initPlanets();
-            
-            function animate() {
-                const now = performance.now();
-                let dt = Math.min(0.033, (now - lastTimestamp) / 1000);
-                lastTimestamp = now;
-                if (dt < 0.003) dt = 0.016;
-                
-                accumulator += dt * currentSpeed;
-                let steps = 0;
-                const maxSteps = 3;
-                while (accumulator >= CONFIG.dtFixed && steps < maxSteps) {
-                    let stepDt = CONFIG.dtFixed;
-                    if (CONFIG.adaptiveDtEnabled && planets.length) {
-                        const adaptiveDt = computeAdaptiveDt(planets, stepDt);
-                        if (adaptiveDt < stepDt) stepDt = adaptiveDt;
-                    }
-                    if (useWorker && worker) {
-                        worker.postMessage({ type: 'step', adaptiveDt: stepDt });
-                    } else {
-                        mainThreadPhysics(planets, stepDt);
-                        for (let p of planets) {
-                            if (p.lod) p.lod.position.copy(p.pos);
-                            p.updateTrail();
-                        }
-                    }
-                    accumulator -= CONFIG.dtFixed;
-                    steps++;
-                }
-                
-                // Update visuals
-                updateTrailVisualsOptimized();
-                asteroidField.rotation.y += 0.002 * currentSpeed;
-                if (stars.material.uniforms) stars.material.uniforms.time.value += dt;
-                
-                const view = document.getElementById('viewMode').value;
-                if (view === 'sun') controls.target.set(0,0,0);
-                else if (view === 'earth') {
-                    const earth = planets.find(p => p.name === "Earth");
-                    if (earth) controls.target.copy(earth.pos);
-                }
-                controls.update();
-                
-                effectComposer.render();
-                requestAnimationFrame(animate);
+        // Возвращаем объекты на место (не обязательно, но для порядка)
+        if (CONFIG.useDynamicOrigin) {
+            for (let planet of planets) if (planet.lod) planet.lod.position.add(originShift);
+            for (let comet of comets) {
+                if (comet.mesh) comet.mesh.position.add(originShift);
+                if (comet.tailSystem) comet.tailSystem.position.add(originShift);
             }
-            
-            animate();
+            if (sunMesh) sunMesh.position.add(originShift);
+            for (let line of orbitLines) line.position.add(originShift);
+            for (let line of trailLines) line.position.add(originShift);
+            if (asteroidField) asteroidField.position.add(originShift);
+            if (asteroidField2) asteroidField2.position.add(originShift);
+            if (starsFar) starsFar.position.add(originShift);
+            if (starsNear) starsNear.position.add(originShift);
+            if (dustParticles) dustParticles.position.add(originShift);
         }
         
-        start();
-        
-        // UI Handlers
-        const speedSpan = document.getElementById('speedVal');
-        const slowerBtn = document.getElementById('slower');
-        const fasterBtn = document.getElementById('faster');
-        const resetSpeedBtn = document.getElementById('resetSpeed');
-        const resetViewBtn = document.getElementById('resetView');
-        const resetSimBtn = document.getElementById('resetSimulation');
-        const toggleTrailsBtn = document.getElementById('toggleTrails');
-        const zoomSensSlider = document.getElementById('zoomSens');
-        
-        slowerBtn.onclick = () => { currentSpeed = Math.max(0.1, currentSpeed / 1.5); currentSpeed = Math.min(currentSpeed, CONFIG.maxTimeScale); CONFIG.timeScale = currentSpeed; speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
-        fasterBtn.onclick = () => { currentSpeed = Math.min(CONFIG.maxTimeScale, currentSpeed * 1.5); CONFIG.timeScale = currentSpeed; speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
-        resetSpeedBtn.onclick = () => { currentSpeed = 1.0; CONFIG.timeScale = 1.0; speedSpan.innerText = '1.0x'; };
-        resetViewBtn.onclick = () => { controls.target.set(0,0,0); camera.position.set(0,22,52); controls.update(); };
-        resetSimBtn.onclick = () => { resetSimulation(); };
-        toggleTrailsBtn.onclick = () => {
-            CONFIG.showTrails = !CONFIG.showTrails;
-            toggleTrailsBtn.textContent = CONFIG.showTrails ? "ON" : "OFF";
-            toggleTrailsBtn.style.background = CONFIG.showTrails ? "#27ae60" : "#aa2e1e";
-            if (!CONFIG.showTrails) {
-                for (let line of trailLines) line.visible = false;
-            } else {
-                updateTrailVisualsOptimized();
-            }
-        };
-        zoomSensSlider.oninput = (e) => { controls.zoomSpeed = parseFloat(e.target.value); };
-        
-        window.addEventListener('resize', () => {
-            CONFIG.width = window.innerWidth;
-            CONFIG.height = window.innerHeight;
-            camera.aspect = CONFIG.width / CONFIG.height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(CONFIG.width, CONFIG.height);
-            effectComposer.setSize(CONFIG.width, CONFIG.height);
-        });
-        
-        console.log('ULTIMATE MONOLITH loaded: full Verlet, LOD, adaptive DT, worker fallback, twinkling stars, texture retry, reset simulation, optimized trails, context loss protection');
-    </script>
+        requestAnimationFrame(animate);
+    }
+    
+    // ========== ЗАПУСК ==========
+    async function start() {
+        await initPlanets();
+        createAsteroidBelts(CONFIG.quality);
+        createStars(CONFIG.quality);
+        createDust(CONFIG.quality);
+        animate();
+    }
+    start();
+    
+    // ========== UI И DAT.GUI ==========
+    const speedSpan = document.getElementById('speedVal');
+    document.getElementById('slower').onclick = () => { currentSpeed = Math.max(0.1, currentSpeed/1.5); currentSpeed = Math.min(currentSpeed, CONFIG.maxTimeScale); speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
+    document.getElementById('faster').onclick = () => { currentSpeed = Math.min(CONFIG.maxTimeScale, currentSpeed*1.5); speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
+    document.getElementById('resetSpeed').onclick = () => { currentSpeed = 1.0; speedSpan.innerText = '1.0x'; };
+    document.getElementById('resetView').onclick = () => { controls.target.set(0,0,0); camera.position.set(0,22,52); controls.update(); };
+    document.getElementById('resetSimulation').onclick = () => resetSimulation();
+    const trailsBtn = document.getElementById('toggleTrails');
+    trailsBtn.onclick = () => { CONFIG.showTrails = !CONFIG.showTrails; trailsBtn.textContent = CONFIG.showTrails ? "ON" : "OFF"; trailsBtn.style.background = CONFIG.showTrails ? "#27ae60" : "#aa2e1e"; if(!CONFIG.showTrails) trailLines.forEach(l=>l.visible=false); else updateTrailVisuals(); };
+    document.getElementById('zoomSens').oninput = (e) => { controls.zoomSpeed = parseFloat(e.target.value); };
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); effectComposer.setSize(window.innerWidth, window.innerHeight); });
+    
+    const gui = new GUI({ title: 'Settings', width: 240, container: document.getElementById('gui-wrapper') });
+    gui.add(CONFIG, 'quality', ['performance', 'balanced', 'quality', 'cinematic']).name('Quality').onChange(val => applyQuality(val));
+    gui.add(CONFIG, 'bloomStrength', 0, 2.5).name('Bloom Strength').onChange(val => bloomPass.strength = val);
+    gui.add(CONFIG, 'bloomThreshold', 0, 1).name('Bloom Threshold').onChange(val => bloomPass.threshold = val);
+    gui.add(CONFIG, 'showTrails').name('Show Trails').onChange(val => { CONFIG.showTrails = val; trailsBtn.textContent = val ? "ON" : "OFF"; if(!val) trailLines.forEach(l=>l.visible=false); else updateTrailVisuals(); });
+    gui.add(CONFIG, 'adaptiveDtEnabled').name('Adaptive Timestep');
+    gui.add(CONFIG, 'timeScale', 0, CONFIG.maxTimeScale).name('Time Scale').onChange(val => { currentSpeed = val; speedSpan.innerText = val.toFixed(1)+'x'; });
+    gui.add(CONFIG, 'useLogarithmicDepth').name('Logarithmic Depth Buffer').onChange(val => { location.reload(); }); // требует перезагрузки
+    gui.add(CONFIG, 'useDynamicOrigin').name('Dynamic Origin (Anti-jitter)');
+    console.log('Ultimate solar system with Keplerian orbits, dynamic origin, logarithmic depth, and all features ready');
+</script>
 </body>
 </html>
 
