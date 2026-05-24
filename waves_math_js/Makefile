@@ -1,14 +1,10 @@
 # Makefile для проекта "Спор о струне"
-# Используется для удобного запуска статического сайта
-
-# Имя основного HTML-файла
 HTML_FILE = index.html
 
-# Цель по умолчанию
 .PHONY: all
 all: help
 
-# Открыть HTML в браузере по умолчанию
+# Открыть в браузере (только локально с GUI)
 .PHONY: open
 open:
 	@echo "Открываем $(HTML_FILE) в браузере..."
@@ -17,41 +13,46 @@ open:
 	elif command -v open > /dev/null; then \
 		open $(HTML_FILE); \
 	else \
-		echo "Не удалось определить команду для открытия браузера. Откройте $(HTML_FILE) вручную."; \
+		echo "❌ Не удалось открыть браузер. Запустите 'make serve' и откройте порт 8000."; \
 	fi
 
-# Запустить простой HTTP-сервер на Python (порт 8000)
+# Запустить HTTP-сервер
 .PHONY: serve
 serve:
-	@echo "Запускаем HTTP-сервер на http://localhost:8000"
+	@echo "🚀 Запускаем HTTP-сервер на http://localhost:8000"
+	@echo "   В CodeSpace: откройте вкладку 'Ports' и нажмите 'Open in Browser'"
 	@if command -v python3 > /dev/null; then \
 		python3 -m http.server 8000; \
 	elif command -v python > /dev/null; then \
 		python -m http.server 8000; \
 	else \
-		echo "Python не установлен. Установите Python или откройте $(HTML_FILE) напрямую."; \
+		echo "❌ Python не установлен."; \
 	fi
 
-# Проверить, что HTML-файл существует
+# Показать URL для ручного открытия
+.PHONY: preview
+preview:
+	@echo "🌐 Откройте в браузере: http://localhost:8000"
+	@echo "   В CodeSpace: нажмите на вкладке 'Ports' на глобус 🌐"
+
+# Проверить наличие HTML-файла
 .PHONY: check
 check:
 	@if [ -f $(HTML_FILE) ]; then \
 		echo "✅ Файл $(HTML_FILE) найден."; \
 	else \
-		echo "❌ Файл $(HTML_FILE) не найден. Убедитесь, что он находится в текущей папке."; \
+		echo "❌ Файл $(HTML_FILE) не найден."; \
 	fi
 
-# Очистка (в данном проекте нечего удалять, заглушка)
 .PHONY: clean
 clean:
-	@echo "В проекте нет временных файлов. Очистка не требуется."
+	@echo "Очистка не требуется."
 
-# Помощь
 .PHONY: help
 help:
 	@echo "Доступные команды:"
-	@echo "  make open    — открыть $(HTML_FILE) в браузере"
-	@echo "  make serve   — запустить локальный HTTP-сервер на порту 8000"
-	@echo "  make check   — проверить наличие $(HTML_FILE)"
-	@echo "  make clean   — очистка (ничего не делает)"
-	@echo "  make help    — показать эту справку"
+	@echo "  make open     — открыть файл в браузере (только для локальных систем)"
+	@echo "  make serve    — запустить HTTP-сервер на порту 8000"
+	@echo "  make preview  — показать URL для открытия"
+	@echo "  make check    — проверить наличие $(HTML_FILE)"
+	@echo "  make help     — показать справку"
