@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Спор о струне — Манускрипт</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #d8cdb0;
+            font-family: 'Georgia', 'Times New Roman', 'Palatino', serif;
+            font-size: 18px;
+            line-height: 1.5;
+            padding: 30px 20px;
+            color: #1e1a10;
+        }
+        .manuscript {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fef7e0;
+            border: 1px solid #b28b5e;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+        .math-header {
+            background: #e7dbbb;
+            border-bottom: 1px solid #cfb87c;
+            padding: 12px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            color: #5c471f;
+            text-align: center;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .math-header span {
+            margin: 0 15px;
+        }
+        .container {
+            padding: 30px 35px 40px 35px;
+        }
+        .title-block {
+            border-bottom: 2px solid #cfb87c;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .title-block h1 {
+            font-size: 2.8rem;
+            font-weight: normal;
+            color: #2b2a1e;
+            letter-spacing: 1px;
+        }
+        .title-block p {
+            font-size: 1rem;
+            color: #7a6233;
+            margin-top: 8px;
+        }
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            border-left: none;
+            padding-left: 0;
+            margin: 40px 0 8px 0;
+            color: #3b2b1a;
+        }
+        .lab-panel {
+            border: none;
+            background: #fffcf0;
+            padding: 25px;
+            margin-bottom: 40px;
+            border-radius: 8px;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            background: #1a1e28;
+            border: 1px solid #ab8e54;
+            border-radius: 8px;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .wiki-btn {
+            background: linear-gradient(145deg, #efe3c9, #e2d2b5);
+            border: 1px solid #bc9a60;
+            padding: 12px 24px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: #3e2b12;
+            transition: all 0.15s;
+            border-radius: 4px;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        .wiki-btn.active {
+            background: linear-gradient(145deg, #c9af7a, #bb9b66);
+            border-color: #8b6436;
+            color: #1f180a;
+            font-weight: 600;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .wiki-btn:hover {
+            background: linear-gradient(145deg, #dccfaa, #cfbf96);
+        }
+        .formula-box {
+            background: #ffffff;
+            border: 1px solid #e0cfb0;
+            padding: 20px;
+            text-align: center;
+            overflow-x: auto;
+            font-size: 1.1rem;
+            border-radius: 8px;
+        }
+        .desc-box {
+            background: #fff9ea;
+            padding: 16px;
+            margin: 20px 0 0 0;
+            font-size: 1rem;
+            text-align: center;
+            border-left: none;
+        }
+        .authors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        .card {
+            border: 1px solid #cfb87c;
+            background: #ffffff;
+            padding: 22px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-radius: 12px;
+            color: #1e1a10;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid #e6dbbc;
+            padding-bottom: 16px;
+            margin-bottom: 18px;
+            justify-content: center;
+        }
+        .card-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            background: #e6dbbc;
+        }
+        .card h3 {
+            font-size: 1.5rem;
+            margin: 0;
+            text-align: center;
+        }
+        .card p {
+            font-size: 1rem;
+            color: #846b3a;
+            text-align: center;
+        }
+        .card ul {
+            list-style: none;
+            margin: 15px 0 18px 0;
+            padding-left: 0;
+        }
+        .card ul li {
+            position: relative;
+            padding-left: 1.2rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.95rem;
+        }
+        .card ul li::before {
+            content: "*";
+            position: absolute;
+            left: 0;
+            color: #8b5a2b;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .quote {
+            background: #fbebd0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-style: italic;
+            color: #5e3a1f;
+            margin-top: 16px;
+            font-size: 0.95rem;
+        }
+        .wiki-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 35px 0;
+            background: #fffcf0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            font-size: 1rem;
+            font-family: 'Segoe UI', 'Caveat', 'Comic Neue', monospace;
+        }
+        .wiki-table th, .wiki-table td {
+            border: 1px solid #ddd0b0;
+            padding: 14px 16px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .wiki-table th:first-child, .wiki-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            font-family: inherit;
+        }
+        .wiki-table th {
+            background: #f8f2e0;
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+        .wiki-table tr:hover {
+            background: #f5eedb;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            margin: 40px 0 20px 0;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .footer-note {
+            border-top: 1px solid #e2cea2;
+            margin-top: 40px;
+            padding-top: 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #997f4b;
+            font-family: monospace;
+        }
+        @media (max-width: 700px) {
+            .container { padding: 15px; }
+            .wiki-btn { padding: 10px 18px; font-size: 0.9rem; }
+            body { font-size: 16px; }
+            .wiki-table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .wiki-table th, .wiki-table td {
+                min-width: 120px;
+                white-space: normal;
+            }
+            .authors-grid {
+                gap: 20px;
+            }
+            .card {
+                padding: 15px;
+                overflow-x: hidden;
+                word-break: break-word;
+            }
+            .card-header {
+                gap: 12px;
+                padding-bottom: 12px;
+                margin-bottom: 12px;
+                flex-wrap: wrap;
+            }
+            .card-img {
+                width: 65px;
+                height: 65px;
+            }
+            .card h3 {
+                font-size: 1.3rem;
+            }
+            .card p {
+                font-size: 0.9rem;
+            }
+            .card ul li {
+                padding-left: 1rem;
+                font-size: 0.85rem;
+            }
+            .quote {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+<div class="manuscript">
+    <div class="math-header">
+        <span>∂²u/∂t² = c² ∂²u/∂x²</span>
+        <span>∑ sin(nx)/n²</span>
+        <span>∫ e^{x²}dx</span>
+        <span>φ(x) ∼ a₀/2 + ∑ aₙ cos(nx)</span>
+        <span>Δf = 0</span>
+    </div>
+    <div class="container">
+        <div class="title-block">
+            <h1>Спор о струне</h1>
+            <p>Волновое уравнение — Тригонометрические ряды — XVIII век</p>
+        </div>
+
+        <div class="lab-panel">
+            <canvas id="stringCanvas" width="800" height="360"></canvas>
+            <div class="btn-group">
+                <button class="wiki-btn active" data-mode="smooth">Гладкая волна (Д'Аламбер)</button>
+                <button class="wiki-btn" data-mode="triangle">Треугольный щипок (Эйлер)</button>
+                <button class="wiki-btn" data-mode="harmonics">Стоячие гармоники (Бернулли)</button>
+                <button class="wiki-btn" data-mode="fourier">Ряд Фурье → излом</button>
+                <button class="wiki-btn" data-mode="wavelet">Бегущая пила (встречи)</button>
+            </div>
+            <div class="formula-box" id="formulaBox">
+                \[ u(x,t) = f(x-vt) + g(x+vt) \]
+            </div>
+            <div class="desc-box" id="descBox">
+                <strong id="descTitle">Гладкая волна (Д'Аламбер)</strong><br>
+                <span id="descText">Аналитическое решение — только гладкие начальные условия.</span>
+            </div>
+        </div>
+
+        <h2 class="section-title">Участники дискуссии</h2>
+        <div class="authors-grid">
+            <!-- Д'Аламбер -->
+            <div class="card">
+                <div class="card-header">
+                    <img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/3/36/Maurice_Quentin_de_La_Tour_-_Jean_Le_Rond_d%27Alambert_-_WGA12353.jpg" alt="Жан Лерон Д’Аламбер" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/e/e3/Jean_le_Rond_d%27Alembert.jpg'">
+                    <div><h3>Жан Лерон Д’Аламбер</h3><p>Франция — 1717–1783</p></div>
+                </div>
+                <ul>
+                    <li>1747 — опубликовал статью по теории поперечных колебаний струны, где дал метод решения волнового уравнения</li>
+                    <li>Решение: бегущие волны («формула Д'Аламбера»)</li>
+                    <li>Требовал непрерывной второй производной (гладкости)</li>
+                    <li>Сформулировал принцип Д’Аламбера в механике</li>
+                </ul>
+                <div class="quote">«Природа действует непрерывно. Геометрические кривые со стыками и углами не могут являться решением физического уравнения.»</div>
+            </div>
+            <!-- Эйлер -->
+            <div class="card">
+                <div class="card-header">
+                    <img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Leonhard_Euler.jpg" alt="Леонард Эйлер" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/6/60/Leonhard_Euler_2.jpg'">
+                    <div><h3>Леонард Эйлер</h3><p>Швейцария / Россия — 1707–1783</p></div>
+                </div>
+                <ul>
+                    <li>Расширил подход Д’Аламбера, нашёл новые решения волнового уравнения</li>
+                    <li>Допускал кусочно-гладкие начальные формы (ломаная струна)</li>
+                    <li>Активно участвовал в споре о струне, отстаивая более широкое понятие функции</li>
+                    <li>Заложил основы современного понятия функции</li>
+                </ul>
+                <div class="quote">«Струна подчиняется законам механики, а не ограничениям формул. Геометрическая кривая может иметь излом.»</div>
+            </div>
+            <!-- Бернулли -->
+            <div class="card">
+                <div class="card-header">
+                    <img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Portr%C3%A4t_des_Daniel_Bernoulli.jpg" alt="Даниил Бернулли" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/5/58/Daniel_Bernoulli_by_Grooth.jpg'">
+                    <div><h3>Даниил Бернулли</h3><p>Швейцария — 1700–1782</p></div>
+                </div>
+                <ul>
+                    <li>Ввёл понятие гармонического колебания и принцип суперпозиции колебаний</li>
+                    <li>Основной тон + обертоны — любое колебание = сумма гармоник</li>
+                    <li>Предвосхитил ряды Фурье, применив метод тригонометрических рядов</li>
+                    <li>Связь математики с физикой звука (музыкальные инструменты)</li>
+                </ul>
+                <div class="quote">«Любая форма струны, какой бы сложной она ни была, есть лишь гармонический аккорд, звучащий на бесконечном числе частот одновременно.»</div>
+            </div>
+        </div>
+
+        <!-- Видео о теории струн -->
+        <div class="video-container">
+            <iframe src="https://rutube.ru/play/embed/53d56bb5e0dd9662bfa6cec53d854cdc" allow="clipboard-write; autoplay" allowfullscreen></iframe>
+        </div>
+
+        <h2 class="section-title">Сравнение позиций</h2>
+        <div style="overflow-x: auto;">
+            <table class="wiki-table">
+                <thead>
+                <tr><th>Критерий</th><th>Д’Аламбер</th><th>Эйлер</th><th>Бернулли</th></tr>
+                </thead>
+                <tbody>
+                <tr><td style="font-weight:600">Вид функции</td>
+                <td>Единое аналитическое выражение на всей длине струны</td>
+                <td>Кусочно-гладкая, с изломами («свободная рука»)</td>
+                <td>Бесконечная сумма синусоид (тригонометрический ряд)</td>
+                </tr>
+                <tr><td style="font-weight:600">Гладкость</td>
+                <td>Непрерывная 2-я производная (строго аналитическая)</td>
+                <td>Допустимы углы и разрывы производной</td>
+                <td>Каждая гармоника гладкая, но их сумма может дать излом</td>
+                </tr>
+                <tr><td style="font-weight:600">Физическая картина</td>
+                <td>Две встречные бегущие волны</td>
+                <td>Свободная начальная форма струны (произвольная)</td>
+                <td>Акустическая суперпозиция стоячих волн (основной тон + обертоны)</td>
+                </tr>
+                <tr><td style="font-weight:600">Препятствие</td>
+                <td>Не умел дифференцировать излом (требовал гладкости)</td>
+                <td>Не верил, что сумма синусоид создаст острый угол</td>
+                <td>Не имел строгой теории сходимости рядов (решена Фурье)</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer-note">
+            ex manuscriptis mathematicis — волновое уравнение — теорема Фурье — спор о струне
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const canvas = document.getElementById('stringCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let canvasReady = false;
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            if (rect.width > 0) {
+                canvas.width = rect.width;
+                canvas.height = 360;
+                canvasReady = true;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        
+        let currentMode = 'smooth';
+        let time = 0;
+
+        const modeData = {
+            smooth: {
+                title: "Гладкая волна (Д'Аламбер)",
+                text: "Аналитическое решение — только гладкие начальные условия.",
+                formula: "\\[ u(x,t) = f(x-vt) + g(x+vt) \\]"
+            },
+            triangle: {
+                title: "Треугольный щипок (Эйлер)",
+                text: "Начальная форма с изломом — допустима по Эйлеру.",
+                formula: "\\[ u(x,0) = \\begin{cases} 2x & 0\\le x\\le 0.5 \\\\ 2(1-x) & 0.5< x\\le 1 \\end{cases} \\]"
+            },
+            harmonics: {
+                title: "Стоячие волны (Бернулли)",
+                text: "Первые три гармоники: основной тон и обертоны.",
+                formula: "\\[ u(x,t) = \\sin(\\pi x)\\cos(\\pi t) + \\frac12\\sin(2\\pi x)\\cos(2\\pi t) + \\frac13\\sin(3\\pi x)\\cos(3\\pi t) \\]"
+            },
+            fourier: {
+                title: "Ряд Фурье → излом",
+                text: "Сумма нечётных гармоник порождает треугольную волну (излом).",
+                formula: "\\[ u(x,t) = \\frac{8}{\\pi^2} \\sum_{k=0}^{\\infty} \\frac{(-1)^k}{(2k+1)^2} \\sin((2k+1)\\pi x) \\cos((2k+1)\\pi t) \\]"
+            },
+            wavelet: {
+                title: "Циклические встречи (задача о стрелках)",
+                text: "Аналог минутной и часовой стрелки — пилообразная траектория.",
+                formula: "\\[ \\frac{L}{1} = \\frac{L+79.75}{12} \\Rightarrow t = 435 \\text{ минут} \\]"
+            }
+        };
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.wiki-btn').forEach(btn => {
+                if (btn.dataset.mode === mode) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            document.getElementById('descTitle').innerHTML = modeData[mode].title;
+            document.getElementById('descText').innerHTML = modeData[mode].text;
+            const fb = document.getElementById('formulaBox');
+            fb.innerHTML = modeData[mode].formula;
+            if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                window.MathJax.typesetPromise([fb]).catch(console.warn);
+            }
+        }
+
+        document.querySelectorAll('.wiki-btn').forEach(btn => {
+            btn.addEventListener('click', () => setMode(btn.dataset.mode));
+            btn.dataset.mode = btn.innerText.includes('Гладкая') ? 'smooth' :
+                               btn.innerText.includes('Треугольный') ? 'triangle' :
+                               btn.innerText.includes('Стоячие') ? 'harmonics' :
+                               btn.innerText.includes('Ряд') ? 'fourier' : 'wavelet';
+        });
+
+        function drawFrame() {
+            if (!ctx) return;
+            if (!canvasReady && canvas.width === 0) return;
+            const w = canvas.width, h = canvas.height;
+            if (w === 0 || h === 0) return;
+
+            ctx.clearRect(0, 0, w, h);
+            const centerY = h / 2;
+            const length = w - 100;
+            const startX = 50;
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#b59860';
+            ctx.lineWidth = 1;
+            if (currentMode === 'wavelet') {
+                ctx.moveTo(startX, 40); ctx.lineTo(startX, h-40);
+                ctx.moveTo(startX, h-40); ctx.lineTo(startX+length, h-40);
+            } else {
+                ctx.moveTo(startX, centerY); ctx.lineTo(startX+length, centerY);
+            }
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#8b6942';
+
+            if (currentMode === 'smooth') {
+                for (let x = 0; x <= length; x++) {
+                    let norm = x / length;
+                    let y = Math.sin(norm * Math.PI) * Math.cos(time * 0.05) * 70;
+                    if (x === 0) ctx.moveTo(startX + x, centerY + y);
+                    else ctx.lineTo(startX + x, centerY + y);
+                }
+            } else if (currentMode === 'triangle') {
+                for (let x = 0; x <= length; x++) {
+                    let norm = x / length;
+                    let tri = (norm < 0.5) ? norm / 0.5 : (1 - norm) / 0.5;
+                    let y = tri * 70 * Math.cos(time * 0.04);
+                    if (x === 0) ctx.moveTo(startX + x, centerY + y);
+                    else ctx.lineTo(startX + x, centerY + y);
+                }
+            } else if (currentMode === 'harmonics') {
+                for (let x = 0; x <= length; x++) {
+                    let ang = (x / length) * Math.PI;
+                    let y = Math.sin(ang) * Math.cos(time*0.03)*50
+                         + Math.sin(2*ang) * Math.cos(time*0.06)*25
+                         + Math.sin(3*ang) * Math.cos(time*0.09)*15;
+                    if (x === 0) ctx.moveTo(startX + x, centerY + y);
+                    else ctx.lineTo(startX + x, centerY + y);
+                }
+            } else if (currentMode === 'fourier') {
+                let nMax = 1 + Math.floor((time / 8) % 32) * 2;
+                if (nMax > 63) nMax = 63;
+                for (let x = 0; x <= length; x++) {
+                    let norm = x / length;
+                    let y = 0;
+                    for (let n = 1; n <= nMax; n += 2) {
+                        let coeff = 8/(Math.PI*Math.PI) * Math.pow(-1, (n-1)/2) / (n*n);
+                        y += coeff * Math.sin(n * Math.PI * norm) * 90;
+                    }
+                    y *= Math.cos(time * 0.04);
+                    if (x === 0) ctx.moveTo(startX + x, centerY + y);
+                    else ctx.lineTo(startX + x, centerY + y);
+                }
+                ctx.fillStyle = "#7d643c";
+                ctx.font = "bold 14px monospace";
+                ctx.fillText(`гармоник: ${Math.floor(nMax/2)+1}`, startX+10, 50);
+            } else if (currentMode === 'wavelet') {
+                const bottom = h - 45, top = 45, range = bottom - top;
+                ctx.beginPath();
+                for (let x = 0; x <= length; x++) {
+                    let t = x / length * 7.5;
+                    let hourVal = ((4.75 + t) % 12) / 12;
+                    let y = bottom - hourVal * range;
+                    if (x === 0) ctx.moveTo(startX + x, y);
+                    else ctx.lineTo(startX + x, y);
+                }
+                ctx.stroke();
+                ctx.beginPath();
+                let lastY = null;
+                for (let x = 0; x <= length; x++) {
+                    let t = x / length * 7.5;
+                    let minVal = ((9.0 + 12*t) % 12) / 12;
+                    let y = bottom - minVal * range;
+                    if (lastY !== null && Math.abs(y - lastY) > range * 0.8) {
+                        ctx.stroke();
+                        ctx.beginPath();
+                    }
+                    if (x === 0) ctx.moveTo(startX + x, y);
+                    else ctx.lineTo(startX + x, y);
+                    lastY = y;
+                }
+                ctx.stroke();
+                let mark = (time * 0.7) % length;
+                ctx.beginPath();
+                ctx.moveTo(startX + mark, top-6);
+                ctx.lineTo(startX + mark, bottom+6);
+                ctx.strokeStyle = "#8b8b3c";
+                ctx.stroke();
+            }
+            ctx.stroke();
+            time++;
+        }
+
+        function animate() {
+            drawFrame();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('load', function() {
+            resizeCanvas();
+            setMode('smooth');
+            animate();
+        });
+        if (document.readyState === 'complete') {
+            resizeCanvas();
+            setMode('smooth');
+            animate();
+        } else {
+            setTimeout(() => {
+                if (!canvasReady) resizeCanvas();
+            }, 100);
+        }
+    })();
+</script>
+</body>
+</html>
