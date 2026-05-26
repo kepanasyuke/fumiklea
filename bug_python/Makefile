@@ -1,5 +1,5 @@
 # Makefile для HARVARD MARK II – автоматический запуск
-SCRIPT = bag.py
+SCRIPT = bug.py
 PYTHON = python3
 VENV = venv
 
