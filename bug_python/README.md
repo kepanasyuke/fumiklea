@@ -3,7 +3,7 @@
 **Ретро‑симулятор ЭЛТ‑монитора с интерактивной ловлей «жука» в духе 1947 года**
 
 ![Pygame](https://img.shields.io/badge/pygame-2.6.1-brightgreen)
-![Python](https://img.shields.io/b/python-3.12-blue)
+![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 > «First actual case of bug being found.» — *из лога Гарвардского Mark II*
