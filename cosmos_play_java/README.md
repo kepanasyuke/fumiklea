@@ -6,7 +6,7 @@
 ### Открывается как обычно в корне или документом .html 
 
 bash
-make run
+''' make run
 cd cosmos_play_java
 '''
 
