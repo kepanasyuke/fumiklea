@@ -30,7 +30,7 @@ play:
 	@echo "Проверка окружения..."
 	@if [ -z "$$DISPLAY" ]; then \
 		echo "Ошибка: переменная DISPLAY не установлена."; \
-		echo "Если вы в Codespaces, сначала запустите 'make start-x11', затем выполните 'export DISPLAY=:99'"; \
+		echo "Лучше на локальном репозитории - "Домашний компьютер с Вирт.машиной"; \
 		exit 1; \
 	fi
 	@if [ -f $(VENV)/bin/python ]; then \
