@@ -44,12 +44,12 @@ play:
 		echo "Запуск в окне (X11)…"; \
 		$$PYCMD $(SCRIPT); \
 	else \
-		echo "X11 не доступен. Пробую браузер (http://localhost:8000)…"; \
+		echo "X11 не доступен. Пробую браузер (http://localhost:6000)…"; \
 		if ! $$PYCMD -c "import pygbag" 2>/dev/null; then \
 			echo "pygbag не установлен. Установите: make install-web"; \
 			exit 1; \
 		fi; \
-		$$PYCMD -m pygbag $(SCRIPT); \
+		$$PYCMD -m pygbag --port 6000 $(SCRIPT); \
 	fi
 
 clean:
