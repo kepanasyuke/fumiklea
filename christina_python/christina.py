@@ -423,7 +423,7 @@ def generate_scenes():
                                     if (px_pipe + f_idx) % 2 == 0:
                                         frame[cy - 3, (px_pipe - 2) : (px_pipe + 3)] = C['WHT']
 
-                # --- 4. НАДПИСЬ "CHRISTINE" УЛЬТРА-ЧИТАЕМЫМ ШРИФТОМ (Кадры 44-49) ---
+                # --- 4. НАДПИСЬ "CHRISTINE" С ИСПРАВЛЕННЫМИ БУКВАМИ R И S (Кадры 44-49) ---
                 if f_idx >= 44:
                     # Полностью очищаем верхний экран, убираем Кристину вниз
                     frame[0:15, :] = C['BLK']
@@ -438,34 +438,33 @@ def generate_scenes():
                         # Буква C (x: 1..2)
                         frame[ty:ty+5, 1] = frame[ty, 1:3] = frame[ty+4, 1:3] = text_glow
                         
-                        # Буква H (x: 5, 7) — Тонкие вертикальные стойки с зазором
-                        frame[ty:ty+5, 5] = frame[ty:ty+5, 7] = frame[ty+2, 6] = text_glow
+                        # Буква H (x: 4..6) — Четкая перемычка по центру на x=5
+                        frame[ty:ty+5, 4] = frame[ty:ty+5, 6] = frame[ty+2, 5] = text_glow
                         
-                        # БОЛЬШОЙ ДВОЙНОЙ ЗАЗОР НА X=8 И X=9 ИДЕАЛЬНО РАЗДЕЛЯЕТ БУКВЫ H И R
+                        # Буква R (x: 8..9) — Исправлено! Палочка на 8, ушко на 9
+                        frame[ty:ty+5, 8] = text_glow
+                        frame[ty, 9] = frame[ty+1, 9] = frame[ty+2, 9] = text_glow # Верхнее ушко
+                        frame[ty+3, 8] = frame[ty+4, 9] = text_glow # Ножка R
                         
-                        # Буква R (x: 10..11) — Тонкий аккуратный ретро-стиль
-                        frame[ty:ty+5, 10] = frame[ty, 10:12] = frame[ty+2, 10:12] = text_glow
-                        frame[ty+1, 11] = frame[ty+3:ty+5, 10] = text_glow
+                        # Буква I (x: 11)
+                        frame[ty:ty+5, 11] = text_glow
                         
-                        # Буква I (x: 13)
-                        frame[ty:ty+5, 13] = text_glow
+                        # Буква S (x: 13..14) — Исправлено! Читаемая пиксельная змейка
+                        frame[ty, 13:15] = frame[ty+2, 13:15] = frame[ty+4, 13:15] = text_glow
+                        frame[ty+1, 13] = frame[ty+3, 14] = text_glow
                         
-                        # Буква S (x: 15..16)
-                        frame[ty, 15:17] = frame[ty+2, 15:17] = frame[ty+4, 15:17] = text_glow
-                        frame[ty+1, 15] = frame[ty+3, 16] = text_glow
+                        # Буква T (x: 16..18) — Ножка строго по центру на x=17
+                        frame[ty, 16:19] = frame[ty:ty+5, 17] = text_glow
                         
-                        # Буква T (x: 18..20) — Ножка по центру на x=19
-                        frame[ty, 18:21] = frame[ty:ty+5, 19] = text_glow
+                        # Буква I (x: 20)
+                        frame[ty:ty+5, 20] = text_glow
                         
-                        # Буква I (x: 22)
-                        frame[ty:ty+5, 22] = text_glow
+                        # Буква N (x: 22..24)
+                        frame[ty:ty+5, 22] = frame[ty:ty+5, 24] = text_glow
+                        frame[ty+1, 23] = text_glow
                         
-                        # Буква N (x: 24..26)
-                        frame[ty:ty+5, 24] = frame[ty:ty+5, 26] = text_glow
-                        frame[ty+1, 25] = text_glow
-                        
-                        # Буква E (x: 28..29) — Компактно завершает слово у самого края
-                        frame[ty:ty+5, 28] = frame[ty, 28:30] = frame[ty+2, 28:30] = frame[ty+4, 28:30] = text_glow
+                        # Буква E (x: 26..27) — Красиво закрывает слово
+                        frame[ty:ty+5, 26] = frame[ty, 26:28] = frame[ty+2, 26:28] = frame[ty+4, 26:28] = text_glow
 
 
 
