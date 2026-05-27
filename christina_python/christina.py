@@ -36,22 +36,14 @@ def generate_scenes():
             frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
             t = f_idx / TOTAL_FRAMES
 
-            def generate_scenes():
-    all_scenes = []
-    for scene_idx in range(TOTAL_SCENES):
-        scene_frames = []
-        for f_idx in range(TOTAL_FRAMES):
-            frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
-            t = f_idx / TOTAL_FRAMES
-
-                        # --- СЦЕНА 0: Базовая (Кристина в огне — ПОМЯТАЯ ФОРМА №1) ---
+            # --- СЦЕНА 0: Базовая (Кристина в огне — ПОМЯТАЯ ФОРМА №1) ---
             if scene_idx == 0:
                 # 1. Зажигаем зловещие фары фар (плавное разгорание, затем мерцание)
                 bright = 255 if f_idx >= 15 else int((f_idx / 15) * 255)
                 # Фары из первой модели (строка 14, колонки 5:8 и 24:27)
                 frame[14:16, 5:8] = frame[14:16, 24:27] = [bright, int(bright * 0.8), 0]
                 
-                # 2. Отрисовка кузова 
+                # 2. Отрисовка кузова из вашей любимой первой версии
                 frame[12:14, 4:28] = C['RED']       # Темно-красный капот
                 frame[13, 11:21] = C['B_RED']       # Выштамповка на капорте
                 frame[14:16, 8:24] = C['BLK']       # Ниша под решетку (между фарами)
@@ -112,7 +104,7 @@ def generate_scenes():
                         if 4 <= glint_x + k <= 27:
                             frame[16:18, glint_x + k] = C['WHT']
 
-                       # --- СЦЕНА 2: Спидометр (Взгляд из салона: Стрелка ложится за 120) ---
+            # --- СЦЕНА 2: Спидометр (Взгляд из салона: Стрелка ложится за 120) ---
             elif scene_idx == 2:
                 # 1. Окружающая темнота салона и зеленая неоновая подсветка торпеды
                 frame[12:24, 3:29] = [20, 20, 25]  # Корпус приборной панели
@@ -147,8 +139,7 @@ def generate_scenes():
                     if 0 <= y < HEIGHT and 0 <= x < WIDTH:
                         frame[y, x] = C['B_RED']  # Ярко-красная стрелка
 
-
-                                               # --- СЦЕНА 3: Выхлоп и бампер Кристины (С кузовом и лесом по бокам) ---
+            # --- СЦЕНА 3: Выхлоп и бампер Кристины (С кузовом и лесом по бокам) ---
             elif scene_idx == 3:
                 # 1. ОТРИСОВКА НОЧНОГО ЛЕСА ПО БОКАМ (Статический фон)
                 # Левый лесок (несколько вертикальных стволов и ветки)
@@ -197,8 +188,7 @@ def generate_scenes():
                         if y_base + 6 < HEIGHT:
                             frame[y_base + 6, (x_pipe - 2) : (x_pipe + 3)] = [60, 60, 65]
 
-
-                                                # --- СЦЕНА 4: Преследование Бадди (Фары Кристины и неоновое имя) ---
+            # --- СЦЕНА 4: Преследование Бадди (Фары Кристины и неоновое имя) ---
             elif scene_idx == 4:
                 # Вся матрица по умолчанию залита глубокой ночной темнотой
                 
@@ -264,108 +254,76 @@ def generate_scenes():
                     frame[ty:ty+3, tx_y] = frame[ty:ty+3, tx_y+4] = text_color
                     frame[ty+3, tx_y+1:tx_y+4] = frame[ty+4:ty+6, tx_y+2] = text_color
 
-
-
             # --- СЦЕНА 5: Мастерская Дарнелла (АКТИВНАЯ ГРАФИКА: Неон, дождь и лужа) ---
             elif scene_idx == 5:
-                # Строки 24-32 остаются строго черными под ваши статус-бары
-                
-                # 1. МЕРЦАЮЩИЙ НЕОН «DARNELL'S» (В верхней части, y от 3 до 8)
                 if (12 <= f_idx <= 14) or (28 <= f_idx <= 29) or (42 <= f_idx <= 45):
-                    neon_color = [30, 5, 15]  # Выключенный неон
+                    neon_color = C['BLK']
                     neon_on = False
                 else:
                     neon_flicker = int(220 + np.sin(f_idx * 1.5) * 35)
                     neon_color = [neon_flicker, 20, int(neon_flicker * 0.6)]
                     neon_on = True
-
-                # Отрисовка букв по центру (x от 3 до 29)
                 ny = 3
-                frame[ny:ny+5, 3] = frame[ny, 3:6] = frame[ny+4, 3:6] = neon_color  # D
+                frame[ny:ny+5, 3] = frame[ny, 3:6] = frame[ny+4, 3:6] = neon_color
                 frame[ny+1:ny+4, 6] = neon_color
-                frame[ny:ny+5, 8] = frame[ny:ny+5, 11] = frame[ny, 9:11] = frame[ny+2, 9:11] = neon_color  # A
-                frame[ny:ny+5, 13] = frame[ny, 13:16] = frame[ny+2, 13:16] = neon_color  # R
+                frame[ny:ny+5, 8] = frame[ny:ny+5, 11] = frame[ny, 9:11] = frame[ny+2, 9:11] = neon_color
+                frame[ny:ny+5, 13] = frame[ny, 13:16] = frame[ny+2, 13:16] = neon_color
                 frame[ny+1, 16] = frame[ny+3, 15] = frame[ny+4, 16] = neon_color
-                frame[ny:ny+5, 18] = frame[ny:ny+5, 22] = neon_color  # N
+                frame[ny:ny+5, 18] = frame[ny:ny+5, 22] = neon_color
                 frame[ny+1, 19] = frame[ny+2, 20] = frame[ny+3, 21] = neon_color
-                frame[ny:ny+5, 24] = frame[ny, 24:28] = frame[ny+2, 24:27] = frame[ny+4, 24:28] = neon_color  # E
-
-                # Окончание вывески ( 'S ) на второй строке
+                frame[ny:ny+5, 24] = frame[ny, 24:28] = frame[ny+2, 24:27] = frame[ny+4, 24:28] = neon_color
                 ny_s = 9
                 nx_s = 13
-                frame[ny_s, nx_s] = frame[ny_s+1, nx_s] = neon_color  # Апостроф
+                frame[ny_s, nx_s] = frame[ny_s+1, nx_s] = neon_color
                 nx_s2 = 15
-                frame[ny_s, nx_s2:nx_s2+3] = frame[ny_s+2, nx_s2:nx_s2+3] = frame[ny_s+4, nx_s2:nx_s2+3] = neon_color  # S
+                frame[ny_s, nx_s2:nx_s2+3] = frame[ny_s+2, nx_s2:nx_s2+3] = frame[ny_s+4, nx_s2:nx_s2+3] = neon_color
                 frame[ny_s+1, nx_s2] = frame[ny_s+3, nx_s2+2] = neon_color
-
-                # 2. АНИМАЦИЯ ПАДАЮЩИХ КАПЕЛЬ ДОЖДЯ (В центральной части, y от 12 до 21)
                 for drop_id in range(3):
                     drop_x = (drop_id * 9 + 7) % WIDTH
                     drop_y = int(12 + (f_idx + drop_id * 15) % 10)
                     if 12 <= drop_y <= 21:
                         frame[drop_y, drop_x] = C['BLU']
-
-                # 3. ИНТЕРАКТИВНАЯ ЛУЖА С ОТРАЖЕНИЕМ (Строки 22-23, строго над приборами)
                 p_y1, p_y2 = 22, 23
-                frame[p_y1, 8:24] = [10, 15, 40]  # Темно-синяя вода лужи
-                frame[p_y2, 6:26] = [10, 15, 40]
-                
+                frame[p_y1, 8:24] = C['BLK']
+                frame[p_y2, 6:26] = C['BLK']
                 if neon_on:
                     wave_shift = 1 if (f_idx % 4 < 2) else 0
                     reflect_brightness = int(70 + np.sin(f_idx * 0.8) * 30)
                     REFLECT_COLOR = [reflect_brightness, 10, int(reflect_brightness * 0.6)]
-                    
                     frame[p_y1, (12 + wave_shift) : (19 + wave_shift)] = REFLECT_COLOR
                     frame[p_y2, (10 - wave_shift) : (17 - wave_shift)] = REFLECT_COLOR
-
                 if f_idx % 12 == 0:
-                    frame[p_y1, 15:18] = C['CHRM']  # Белый круговой всплеск капли
+                    frame[p_y1, 15:18] = C['CHRM']
 
-                    #zastavka 456 78 9)localhost
-
-
-            # --- СЦЕНА 6: Взрыв заправки (Акт 1: HR HR лесенкой -> Акт 2: Взрыв -> Акт 3: Имя) ---
+            # --- СЦЕНА 6: Взрыв, лужа, белый пар, буквы лесенкой и моноширинное имя CHRISTINE ---
             elif scene_idx == 6:
                 # Строки 24-32 строго черные, бережём индикаторы (РЕМ, РАС, ТОП) в самом низу!
-                
-                # 1. ПОСТОЯННЫЙ ФОН: МАЛЕНЬКАЯ ГОЛУБАЯ ЛУЖА (Строго на строке 22, над приборами)
                 if f_idx < 44:
                     frame[22, 6:26] = C['BLU']
-
-                # Эпицентр взрыва смещен в левый верхний угол, куда уходит лесенка букв
                 center_x, center_y = 6, 4
-
-                # --- АКТ 1: БУКВЫ "HR HR" ЛЕСЕНКОЙ В ТЕМНОТЕ (Кадры 0-14) ---
+                
+                # --- АКТ 1: ДВА ПООЧЕРЕДНЫХ "HR" ЛЕСЕНКОЙ В ТЕМНОТЕ ---
                 if f_idx < 15:
                     text_color = C['B_RED'] if f_idx % 2 == 0 else C['WHT']
-                    
-                    # Нижняя ступенька (x=16, y=14) — Звук по центру на пустом асфальте
-                    tx3, ty3 = 16, 14
-                    frame[ty3:ty3+4, tx3] = frame[ty3:ty3+4, tx3+2] = frame[ty3+2, tx3+1] = text_color
-                    frame[ty3:ty3+4, tx3+4] = frame[ty3, tx3+4:tx3+7] = frame[ty3+2, tx3+4:tx3+6] = text_color
-                    frame[ty3+1, tx3+6] = frame[ty3+3, tx3+5] = frame[ty3+4, tx3+6] = text_color
-                    
-                    # Средняя ступенька (x=11, y=9) — Сдвиг по диагонали влево-вверх
-                    tx2, ty2 = 11, 9
-                    frame[ty2:ty2+4, tx2] = frame[ty2:ty2+4, tx2+2] = frame[ty2+2, tx2+1] = text_color
-                    frame[ty2:ty2+4, tx2+4] = frame[ty2, tx2+4:tx2+7] = frame[ty2+2, tx2+4:tx2+6] = text_color
-                    frame[ty2+1, tx2+6] = frame[ty2+3, tx2+5] = frame[ty2+4, tx2+6] = text_color
-                    
-                    # Верхняя ступенька (x=6, y=4) — Упирается точно в будущую бензоколонку
-                    tx1, ty1 = 6, 4
-                    frame[ty1:ty1+4, tx1] = frame[ty1:ty1+4, tx1+2] = frame[ty1+2, tx1+1] = text_color
-                    frame[ty1:ty1+4, tx1+4] = frame[ty1, tx1+4:tx1+7] = frame[ty1+2, tx1+4:tx1+6] = text_color
-                    frame[ty1+1, tx1+6] = frame[ty1+3, tx1+5] = frame[ty1+4, tx1+6] = text_color
-
-                # --- АКТ 2 И АКТ 3: ОТРИСОВКА ВЗРЫВА И ПОЖАРА (Кадры 15-49) ---
+                    if f_idx < 8:
+                        if 2 <= f_idx <= 5:
+                            tx2, ty2 = 11, 9
+                            frame[ty2:ty2+4, tx2] = frame[ty2:ty2+4, tx2+2] = frame[ty2+2, tx2+1] = text_color
+                            frame[ty2:ty2+4, tx2+4] = frame[ty2, tx2+4:tx2+7] = frame[ty2+2, tx2+4:tx2+6] = text_color
+                            frame[ty2+1, tx2+6] = frame[ty2+3, tx2+5] = frame[ty2+4, tx2+6] = text_color
+                    else:
+                        if 10 <= f_idx <= 13:
+                            tx1, ty1 = 6, 4
+                            frame[ty1:ty1+4, tx1] = frame[ty1:ty1+4, tx1+2] = frame[ty1+2, tx1+1] = text_color
+                            frame[ty1:ty1+4, tx1+4] = frame[ty1, tx1+4:tx1+7] = frame[ty1+2, tx1+4:tx1+6] = text_color
+                            frame[ty1+1, tx1+6] = frame[ty1+3, tx1+5] = frame[ty1+4, tx1+6] = text_color
+                
+                # --- АКТ 2: ОТРИСОВКА ВЗРЫВА И ПОЖАРА ---
                 if f_idx >= 15:
-                    # Радиус взрыва растет, а после 44 кадра плавно тухнет
                     if f_idx < 44:
                         fire_radius = int(1 + ((f_idx - 15) / 25) * 15) if f_idx < 40 else 15
                     else:
                         fire_radius = max(0, 15 - (f_idx - 44) * 3)
-                    
-                    # Рисуем огонь строго в верхней части (y от 0 до 14)
                     for y in range(0, 15):
                         for x in range(WIDTH):
                             dist = np.hypot(x - center_x, y - center_y)
@@ -378,29 +336,24 @@ def generate_scenes():
                                 else:
                                     org_flicker = int(190 + np.cos(f_idx * 1.1 - y) * 45)
                                     frame[y, x] = [org_flicker, int(org_flicker * 0.4), 10]
-
-                # --- ДВИЖЕНИЕ КРИСТИНЫ (Кадры 28-49) ---
+                
+                # --- ДВИЖЕНИЕ МАШИНЫ, ПЛАВЛЕНИЕ И ПАР ---
                 if f_idx >= 28:
                     if f_idx < 44:
                         car_progress = (f_idx - 28) / 16
                         cy = int(8 + car_progress * 9)
                     else:
-                        # Уезжает вниз за экран
                         exit_progress = (f_idx - 44) / 6
                         cy = int(17 + exit_progress * 10)
-
-                    # Отрисовка силуэта Кристины
                     if 0 <= cy < 24:
-                        frame[cy:min(24, cy+2), 4:28] = C['RED']       # Капот
-                        frame[cy, 11:21] = C['B_RED']         # Выштамповка
-                        if cy+2 < 24: frame[cy+2, 8:24] = C['BLK']    # Решетка
-                        if cy+3 < 24: frame[cy+3, 8:24] = C['CHRM']
+                        frame[cy:min(24, cy+2), 4:28] = C['RED']
+                        frame[cy, 11:21] = C['B_RED']
+                        if cy+2 < 24: frame[cy+2, 8:24] = C['BLK']
+                        if cy+3 < 24: frame[cy+3, 8:24] = C['CHRM']  # Исправлено с ty+3 на cy+3!
                         if cy+2 < 24:
-                            frame[cy+1:min(24, cy+3), 5:8] = C['WHT']   # Фары
+                            frame[cy+1:min(24, cy+3), 5:8] = C['WHT']
                             frame[cy+1:min(24, cy+3), 24:27] = C['WHT']
-                        if cy+4 < 24: frame[cy+4, 4:28] = C['CHRM']  # Бампер
-
-                        # Скромное плавление кузова (до 43 кадра)
+                        if cy+4 < 24: frame[cy+4, 4:28] = C['CHRM']
                         if 34 <= f_idx < 44:
                             melt_intensity = (f_idx - 34)
                             for x in range(4, 28):
@@ -410,8 +363,6 @@ def generate_scenes():
                                         target_y = cy + 2 + d
                                         if target_y < 24:
                                             frame[target_y, x] = C['BLK'] if d % 2 == 0 else C['ORG']
-
-                        # Белый пар над лужей
                         if 36 <= f_idx < 44 and cy + 4 >= 20:
                             steam_stage = (f_idx - 36) % 6
                             for px_pipe in [8, 23]:
@@ -422,49 +373,36 @@ def generate_scenes():
                                 if steam_stage > 4 and cy - 3 >= 0:
                                     if (px_pipe + f_idx) % 2 == 0:
                                         frame[cy - 3, (px_pipe - 2) : (px_pipe + 3)] = C['WHT']
-
-                # --- 4. НАДПИСЬ "CHRISTINE" С ИСПРАВЛЕННЫМИ БУКВАМИ R И S (Кадры 44-49) ---
+                
+                # --- АКТ 3: НАДПИСЬ "CHRISTINE" БЕЗ НАЛОЖЕНИЙ БУКВ H, R, I ---
                 if f_idx >= 44:
-                    # Полностью очищаем верхний экран, убираем Кристину вниз
                     frame[0:15, :] = C['BLK']
-                    cy = 35 
-
+                    cy = 35
                     fade_out = max(0, 255 - (f_idx - 44) * 50)
                     text_glow = [fade_out, fade_out, fade_out]
-                    
                     if fade_out > 0:
-                        ty = 11  # Высота строки по центру экрана на чистом асфальте
-                        
-                        # Буква C (x: 1..2)
-                        frame[ty:ty+5, 1] = frame[ty, 1:3] = frame[ty+4, 1:3] = text_glow
-                        
-                        # Буква H (x: 4..6) — Четкая перемычка по центру на x=5
-                        frame[ty:ty+5, 4] = frame[ty:ty+5, 6] = frame[ty+2, 5] = text_glow
-                        
-                        # Буква R (x: 8..9) — Исправлено! Палочка на 8, ушко на 9
-                        frame[ty:ty+5, 8] = text_glow
-                        frame[ty, 9] = frame[ty+1, 9] = frame[ty+2, 9] = text_glow # Верхнее ушко
-                        frame[ty+3, 8] = frame[ty+4, 9] = text_glow # Ножка R
-                        
-                        # Буква I (x: 11)
-                        frame[ty:ty+5, 11] = text_glow
-                        
-                        # Буква S (x: 13..14) — Исправлено! Читаемая пиксельная змейка
-                        frame[ty, 13:15] = frame[ty+2, 13:15] = frame[ty+4, 13:15] = text_glow
-                        frame[ty+1, 13] = frame[ty+3, 14] = text_glow
-                        
-                        # Буква T (x: 16..18) — Ножка строго по центру на x=17
-                        frame[ty, 16:19] = frame[ty:ty+5, 17] = text_glow
-                        
-                        # Буква I (x: 20)
-                        frame[ty:ty+5, 20] = text_glow
-                        
-                        # Буква N (x: 22..24)
-                        frame[ty:ty+5, 22] = frame[ty:ty+5, 24] = text_glow
-                        frame[ty+1, 23] = text_glow
-                        
-                        # Буква E (x: 26..27) — Красиво закрывает слово
-                        frame[ty:ty+5, 26] = frame[ty, 26:28] = frame[ty+2, 26:28] = frame[ty+4, 26:28] = text_glow
+                        ty = 11
+                        # C (x: 3..4)
+                        frame[ty:ty+5, 3] = frame[ty, 3:5] = frame[ty+4, 3:5] = text_glow
+                        # H (x: 6..7)
+                        frame[ty:ty+5, 6] = frame[ty:ty+5, 7] = text_glow; frame[ty+2, 6:8] = text_glow
+                        # R (x: 9..10)
+                        frame[ty:ty+5, 9] = frame[ty, 9:11] = frame[ty+2, 9:11] = text_glow
+                        frame[ty+1, 10] = frame[ty+3:ty+5, 10] = text_glow
+                        # I (x: 12..13)
+                        frame[ty, 12:14] = frame[ty+4, 12:14] = frame[ty:ty+5, 12] = text_glow
+                        # S (x: 15..16)
+                        frame[ty, 15:17] = frame[ty+2, 15:17] = frame[ty+4, 15:17] = text_glow
+                        frame[ty+1, 15] = frame[ty+3, 16] = text_glow
+                        # T (x: 18..19)
+                        frame[ty, 18:20] = frame[ty:ty+5, 19] = text_glow
+                        # I (x: 21..22)
+                        frame[ty, 21:23] = frame[ty+4, 21:23] = frame[ty:ty+5, 21] = text_glow
+                        # N (x: 24..25)
+                        frame[ty:ty+5, 24] = frame[ty:ty+5, 25] = text_glow
+                        frame[ty+1, 24] = frame[ty+2, 24] = frame[ty+3, 25] = text_glow
+                        # E (x: 27..28)
+                        frame[ty:ty+5, 27] = frame[ty, 27:29] = frame[ty+2, 27:29] = frame[ty+4, 27:29] = text_glow
 
 
 
