@@ -295,11 +295,10 @@ def generate_scenes():
                 if f_idx % 12 == 0:
                     frame[p_y1, 15:18] = C['CHRM']
 
-            # --- СЦЕНА 6: Взрыв, лужа, белый пар, буквы лесенкой и моноширинное имя CHRISTINE ---
+            # --- СЦЕНА 6: Взрыв, лужа, пар и уезд машины Кристины (Часть 1) ---
             elif scene_idx == 6:
                 # Строки 24-32 строго черные, бережём индикаторы (РЕМ, РАС, ТОП) в самом низу!
-                if f_idx < 44:
-                    frame[22, 6:26] = C['BLU']
+                frame[22, 6:26] = C['BLU']
                 center_x, center_y = 6, 4
                 
                 # --- АКТ 1: ДВА ПООЧЕРЕДНЫХ "HR" ЛЕСЕНКОЙ В ТЕМНОТЕ ---
@@ -320,10 +319,7 @@ def generate_scenes():
                 
                 # --- АКТ 2: ОТРИСОВКА ВЗРЫВА И ПОЖАРА ---
                 if f_idx >= 15:
-                    if f_idx < 44:
-                        fire_radius = int(1 + ((f_idx - 15) / 25) * 15) if f_idx < 40 else 15
-                    else:
-                        fire_radius = max(0, 15 - (f_idx - 44) * 3)
+                    fire_radius = int(1 + ((f_idx - 15) / 34) * 15) if f_idx < 42 else max(0, 15 - (f_idx - 42) * 2)
                     for y in range(0, 15):
                         for x in range(WIDTH):
                             dist = np.hypot(x - center_x, y - center_y)
@@ -339,12 +335,13 @@ def generate_scenes():
                 
                 # --- ДВИЖЕНИЕ МАШИНЫ, ПЛАВЛЕНИЕ И ПАР ---
                 if f_idx >= 28:
-                    if f_idx < 44:
-                        car_progress = (f_idx - 28) / 16
+                    if f_idx < 42:
+                        car_progress = (f_idx - 28) / 14
                         cy = int(8 + car_progress * 9)
                     else:
-                        exit_progress = (f_idx - 44) / 6
-                        cy = int(17 + exit_progress * 10)
+                        exit_progress = (f_idx - 42) / 7
+                        cy = int(17 + exit_progress * 12)
+                        
                     if 0 <= cy < 24:
                         frame[cy:min(24, cy+2), 4:28] = C['RED']
                         frame[cy, 11:21] = C['B_RED']
@@ -354,7 +351,8 @@ def generate_scenes():
                             frame[cy+1:min(24, cy+3), 5:8] = C['WHT']
                             frame[cy+1:min(24, cy+3), 24:27] = C['WHT']
                         if cy+4 < 24: frame[cy+4, 4:28] = C['CHRM']
-                        if 34 <= f_idx < 44:
+                        
+                        if 34 <= f_idx < 42:
                             melt_intensity = (f_idx - 34)
                             for x in range(4, 28):
                                 if (x + f_idx) % 3 == 0:
@@ -363,9 +361,9 @@ def generate_scenes():
                                         target_y = cy + 2 + d
                                         if target_y < 24:
                                             frame[target_y, x] = C['BLK'] if d % 2 == 0 else C['ORG']
-                        if 36 <= f_idx < 44 and cy + 4 >= 20:
+                        if 36 <= f_idx < 42 and cy + 4 >= 20:
                             steam_stage = (f_idx - 36) % 6
-                            for px_pipe in [8, 23]:  # <-- ИСПРАВЛЕНО
+                            for px_pipe in [8, 23]:
                                 if steam_stage > 0 and cy - 1 >= 0:
                                     frame[cy - 1, px_pipe] = C['WHT']
                                 if steam_stage > 2 and cy - 2 >= 0:
@@ -373,38 +371,69 @@ def generate_scenes():
                                 if steam_stage > 4 and cy - 3 >= 0:
                                     if (px_pipe + f_idx) % 2 == 0:
                                         frame[cy - 3, (px_pipe - 2) : (px_pipe + 3)] = C['WHT']
-                
-                # --- АКТ 3: НАДПИСЬ "CHRISTINE" БЕЗ НАЛОЖЕНИЙ БУКВ H, R, I ---
-                if f_idx >= 44:
-                    frame[0:15, :] = C['BLK']
-                    cy = 35
-                    fade_out = max(0, 255 - (f_idx - 44) * 50)
-                    text_glow = [fade_out, fade_out, fade_out]
-                    if fade_out > 0:
-                        ty = 11
-                        # C (x: 3..4)
-                        frame[ty:ty+5, 3] = frame[ty, 3:5] = frame[ty+4, 3:5] = text_glow
-                        # H (x: 6..7)
-                        frame[ty:ty+5, 6] = frame[ty:ty+5, 7] = text_glow; frame[ty+2, 6:8] = text_glow
-                        # R (x: 9..10)
-                        frame[ty:ty+5, 9] = frame[ty, 9:11] = frame[ty+2, 9:11] = text_glow
-                        frame[ty+1, 10] = frame[ty+3:ty+5, 10] = text_glow
-                        # I (x: 12..13)
-                        frame[ty, 12:14] = frame[ty+4, 12:14] = frame[ty:ty+5, 12] = text_glow
-                        # S (x: 15..16)
-                        frame[ty, 15:17] = frame[ty+2, 15:17] = frame[ty+4, 15:17] = text_glow
-                        frame[ty+1, 15] = frame[ty+3, 16] = text_glow
-                        # T (x: 18..19)
-                        frame[ty, 18:20] = frame[ty:ty+5, 19] = text_glow
-                        # I (x: 21..22)
-                        frame[ty, 21:23] = frame[ty+4, 21:23] = frame[ty:ty+5, 21] = text_glow
-                        # N (x: 24..25)
-                        frame[ty:ty+5, 24] = frame[ty:ty+5, 25] = text_glow
-                        frame[ty+1, 24] = frame[ty+2, 24] = frame[ty+3, 25] = text_glow
-                        # E (x: 27..28)
-                        frame[ty:ty+5, 27] = frame[ty, 27:29] = frame[ty+2, 27:29] = frame[ty+4, 27:29] = text_glow
 
-            #снова работает
+            # --- СЦЕНА 7: Отдельный затухающий титр имени CHRISTINE (Выверенный центр) ---
+            elif scene_idx == 7:
+                # Защита от float-переменных
+                if f_idx < 15:
+                    glow = int((f_idx / 15) * 255)
+                elif 15 <= f_idx < 35:
+                    glow = int(220 + np.sin(f_idx * 1.5) * 35)
+                else:
+                    glow = max(0, 255 - int(((f_idx - 35) / 14) * 255))
+                    
+                text_glow = [glow, glow, glow]
+                
+                if glow > 0:
+                    ty = 11  # Высота строки строго по центру матрицы
+                    
+                    # Буква C (x: 0..2) — Сдвинули всё слово на 2 пикселя влево от зрителя!
+                    frame[ty:ty+5, 0] = text_glow
+                    frame[ty, 0:3] = text_glow
+                    frame[ty+4, 0:3] = text_glow
+                    
+                    # Буква H (x: 4..6)
+                    frame[ty:ty+5, 4] = text_glow
+                    frame[ty:ty+5, 6] = text_glow
+                    frame[ty+2, 5] = text_glow
+                    
+                    # Буква R (x: 8..10) — КРУТАЯ УДЛИНЁННАЯ СТОЙКА (падает до строки ty+6!)
+                    frame[ty:ty+7, 8] = text_glow  # Левая ножка длиннее на 2 пикселя вниз!
+                    frame[ty, 9:11] = text_glow
+                    frame[ty+1, 10] = text_glow
+                    frame[ty+2, 9:11] = text_glow
+                    frame[ty+3, 9] = text_glow
+                    frame[ty+4, 10] = text_glow
+                    
+                    # Буква I (x: 12)
+                    frame[ty:ty+5, 12] = text_glow
+                    
+                    # Буква S (x: 14..15)
+                    frame[ty, 14:16] = text_glow
+                    frame[ty+2, 14:16] = text_glow
+                    frame[ty+4, 14:16] = text_glow
+                    frame[ty+1, 14] = text_glow
+                    frame[ty+3, 15] = text_glow
+                    
+                    # Буква T (x: 17..19) — Ножка по центру на x=18
+                    frame[ty, 17:20] = text_glow
+                    frame[ty:ty+5, 18] = text_glow
+                    
+                    # Буква I (x: 21)
+                    frame[ty:ty+5, 21] = text_glow
+                    
+                    # Буква N (x: 23..25)
+                    frame[ty:ty+5, 23] = text_glow
+                    frame[ty:ty+5, 25] = text_glow
+                    frame[ty+1, 23] = text_glow
+                    frame[ty+2, 24] = text_glow
+                    frame[ty+3, 25] = text_glow
+                    
+                    # Буква E (x: 27..29) — Теперь имеет свободные пиксели справа и не обрезается!
+                    frame[ty:ty+5, 27] = text_glow
+                    frame[ty, 27:30] = text_glow
+                    frame[ty+2, 27:30] = text_glow
+                    frame[ty+4, 27:30] = text_glow
 
 
             # СЦЕНА 7: Ослепление дальним светом
