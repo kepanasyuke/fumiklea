@@ -36,45 +36,101 @@ def generate_scenes():
             frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
             t = f_idx / TOTAL_FRAMES
 
-            # СЦЕНА 0: Базовая (Кристина в огне)
+            def generate_scenes():
+    all_scenes = []
+    for scene_idx in range(TOTAL_SCENES):
+        scene_frames = []
+        for f_idx in range(TOTAL_FRAMES):
+            frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+            t = f_idx / TOTAL_FRAMES
+
+                        # --- СЦЕНА 0: Базовая (Кристина в огне — ПОМЯТАЯ ФОРМА №1) ---
             if scene_idx == 0:
-                bright = 255 if f_idx >= 15 else int((f_idx/15)*255)
-                frame[14:16, 5:8] = frame[14:16, 24:27] = [bright, int(bright*0.8), 0]
-                frame[12:14, 4:28] = C['RED']
-                frame[16:18, 4:28] = C['CHRM']
+                # 1. Зажигаем зловещие фары фар (плавное разгорание, затем мерцание)
+                bright = 255 if f_idx >= 15 else int((f_idx / 15) * 255)
+                # Фары из первой модели (строка 14, колонки 5:8 и 24:27)
+                frame[14:16, 5:8] = frame[14:16, 24:27] = [bright, int(bright * 0.8), 0]
+                
+                # 2. Отрисовка кузова из вашей любимой первой версии
+                frame[12:14, 4:28] = C['RED']       # Темно-красный капот
+                frame[13, 11:21] = C['B_RED']       # Выштамповка на капорте
+                frame[14:16, 8:24] = C['BLK']       # Ниша под решетку (между фарами)
+                frame[15, 8:24] = C['CHRM']         # Хромированная решетка
+
+                # 3. Синхронизированный СМЯТЫЙ бампер (вмятина всегда зафиксирована)
+                # Базовый бампер шел по строке 16-17. Сминаем центр (от 11 до 21 пикселя) вверх на 2 строки.
+                for x in range(4, 28):
+                    if 11 <= x <= 21:
+                        pixel_y = 14  # Вмятина ушла вверх, перекрывая решетку
+                    else:
+                        pixel_y = 16  # Целая часть бампера по бокам
+                    
+                    frame[pixel_y, x] = C['CHRM']
+                    if pixel_y + 1 < HEIGHT:
+                        frame[pixel_y + 1, x] = C['CHRM']
+
+                # 4. Анимация яростного пиксельного пламени снизу
                 if f_idx > 10:
                     for x in range(WIDTH):
-                        h = int((np.sin(x + f_idx) + 1.2) * 5 * ((f_idx-10)/40))
+                        h = int((np.sin(x + f_idx) + 1.2) * 5 * ((f_idx - 10) / 40))
                         for y in range(h):
-                            if HEIGHT-1-y >= 0:
-                                frame[HEIGHT-1-y, x] = C['YLW'] if y < h-3 else C['ORG']
+                            if HEIGHT - 1 - y >= 0:
+                                frame[HEIGHT - 1 - y, x] = C['YLW'] if y < h - 3 else C['ORG']
 
-            # СЦЕНА 1: Регенерация бампера
+            # --- СЦЕНА 1: Регенерация бампера (Восстановление к ФОРМЕ №1 — "Show Me") ---
             elif scene_idx == 1:
-                frame[12:15, 4:28] = C['RED']
-                dent = int((1.0 - t) * 6)
-                frame[16, 4:28] = C['CHRM']
-                if dent > 0:
-                    frame[16, 12:20] = C['BLK']
-                    if 16+dent < HEIGHT:
-                        frame[16+dent, 12:20] = C['CHRM']
+                # 1. Постоянная основа кузова из первой версии
+                frame[12:14, 4:28] = C['RED']
+                frame[13, 11:21] = C['B_RED']
+                frame[14:16, 8:24] = C['BLK']
+                frame[15, 8:24] = C['CHRM']
+                
+                # Стабильно горящие фары
+                frame[14:16, 5:8] = [200, 160, 0]
+                frame[14:16, 24:27] = [200, 160, 0]
 
-            # СЦЕНА 2: Спидометр
+                # 2. Динамическое выпрямление бампера
+                # t меняется от 0.0 до 1.0. Сдвигаем центральную вмятину из y=14 обратно вниз на y=16.
+                # К 35-му кадру бампер должен стать полностью ровным.
+                for x in range(4, 28):
+                    if t < 0.70 and 11 <= x <= 21:
+                        # Плавный сдвиг центральной части вниз с течением времени
+                        current_offset = int((1.0 - (t / 0.70)) * 2)
+                        pixel_y = 16 - current_offset
+                    else:
+                        pixel_y = 16  # Идеальное положение из первой модели
+
+                    frame[pixel_y, x] = C['CHRM']
+                    if pixel_y + 1 < HEIGHT:
+                        frame[pixel_y + 1, x] = C['CHRM']
+
+                # 3. Эффект финального глянцевого блика новизны (с 38 по 50 кадр)
+                if f_idx >= 38:
+                    glint_progress = (f_idx - 38) / 12
+                    glint_x = int(4 + glint_progress * 22)
+                    for k in range(2):
+                        if 4 <= glint_x + k <= 27:
+                            frame[16:18, glint_x + k] = C['WHT']
+
+            # --- СЦЕНА 2: Спидометр (остается без изменений, с защитой границ) ---
             elif scene_idx == 2:
                 for a in range(5, 27):
-                    y = 22 - int(np.sin((a-5)/22*np.pi)*10)
+                    y = 22 - int(np.sin((a - 5) / 22 * np.pi) * 10)
                     if 0 <= y < HEIGHT:
                         frame[y, a] = C['WHT']
+                        
                 angle = t * np.pi
                 sx = int(16 + np.cos(angle) * 8)
                 sy = int(22 - np.sin(angle) * 8)
-                if 0 <= sy < HEIGHT and 0 <= sx < WIDTH:
+                
+                if 0 <= 22 < HEIGHT and 0 <= 16 < WIDTH:
                     frame[22, 16] = C['B_RED']
-                    for i in range(9):
-                        y = int(22 + (sy-22)*i/8)
-                        x = int(16 + (sx-16)*i/8)
-                        if 0 <= y < HEIGHT and 0 <= x < WIDTH:
-                            frame[y, x] = C['B_RED']
+                    
+                for i in range(9):
+                    y = int(22 + (sy - 22) * i / 8)
+                    x = int(16 + (sx - 16) * i / 8)
+                    if 0 <= y < HEIGHT and 0 <= x < WIDTH:
+                        frame[y, x] = C['B_RED']
 
             # СЦЕНА 3: Задние плавники
             elif scene_idx == 3:
