@@ -442,6 +442,9 @@ def generate_scenes():
                         # Буква N (x: 27..29)
                         frame[ty:ty+5, 27] = frame[ty:ty+5, 29] = text_glow
                         frame[ty+1, 28] = text_glow
+                        # E
+                        frame[ty:ty+5, 26] = frame[ty, 26:28] = frame[ty+2, 26:28] = frame[ty+4, 26:28] = text_glow
+
 
 
 
