@@ -371,7 +371,6 @@ def generate_scenes():
                                 if steam_stage > 4 and cy - 3 >= 0:
                                     if (px_pipe + f_idx) % 2 == 0:
                                         frame[cy - 3, (px_pipe - 2) : (px_pipe + 3)] = C['WHT']
-
             # --- СЦЕНА 7: Отдельный затухающий титр имени CHRISTINE (Выверенный центр) ---
             elif scene_idx == 7:
                 # 1. РАСЧЕТ ЯРКОСТИ ТЕКСТА КРИСТИНИ (Имя гаснет к 42 кадру)
@@ -386,7 +385,7 @@ def generate_scenes():
                 
                 # Рисуем буквы, пока они видны на экране (до 42 кадра)
                 if glow > 0 and f_idx < 42:
-                    ty = 11  # Базовая высотационной строки
+                    ty = 11  # Базовая высота текстовой строки
                     melt1 = int(2 + np.sin(f_idx * 0.4) * 2)  
                     melt2 = int(2 + np.cos(f_idx * 0.5) * 1.5)
                     
@@ -429,16 +428,16 @@ def generate_scenes():
                     # --- Буква I ---
                     frame[ty : ty + 5, 22] = text_glow
                     
-                    # --- Буква N ---
+                    # --- Буква N (x: 24..26) — ИСПРАВЛЕНА ПОД ШИРОКИЙ ШРИФТ БЕЗ НАЛОЖЕНИЙ! ---
                     if ty + 5 + melt2 < HEIGHT:
-                        frame[ty : ty + 5 + melt2, 24] = text_glow  
-                    frame[ty : ty + 5, 26] = text_glow
+                        frame[ty : ty + 5 + melt2, 24] = text_glow  # Левая стойка течет
+                    frame[ty : ty + 5, 26] = text_glow              # Правая стойка ровная
                     frame[ty + 1, 24] = text_glow
-                    frame[ty + 2, 25] = text_glow
+                    frame[ty + 2, 25] = text_glow                    # Тонкая диагональ
                     frame[ty + 3, 26] = text_glow
                     
                     # --- Буква E ---
-                    frame[ty : ty + 5, 30] = C['BLK']  
+                    frame[ty : ty + 5, 27] = C['BLK']  # Выжигаем артефакт перед рисованием перекладин
                     frame[ty : ty + 5, 28] = text_glow  
                     frame[ty, 28:31] = text_glow   
                     frame[ty + 2, 28:30] = text_glow 
@@ -487,16 +486,13 @@ def generate_scenes():
                         if cy+2 < 24: frame[cy+2, 8:24] = C['BLK']
                         if cy+3 < 24: frame[cy+3, 8:24] = C['CHRM']
                         
-                        # Яростные белые фары плавно увеличиваются в размерах (СКОБКА ИСПРАВЛЕНА!)
+                        # Яростные белые фары плавно увеличиваются в размерах
                         if cy+2 < 24:
                             frame[cy+1:min(24, cy+3), 5:8] = C['WHT']
                             frame[cy+1:min(24, cy+3), 24:27] = C['WHT']
                             
                         # Хромированный передний бампер по низу кузова
                         if cy+4 < 24: frame[cy+4, 4:28] = C['CHRM']
-
-
-
 
             # СЦЕНА 8: Ослепление дальним светом
             elif scene_idx == 7:
