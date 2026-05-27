@@ -198,23 +198,67 @@ def generate_scenes():
                             frame[y_base + 6, (x_pipe - 2) : (x_pipe + 3)] = [60, 60, 65]
 
 
-            # СЦЕНА 4: Преследование Бадди
+             # --- СЦЕНА 4: Преследование Бадди (Кристина настигает жертву) ---
             elif scene_idx == 4:
-                size = int(1 + t * 4)
-                for y in range(16-size, 16+size):
-                    for x in range(6-size, 6+size):
-                        if 0 <= y < HEIGHT and 0 <= x < WIDTH:
-                            frame[y, x] = C['YLW']
-                for y in range(16-size, 16+size):
-                    for x in range(26-size, 26+size):
-                        if 0 <= y < HEIGHT and 0 <= x < WIDTH:
-                            frame[y, x] = C['YLW']
-                hx = int(20 - t * 4)
-                if 0 <= hx < WIDTH:
-                    frame[18:22, hx] = C['WHT']
-                    frame[17, hx] = C['CHRM']
-                    if hx-1 >= 0: frame[22, hx-1] = C['WHT']
-                    if hx+1 < WIDTH: frame[22, hx+1] = C['WHT']
+                # 1. СТАТИЧЕСКИЙ ФОН: Ночной лес и небо
+                # Одинокая сосна на обочине справа
+                frame[4:20, 29] = [20, 40, 20]      # Ствол дерева
+                frame[2:12, 27:32] = [10, 30, 10]    # Ветки сосны
+
+                # 2. ДИНАМИЧЕСКИЙ СВЕТ ФАР КРИСТИНЫ (Желтый конус света)
+                # Свет бьет из правого верхнего угла (от машины) по диагонали налево-вниз
+                # Интенсивность света пульсирует от кадра к кадру, создавая зловещее мерцание
+                light_flash = int(210 + np.sin(f_idx * 0.8) * 45)
+                LIGHT_COLOR = [light_flash, int(light_flash * 0.85), 50]
+
+                for y in range(8, HEIGHT):
+                    # Световой конус расширяется к левому нижнему углу
+                    x_start = max(0, int(24 - (y - 8) * 1.5))
+                    x_end = min(WIDTH, int(26 - (y - 8) * 0.2))
+                    if x_start < x_end:
+                        frame[y, x_start:x_end] = LIGHT_COLOR
+
+                # 3. ОТРИСОВКА КРИСТИНЫ (Приближается по диагонали, x от 15 до 31)
+                # Ее силуэт основан на пропорциях первой версии, но развернут под углом
+                frame[8:13, 18:30] = C['RED']       # Длинный борт и капот машины
+                frame[9, 20:26] = C['B_RED']        # Выштамповка на капоте
+                frame[12:15, 16:31] = C['CHRM']     # Хромированный боковой молдинг и бампер
+                
+                # Левая светящаяся фара (ближняя к зрителю, строка 11, колонка 17)
+                frame[10:12, 17:19] = [255, 230, 100]
+
+                # 4. УБЕГАЮЩИЙ БАДДИ РЕППЕРТОН (В левой части экрана, y от 16 до 26)
+                # Координата x бегущего человека плавно смещается влево с течением времени (t)
+                buddy_x = int(8 - (t * 5)) 
+                buddy_y = 16
+                
+                if 0 <= buddy_x < WIDTH:
+                    # Голова и тело Бадди
+                    frame[buddy_y, buddy_x] = [40, 40, 50]          # Куртка (темная)
+                    frame[buddy_y-1, buddy_x] = C['CHRM']            # Лицо (белые пиксели кожи в свете фар)
+                    frame[buddy_y+1:buddy_y+4, buddy_x] = [20, 20, 30] # Брюки
+
+                    # Анимация бегущих ног (пиксели меняются местами каждый кадр)
+                    if f_idx % 4 < 2:
+                        # Ноги расставлены (левая шаг вперед, правая назад)
+                        if buddy_x - 1 >= 0 and buddy_y + 4 < HEIGHT:
+                            frame[buddy_y + 4, buddy_x - 1] = [20, 20, 30]
+                        if buddy_x + 1 < WIDTH and buddy_y + 4 < HEIGHT:
+                            frame[buddy_y + 4, buddy_x + 1] = [20, 20, 30]
+                    else:
+                        # Ноги вместе (в момент прыжка)
+                        if buddy_y + 4 < HEIGHT:
+                            frame[buddy_y + 4, buddy_x] = [20, 20, 30]
+                            if buddy_y + 5 < HEIGHT:
+                                frame[buddy_y + 5, buddy_x] = [20, 20, 30]
+
+                # 5. ИСКРЫ ИЗ-ПОД КОЛЕС КРИСТИНЫ (Анимация бешеной погони)
+                # Желтые и оранжевые пиксели хаотично вылетают из-под колес машины справа
+                for _ in range(2):
+                    spark_x = np.random.randint(16, 26)
+                    spark_y = np.random.randint(14, 17)
+                    if 0 <= spark_x < WIDTH and 0 <= spark_y < HEIGHT:
+                        frame[spark_y, spark_x] = C['YLW'] if f_idx % 2 == 0 else C['ORG']
 
             # СЦЕНА 5: Вывеска автомастерской
             elif scene_idx == 5:
