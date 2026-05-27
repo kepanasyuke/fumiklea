@@ -494,6 +494,8 @@ def generate_scenes():
                         # Хромированный передний бампер по низу кузова
                         if cy+4 < 24: frame[cy+4, 4:28] = C['CHRM']
 
+            #ostalnoe na localhost dogruzgau.ru
+
             # СЦЕНА 8: Ослепление дальним светом
             elif scene_idx == 7:
                 frame[:] = [int(t * 40)] * 3
