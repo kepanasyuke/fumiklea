@@ -198,67 +198,54 @@ def generate_scenes():
                             frame[y_base + 6, (x_pipe - 2) : (x_pipe + 3)] = [60, 60, 65]
 
 
-             # --- СЦЕНА 4: Преследование Бадди (Кристина настигает жертву) ---
+                         # --- СЦЕНА 4: Преследование Бадди (Крупный план фар в упор) ---
             elif scene_idx == 4:
-                # 1. СТАТИЧЕСКИЙ ФОН: Ночной лес и небо
-                # Одинокая сосна на обочине справа
-                frame[4:20, 29] = [20, 40, 20]      # Ствол дерева
-                frame[2:12, 27:32] = [10, 30, 10]    # Ветки сосны
-
-                # 2. ДИНАМИЧЕСКИЙ СВЕТ ФАР КРИСТИНЫ (Желтый конус света)
-                # Свет бьет из правого верхнего угла (от машины) по диагонали налево-вниз
-                # Интенсивность света пульсирует от кадра к кадру, создавая зловещее мерцание
-                light_flash = int(210 + np.sin(f_idx * 0.8) * 45)
-                LIGHT_COLOR = [light_flash, int(light_flash * 0.85), 50]
-
-                for y in range(8, HEIGHT):
-                    # Световой конус расширяется к левому нижнему углу
-                    x_start = max(0, int(24 - (y - 8) * 1.5))
-                    x_end = min(WIDTH, int(26 - (y - 8) * 0.2))
-                    if x_start < x_end:
-                        frame[y, x_start:x_end] = LIGHT_COLOR
-
-                # 3. ОТРИСОВКА КРИСТИНЫ (Приближается по диагонали, x от 15 до 31)
-                # Ее силуэт основан на пропорциях первой версии, но развернут под углом
-                frame[8:13, 18:30] = C['RED']       # Длинный борт и капот машины
-                frame[9, 20:26] = C['B_RED']        # Выштамповка на капоте
-                frame[12:15, 16:31] = C['CHRM']     # Хромированный боковой молдинг и бампер
+                # Весь фон — абсолютно черный ночной переулок
                 
-                # Левая светящаяся фара (ближняя к зрителю, строка 11, колонка 17)
-                frame[10:12, 17:19] = [255, 230, 100]
-
-                # 4. УБЕГАЮЩИЙ БАДДИ РЕППЕРТОН (В левой части экрана, y от 16 до 26)
-                # Координата x бегущего человека плавно смещается влево с течением времени (t)
-                buddy_x = int(8 - (t * 5)) 
-                buddy_y = 16
+                # 1. РАСЧЕТ ПРИБЛИЖЕНИЯ КРИСТИНЫ (Фары разрастаются с каждым кадром)
+                # t идет от 0.0 до 1.0. Радиус фар растет от 2 до 11 пикселей.
+                headlight_radius = int(2 + t * 9)
                 
-                if 0 <= buddy_x < WIDTH:
-                    # Голова и тело Бадди
-                    frame[buddy_y, buddy_x] = [40, 40, 50]          # Куртка (темная)
-                    frame[buddy_y-1, buddy_x] = C['CHRM']            # Лицо (белые пиксели кожи в свете фар)
-                    frame[buddy_y+1:buddy_y+4, buddy_x] = [20, 20, 30] # Брюки
+                # Координаты центров левой и правой фар
+                left_center_x, left_center_y = 7, 16
+                right_center_x, right_center_y = 24, 16
 
-                    # Анимация бегущих ног (пиксели меняются местами каждый кадр)
-                    if f_idx % 4 < 2:
-                        # Ноги расставлены (левая шаг вперед, правая назад)
-                        if buddy_x - 1 >= 0 and buddy_y + 4 < HEIGHT:
-                            frame[buddy_y + 4, buddy_x - 1] = [20, 20, 30]
-                        if buddy_x + 1 < WIDTH and buddy_y + 4 < HEIGHT:
-                            frame[buddy_y + 4, buddy_x + 1] = [20, 20, 30]
-                    else:
-                        # Ноги вместе (в момент прыжка)
-                        if buddy_y + 4 < HEIGHT:
-                            frame[buddy_y + 4, buddy_x] = [20, 20, 30]
-                            if buddy_y + 5 < HEIGHT:
-                                frame[buddy_y + 5, buddy_x] = [20, 20, 30]
+                # Отрисовка слепящего света фар Кристины
+                for y in range(HEIGHT):
+                    for x in range(WIDTH):
+                        # Дистанция до левой и правой фары
+                        dist_left = np.hypot(x - left_center_x, y - left_center_y)
+                        dist_right = np.hypot(x - right_center_x, y - right_center_y)
+                        
+                        # Ближе к центру фара белая, по краям — яростно-желтая
+                        if dist_left < headlight_radius or dist_right < headlight_radius:
+                            min_dist = min(dist_left, dist_right)
+                            if min_dist < headlight_radius * 0.4:
+                                frame[y, x] = C['WHT']  # Ослепительное ядро фары
+                            else:
+                                # Мерцающий желтый свет фар Кристины
+                                flash = int(220 + np.sin(f_idx * 0.9) * 35)
+                                frame[y, x] = [flash, int(flash * 0.8), 0]
 
-                # 5. ИСКРЫ ИЗ-ПОД КОЛЕС КРИСТИНЫ (Анимация бешеной погони)
-                # Желтые и оранжевые пиксели хаотично вылетают из-под колес машины справа
-                for _ in range(2):
-                    spark_x = np.random.randint(16, 26)
-                    spark_y = np.random.randint(14, 17)
-                    if 0 <= spark_x < WIDTH and 0 <= spark_y < HEIGHT:
-                        frame[spark_y, spark_x] = C['YLW'] if f_idx % 2 == 0 else C['ORG']
+                # 2. СИЛУЭТ БЕГУЩЕГО БАДДИ (Строго по центру, x=16, y=14..22)
+                # Он бежит прямо на зрителя, спасаясь от настигающего света
+                buddy_y = 14
+                buddy_x = 16
+                
+                # Рисуем черную фигуру Бадди поверх светящихся фар Кристины (эффект контржура)
+                frame[buddy_y, buddy_x] = C['BLK']       # Голова
+                frame[buddy_y+1 : buddy_y+4, buddy_x] = C['BLK'] # Торс
+                
+                # Анимация бегущих ног (руки и ноги двигаются влево-вправо)
+                if f_idx % 4 < 2:
+                    frame[buddy_y+2, buddy_x-1] = C['BLK'] # Левая рука
+                    frame[buddy_y+4, buddy_x-1] = C['BLK'] # Левая нога шаг в сторону
+                    frame[buddy_y+5, buddy_x-1] = C['BLK']
+                else:
+                    frame[buddy_y+2, buddy_x+1] = C['BLK'] # Правая рука
+                    frame[buddy_y+4, buddy_x+1] = C['BLK'] # Правая нога шаг в сторону
+                    frame[buddy_y+5, buddy_x+1] = C['BLK']
+
 
             # СЦЕНА 5: Вывеска автомастерской
             elif scene_idx == 5:
