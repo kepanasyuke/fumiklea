@@ -404,6 +404,8 @@ def generate_scenes():
                         # E (x: 27..28)
                         frame[ty:ty+5, 27] = frame[ty, 27:29] = frame[ty+2, 27:29] = frame[ty+4, 27:29] = text_glow
 
+            #снова работает
+
 
             # СЦЕНА 7: Ослепление дальним светом
             elif scene_idx == 7:
