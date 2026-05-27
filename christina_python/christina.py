@@ -324,18 +324,22 @@ def generate_scenes():
                     #zastavka 456 78 9)localhost
 
 
-                    # --- СЦЕНА 6: Взрыв, скромное плавление, пар клубами и сплошной залив экрана ---
+            # --- СЦЕНА 6: Взрыв, лужа, белый пар, крупные буквы по краям и финальное имя CHRISTIN ---
             elif scene_idx == 6:
-                # Строки 24-32 строго черные, бережём индикаторы (РЕМ, РАС, ТОП) внизу!
+                # Строки 24-32 строго черные, бережём индикаторы (РЕМ, РАС, ТОП) в самом низу!
                 
                 # 1. МАЛЕНЬКАЯ ГОЛУБАЯ ЛУЖА И ЧЁРНЫЙ ПРОМЕЖУТОК
-                frame[22, 6:26] = C['BLU']
+                if f_idx < 44:
+                    frame[22, 6:26] = C['BLU']
                 
-                # Эпицентр взрыва в самом верху (y=6), чтобы оставить большой черный промежуток
+                # Эпицентр взрыва в самом верху (y=6). К концу сцены огонь плавно затухает
                 center_x, center_y = 16, 6
-                fire_radius = int(1 + (f_idx / 40) * 15) if f_idx < 40 else 15
+                if f_idx < 44:
+                    fire_radius = int(1 + (f_idx / 40) * 15) if f_idx < 40 else 15
+                else:
+                    fire_radius = max(0, 15 - (f_idx - 44) * 3) # Огонь тухнет
 
-                # 2. ОТРИСОВКА БУШУЮЩЕГО ПЛАМЕНИ ВЗРЫВА (Строго вверху, y от 0 до 14)
+                # 2. ОТРИСОВКА ПЛАМЕНИ ВЗРЫВА (Строго вверху, y от 0 до 14)
                 for y in range(0, 15):
                     for x in range(WIDTH):
                         dist = np.hypot(x - center_x, y - center_y)
@@ -349,95 +353,95 @@ def generate_scenes():
                                 org_flicker = int(190 + np.cos(f_idx * 1.1 - y) * 45)
                                 frame[y, x] = [org_flicker, int(org_flicker * 0.4), 10]
 
-                # 3. КРИСТИНА ВЫЕЗЖАЕТ ИЗ ОГНЯ НА ЛУЖУ (Кадры 28-49)
+                # 3. КРИСТИНА ВЫЕЗЖАЕТ ИЗ ОГНЯ И УЕЗЖАЕТ ВНИЗ ЗА ЭКРАН
                 if f_idx >= 28:
-                    car_progress = (f_idx - 28) / 21
-                    cy = int(8 + car_progress * 9) 
-                    
-                    if 0 <= cy < 23:
-                        # Расчет деформации: при ударе о воду (с 38 кадра) бампер аккуратно сминается внутрь на 1 пиксель
-                        is_crashed = 1 if f_idx >= 38 else 0
+                    if f_idx < 44:
+                        car_progress = (f_idx - 28) / 16
+                        cy = int(8 + car_progress * 9) 
+                    else:
+                        exit_progress = (f_idx - 44) / 6
+                        cy = int(17 + exit_progress * 10)
 
-                        # Рисуем Кристину из вашей любимой модели (пока экран не залит брызгами)
-                        if f_idx < 44:
-                            frame[cy:cy+2, 4:28] = C['RED']       # Капот
-                            frame[cy, 11:21] = C['B_RED']         # Выштамповка
-                            
-                            # Решетка радиатора и ниша (учитываем легкую помятость - сдвиг вверх на is_crashed)
-                            if cy+2-is_crashed < 22: frame[cy+2-is_crashed, 8:24] = C['BLK']
-                            if cy+3-is_crashed < 22: frame[cy+3-is_crashed, 8:24] = C['CHRM']
-                            
-                            # Фары горят сквозь дым
-                            if cy+2 < 22:
-                                frame[cy+1:cy+3, 5:8] = C['WHT']
-                                frame[cy+1:cy+3, 24:27] = C['WHT']
-                                
-                            # Массивный передний бампер (сминается вверх на 1 пиксель)
-                            if cy+4-is_crashed < 22: frame[cy+4-is_crashed, 4:28] = C['CHRM']
+                    # Рисуем машину, пока её верхняя часть ещё видна на экране (cy < 24)
+                    if 0 <= cy < 24:
+                        frame[cy:min(24, cy+2), 4:28] = C['RED']       # Капот
+                        frame[cy, 11:21] = C['B_RED']         # Выштамповка
+                        if cy+2 < 24: frame[cy+2, 8:24] = C['BLK']    # Решетка
+                        if cy+3 < 24: frame[cy+3, 8:24] = C['CHRM']
+                        if cy+2 < 24:
+                            frame[cy+1:min(24, cy+3), 5:8] = C['WHT']   # Фары
+                            frame[cy+1:min(24, cy+3), 24:27] = C['WHT']
+                        if cy+4 < 24: frame[cy+4, 4:28] = C['CHRM']  # Бампер
 
-                        # СКРОМНОЕ ПЛАВЛЕНИЕ КРАСКИ (с 34 по 43 кадр, повреждения небольшие)
+                        # Эффект текущей краски (до 43 кадра)
                         if 34 <= f_idx < 44:
+                            melt_intensity = (f_idx - 34)
                             for x in range(4, 28):
-                                # Редкие аккуратные подтеки обгоревшей краски (длиной всего в 1 пиксель)
-                                if (x + f_idx) % 5 == 0:
-                                    target_y = cy + 2
-                                    if target_y < 22:
-                                        frame[target_y, x] = C['BLK'] if f_idx % 2 == 0 else C['ORG']
+                                if (x + f_idx) % 3 == 0:
+                                    drop_length = np.random.randint(1, max(2, melt_intensity // 2))
+                                    for d in range(1, drop_length + 1):
+                                        target_y = cy + 2 + d
+                                        if target_y < 24:
+                                            frame[target_y, x] = C['BLK'] if d % 2 == 0 else C['ORG']
 
-                        # --- КРИСТИНА ВЛЕТАЕТ В ЛУЖУ: ПАР КЛУБАМИ И СПЛОШНОЙ ЗАЛИВ ---
-                        if cy + 4 >= 20:
-                            # 1. БЕЛЫЙ ПАР ОКРУГЛЫМИ КЛУБАМИ
-                            # Симулируем кучевые облака пара, растущие округлыми сферами из левой (8) и правой (21) точек
-                            steam_radius = int(1 + ((f_idx - 36) % 6) * 0.8) # Радиус клубов растет
-                            for steam_center_x in [9, 22]:
-                                steam_center_y = cy - 1
-                                for py in range(max(0, steam_center_y - steam_radius), steam_center_y + 1):
-                                    for px in range(steam_center_x - steam_radius, steam_center_x + steam_radius + 1):
-                                        if 0 <= px < WIDTH and py >= 0:
-                                            # Проверяем круглую форму клуба пара по формуле гипотенузы
-                                            if np.hypot(px - steam_center_x, py - steam_center_y) < steam_radius:
-                                                frame[py, px] = C['WHT']
+                        # --- КРИСТИНА ВЛЕТАЕТ В ЛУЖУ: БЕЛЫЙ ПАР И БУКВЫ "HR HR" ---
+                        if 36 <= f_idx < 44 and cy + 4 >= 20:
+                            # Белый пар
+                            steam_stage = (f_idx - 36) % 6
+                            for px_pipe in [8, 23]:
+                                if steam_stage > 0 and cy - 1 >= 0:
+                                    frame[cy - 1, px_pipe] = C['WHT']
+                                if steam_stage > 2 and cy - 2 >= 0:
+                                    frame[cy - 2, (px_pipe - 1) : (px_pipe + 2)] = C['WHT']
+                                if steam_stage > 4 and cy - 3 >= 0:
+                                    if (px_pipe + f_idx) % 2 == 0:
+                                        frame[cy - 3, (px_pipe - 2) : (px_pipe + 3)] = C['WHT']
 
-                            # Буквы "HR HR" задыхающегося мотора V8 в воздухе (кадры 38-43)
+                            # БУКВЫ "HR HR" ВЫЕЗЖАЮТ ЗА ГРАНИЦЫ (y=15)
                             if 38 <= f_idx < 44:
                                 text_color = C['WHT'] if f_idx % 2 == 0 else C['B_RED']
-                                # Левое HR (x=3, y=2)
-                                frame[2:6, 3] = frame[2:6, 5] = frame[4, 4] = text_color
-                                frame[2:6, 7] = frame[2, 8] = frame[4, 8] = text_color
-                                frame[3, 9] = frame[5, 9] = text_color
-                                # Правое HR (x=23, y=3)
-                                frame[3:7, 23] = frame[3:7, 25] = frame[5, 24] = text_color
-                                frame[3:7, 27] = frame[3, 28] = frame[5, 28] = text_color
-                                frame[4, 29] = frame[6, 29] = text_color
-
-                            # 2. ФИНАЛЬНЫЙ ЭФФЕКТ: СПЛОШНАЯ ВОЛНА ЗАЛИВАЕТ ЭКРАН! (Кадры 44-49)
-                            if f_idx >= 44:
-                                # Кристина полностью сбила пламя: убираем верхний огонь взрыва
-                                frame[0:15, :] = C['BLK']
+                                ly = 15
                                 
-                                # Сплошная линия брызг стремительно поднимается вверх
-                                splash_progress = (f_idx - 44) # от 0 до 5
-                                splash_y_top = max(0, 22 - splash_progress * 5)
+                                # Левое "HR" (Обрезается левым краем)
+                                frame[ly:ly+5, 0] = text_color
+                                frame[ly+2, 0] = text_color
+                                frame[ly:ly+5, 2] = frame[ly, 2:5] = frame[ly+2, 2:5] = text_color
+                                frame[ly+1, 5] = frame[ly+3, 4] = frame[ly+4, 5] = text_color
                                 
-                                # Закрашиваем экран СПЛОШНЫМ белым цветом снизу вверх
-                                frame[splash_y_top:24, :] = C['WHT']
-                                
-                                # Верхнюю кромку волны делаем слегка рваной/голубой для красоты брызг
-                                if splash_y_top - 1 >= 0:
-                                    frame[splash_y_top - 1, ::2] = C['BLU']
-                                if splash_y_top - 2 >= 0:
-                                    frame[splash_y_top - 2, 1::3] = C['BLU']
+                                # Правое "HR" (Обрезается правым краем)
+                                rx = 25
+                                frame[ly:ly+5, rx] = frame[ly:ly+5, rx+2] = frame[ly+2, rx+1] = text_color
+                                frame[ly:ly+5, rx+4] = frame[ly, rx+4:rx+7] = frame[ly+2, rx+4:rx+6] = text_color
+                                frame[ly+1, rx+6] = frame[ly+3, rx+5] = text_color
+                                if rx+6 < WIDTH: frame[ly+4, rx+6] = text_color
 
-                # 4. ЛЕТЯЩИЕ ИСКРЫ ВЗРЫВА (Только в верхней части)
-                if f_idx >= 10 and f_idx < 35:
-                    for i in range(2):
-                        spark_speed = (f_idx - 10) * 1.5
-                        angle = (i * 180 + f_idx * 5) * np.pi / 180
-                        sx = int(center_x + np.cos(angle) * spark_speed)
-                        sy = int(center_y + np.sin(angle) * spark_speed * 0.6)
-                        if 0 <= sx < WIDTH and 0 <= sy < 16:
-                            frame[sy, sx] = C['WHT'] if f_idx % 2 == 0 else C['YLW']
-
+                # 4. ФИНАЛЬНЫЙ ВЫЕЗД: НАДПИСЬ "CHRISTIN" СТРОГО ПО ЦЕНТРУ (Кадры 44-49)
+                if f_idx >= 44:
+                    fade_out = max(0, 255 - (f_idx - 44) * 50)
+                    text_glow = [fade_out, fade_out, fade_out] # Белый неон
+                    
+                    if fade_out > 0:
+                        ty = 11  # Высота строки
+                        
+                        # Буква C (x: 3..5)
+                        frame[ty:ty+5, 3] = frame[ty, 3:6] = frame[ty+4, 3:6] = text_glow
+                        # Буква H (x: 7..9)
+                        frame[ty:ty+5, 7] = frame[ty:ty+5, 9] = frame[ty+2, 8] = text_glow
+                        # Буква R (x: 11..13)
+                        frame[ty:ty+5, 11] = frame[ty, 11:14] = frame[ty+2, 11:14] = text_glow
+                        frame[ty+1, 13] = frame[ty+3, 12] = frame[ty+4, 13] = text_glow
+                        # Буква I (x: 15)
+                        frame[ty:ty+5, 15] = text_glow
+                        # Буква S (x: 17..19)
+                        frame[ty, 17:20] = frame[ty+2, 17:20] = frame[ty+4, 17:20] = text_glow
+                        frame[ty+1, 17] = frame[ty+3, 19] = text_glow
+                        # Буква T (x: 21..23)
+                        frame[ty, 21:24] = frame[ty:ty+5, 22] = text_glow
+                        # Буква I (x: 25)
+                        frame[ty:ty+5, 25] = text_glow
+                        # Буква N (x: 27..29)
+                        frame[ty:ty+5, 27] = frame[ty:ty+5, 29] = text_glow
+                        frame[ty+1, 28] = text_glow
 
 
 
