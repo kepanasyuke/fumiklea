@@ -374,66 +374,132 @@ def generate_scenes():
 
             # --- СЦЕНА 7: Отдельный затухающий титр имени CHRISTINE (Выверенный центр) ---
             elif scene_idx == 7:
-                # Защита от float-переменных
+                # 1. РАСЧЕТ ЯРКОСТИ ТЕКСТА КРИСТИНИ (Имя гаснет к 42 кадру, уступая место машине)
                 if f_idx < 15:
                     glow = int((f_idx / 15) * 255)
                 elif 15 <= f_idx < 35:
                     glow = int(220 + np.sin(f_idx * 1.5) * 35)
                 else:
-                    glow = max(0, 255 - int(((f_idx - 35) / 14) * 255))
+                    glow = max(0, 255 - int(((f_idx - 35) / 7) * 255)) if f_idx < 42 else 0
                     
                 text_glow = [glow, glow, glow]
                 
-                if glow > 0:
-                    ty = 11  # Высота строки строго по центру матрицы
+                # Рисуем буквы, пока они видны на экране (до 42 кадра)
+                if glow > 0 and f_idx < 42:
+                    ty = 11  # Базовая высота текстовой строки
+                    melt1 = int(2 + np.sin(f_idx * 0.4) * 2)  
+                    melt2 = int(2 + np.cos(f_idx * 0.5) * 1.5)
                     
-                    # Буква C (x: 0..2) — Сдвинули всё слово на 2 пикселя влево от зрителя!
-                    frame[ty:ty+5, 0] = text_glow
-                    frame[ty, 0:3] = text_glow
-                    frame[ty+4, 0:3] = text_glow
+                    # --- Буква C ---
+                    if ty + 5 + melt1 < HEIGHT:
+                        frame[ty : ty + 5 + melt1, 1] = text_glow
+                    frame[ty, 1:4] = text_glow
+                    frame[ty + 4, 1:4] = text_glow
                     
-                    # Буква H (x: 4..6)
-                    frame[ty:ty+5, 4] = text_glow
-                    frame[ty:ty+5, 6] = text_glow
-                    frame[ty+2, 5] = text_glow
+                    # --- Буква H ---
+                    frame[ty : ty + 5, 5] = text_glow
+                    frame[ty : ty + 5, 7] = text_glow
+                    frame[ty + 2, 6] = text_glow
                     
-                    # Буква R (x: 8..10) — КРУТАЯ УДЛИНЁННАЯ СТОЙКА (падает до строки ty+6!)
-                    frame[ty:ty+7, 8] = text_glow  # Левая ножка длиннее на 2 пикселя вниз!
-                    frame[ty, 9:11] = text_glow
-                    frame[ty+1, 10] = text_glow
-                    frame[ty+2, 9:11] = text_glow
-                    frame[ty+3, 9] = text_glow
-                    frame[ty+4, 10] = text_glow
+                    # --- Буква R ---
+                    if ty + 7 + melt2 < HEIGHT:
+                        frame[ty : ty + 7 + melt2, 9] = text_glow
+                    frame[ty, 9:12] = text_glow
+                    frame[ty + 2, 9:12] = text_glow
+                    frame[ty + 1, 11] = text_glow
+                    frame[ty + 3, 10] = text_glow
+                    frame[ty + 4, 11] = text_glow
                     
-                    # Буква I (x: 12)
-                    frame[ty:ty+5, 12] = text_glow
+                    # --- Буква I ---
+                    frame[ty : ty + 5, 13] = text_glow
                     
-                    # Буква S (x: 14..15)
-                    frame[ty, 14:16] = text_glow
-                    frame[ty+2, 14:16] = text_glow
-                    frame[ty+4, 14:16] = text_glow
-                    frame[ty+1, 14] = text_glow
-                    frame[ty+3, 15] = text_glow
+                    # --- Буква S ---
+                    frame[ty, 15:17] = text_glow
+                    frame[ty + 2, 15:17] = text_glow
+                    if ty + 5 + melt1 < HEIGHT:
+                        frame[ty + 4 : ty + 5 + melt1, 15] = text_glow  
+                    frame[ty + 4, 15:17] = text_glow
+                    frame[ty + 1, 15] = text_glow
+                    frame[ty + 3, 16] = text_glow
                     
-                    # Буква T (x: 17..19) — Ножка по центру на x=18
-                    frame[ty, 17:20] = text_glow
-                    frame[ty:ty+5, 18] = text_glow
+                    # --- Буква T ---
+                    frame[ty, 18:21] = text_glow
+                    frame[ty : ty + 5, 19] = text_glow
                     
-                    # Буква I (x: 21)
-                    frame[ty:ty+5, 21] = text_glow
+                    # --- Буква I ---
+                    frame[ty : ty + 5, 22] = text_glow
                     
-                    # Буква N (x: 23..25)
-                    frame[ty:ty+5, 23] = text_glow
-                    frame[ty:ty+5, 25] = text_glow
-                    frame[ty+1, 23] = text_glow
-                    frame[ty+2, 24] = text_glow
-                    frame[ty+3, 25] = text_glow
+                    # --- Буква N ---
+                    if ty + 5 + melt2 < HEIGHT:
+                        frame[ty : ty + 5 + melt2, 24] = text_glow  
+                    frame[ty : ty + 5, 26] = text_glow
+                    frame[ty + 1, 24] = text_glow
+                    frame[ty + 2, 25] = text_glow
+                    frame[ty + 3, 26] = text_glow
                     
-                    # Буква E (x: 27..29) — Теперь имеет свободные пиксели справа и не обрезается!
-                    frame[ty:ty+5, 27] = text_glow
-                    frame[ty, 27:30] = text_glow
-                    frame[ty+2, 27:30] = text_glow
-                    frame[ty+4, 27:30] = text_glow
+                    # --- Буква E ---
+                    frame[ty : ty + 5, 30] = C['BLK']  
+                    frame[ty : ty + 5, 28] = text_glow  
+                    frame[ty, 28:31] = text_glow   
+                    frame[ty + 2, 28:30] = text_glow 
+                    frame[ty + 4, 28:31] = text_glow 
+
+                # 4. ДЕЛИКАТНЫЙ ГОЛУБОЙ ХВОСТИК НАД НАДПИСЬЮ (Кадры 15-37)
+                if 15 <= f_idx < 38:
+                    # Уменьшенный шаг вращения и более компактная эллиптическая орбита
+                    angle = (f_idx - 15) * 0.18
+                    radius_x = 10 - (f_idx - 15) * 0.2
+                    radius_y = 5 - (f_idx - 15) * 0.1
+                    
+                    # Голова (Белый пиксель) и мягкий голубой шлейф
+                    spark_x = int(16 + np.cos(angle) * radius_x)
+                    spark_y = int(13 + np.sin(angle) * radius_y)
+                    trail_x = int(16 + np.cos(angle - 0.2) * radius_x)
+                    trail_y = int(13 + np.sin(angle - 0.2) * radius_y)
+                    
+                    if 0 <= trail_y < 24 and 0 <= trail_x < WIDTH and f_idx < 38:
+                        frame[trail_y, trail_x] = C['BLU']  # Голубой хвостик
+                    if 0 <= spark_y < 24 and 0 <= spark_x < WIDTH and f_idx < 38:
+                        frame[spark_y, spark_x] = C['WHT']  # Белая головка
+
+                # 5. МАЛЕНЬКАЯ ЗВЕЗДОЧКА В ЦЕНТРЕ (Кадры 38-41)
+                elif 38 <= f_idx < 42:
+                    sx, sy = 16, 13
+                    frame[sy, sx] = C['WHT']
+                    # Маленькие голубые лучики вспышки
+                    if sy - 1 >= 0: frame[sy - 1, sx] = C['BLU']
+                    if sy + 1 < 24: frame[sy + 1, sx] = C['BLU']
+                    if sx - 1 >= 0: frame[sy, sx - 1] = C['BLU']
+                    if sx + 1 < WIDTH: frame[sy, sx + 1] = C['BLU']
+
+                # --- 6. КРИСТИНА ИЗ "SHOW ME" НАДВИГАЕТСЯ ИЗ ТЕМНОТЫ (Кадры 42-49) ---
+                if f_idx >= 42:
+                    # Вся область очищается под чистый черный ночной переулок
+                    frame[0:24, :] = C['BLK']
+                    
+                    # Масштаб приближения машины на зрителя за оставшиеся 8 кадров
+                    t_rush = (f_idx - 42) / 7
+                    
+                    # Рассчитываем, как красный капот Кристины разрастается из глубины
+                    scale_y = int(8 + t_rush * 14)
+                    if 0 <= scale_y < 24:
+                        frame[0:scale_y, 2:30] = C['RED']  # Кузов Кристины
+                        
+                        # Хромированная идеальная решетка радиатора восстанавливающегося Плимута
+                        if scale_y - 3 >= 0:
+                            frame[scale_y-3:scale_y, 6:26] = C['CHRM']
+                        # Тяжелый блестящий бампер снизу
+                        if scale_y - 1 >= 0:
+                            frame[scale_y-1, 4:28] = C['CHRM']
+                            
+                        # Ослепительные белые фары яростно зажигаются в упор перед экраном!
+                        glare_radius = int(1 + t_rush * 4)
+                        for y in range(HEIGHT):
+                            for x in range(WIDTH):
+                                if np.hypot(x - 7, y - 10) < glare_radius or np.hypot(x - 25, y - 10) < glare_radius:
+                                    if y < 24:
+                                        frame[y, x] = C['WHT']
+
 
 
             # СЦЕНА 8: Ослепление дальним светом
