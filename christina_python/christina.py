@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 CHRISTINE: ПИКСЕЛЬНЫЙ КВЕСТ (КОМИКС-СТИЛЬ)
-- Анимация: 19 ваших сцен (дождь, бампер, спидометр, плавники, погоня, вывеска...)
-- Диалоги справа (белое облако)
-- Терминал внизу с вводом команд
+- 19 анимированных сцен (дождь, бампер, спидометр, погоня, взрыв...)
+- Диалоги справа (белое облачко)
+- Терминал внизу с вводом команд (видимый)
 - Глитч при наведении на пиксели
 """
 
@@ -15,11 +15,11 @@ import random
 
 # ------------------------- ПАРАМЕТРЫ -------------------------
 WIDTH, HEIGHT = 32, 32
-PIXEL_SIZE = 14          # 32*14 = 448px
+PIXEL_SIZE = 14
 TOTAL_FRAMES = 50
 TOTAL_SCENES = 19
 
-# ------------------------- ЦВЕТА (ВАШИ) -------------------------
+# ------------------------- ЦВЕТА -------------------------
 C = {
     'BLK': [0, 0, 0],       'RED': [200, 0, 0],     'B_RED': [255, 30, 30],
     'YLW': [255, 215, 0],   'ORG': [255, 100, 0],   'CHRM': [192, 192, 192],
@@ -27,7 +27,7 @@ C = {
     'PNK': [230, 0, 120]
 }
 
-# ------------------------- ГЕНЕРАЦИЯ СЦЕН (ИЗ ВАШЕГО КОДА) -------------------------
+# ------------------------- ГЕНЕРАЦИЯ СЦЕН (С ИСПРАВЛЕНИЕМ ГРАНИЦ) -------------------------
 def generate_scenes():
     all_scenes = []
     for scene_idx in range(TOTAL_SCENES):
@@ -36,7 +36,8 @@ def generate_scenes():
             frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
             t = f_idx / TOTAL_FRAMES
 
-            if scene_idx == 0:   # базовая + огонь
+            # СЦЕНА 0: Базовая (Кристина в огне)
+            if scene_idx == 0:
                 bright = 255 if f_idx >= 15 else int((f_idx/15)*255)
                 frame[14:16, 5:8] = frame[14:16, 24:27] = [bright, int(bright*0.8), 0]
                 frame[12:14, 4:28] = C['RED']
@@ -45,90 +46,231 @@ def generate_scenes():
                     for x in range(WIDTH):
                         h = int((np.sin(x + f_idx) + 1.2) * 5 * ((f_idx-10)/40))
                         for y in range(h):
-                            frame[HEIGHT-1-y, x] = C['YLW'] if y < h-3 else C['ORG']
-            elif scene_idx == 1:  # регенерация бампера
+                            if HEIGHT-1-y >= 0:
+                                frame[HEIGHT-1-y, x] = C['YLW'] if y < h-3 else C['ORG']
+
+            # СЦЕНА 1: Регенерация бампера
+            elif scene_idx == 1:
                 frame[12:15, 4:28] = C['RED']
                 dent = int((1.0 - t) * 6)
                 frame[16, 4:28] = C['CHRM']
                 if dent > 0:
                     frame[16, 12:20] = C['BLK']
-                    frame[16+dent, 12:20] = C['CHRM']
-            elif scene_idx == 2:  # спидометр
+                    if 16+dent < HEIGHT:
+                        frame[16+dent, 12:20] = C['CHRM']
+
+            # СЦЕНА 2: Спидометр
+            elif scene_idx == 2:
                 for a in range(5, 27):
-                    frame[22 - int(np.sin((a-5)/22*np.pi)*10), a] = C['WHT']
+                    y = 22 - int(np.sin((a-5)/22*np.pi)*10)
+                    if 0 <= y < HEIGHT:
+                        frame[y, a] = C['WHT']
                 angle = t * np.pi
                 sx = int(16 + np.cos(angle) * 8)
                 sy = int(22 - np.sin(angle) * 8)
-                frame[22, 16] = C['B_RED']
-                for i in range(9):
-                    frame[int(22 + (sy-22)*i/8), int(16 + (sx-16)*i/8)] = C['B_RED']
-            elif scene_idx == 3:  # задние плавники
+                if 0 <= sy < HEIGHT and 0 <= sx < WIDTH:
+                    frame[22, 16] = C['B_RED']
+                    for i in range(9):
+                        y = int(22 + (sy-22)*i/8)
+                        x = int(16 + (sx-16)*i/8)
+                        if 0 <= y < HEIGHT and 0 <= x < WIDTH:
+                            frame[y, x] = C['B_RED']
+
+            # СЦЕНА 3: Задние плавники
+            elif scene_idx == 3:
                 frame[10:22, 6:10] = C['RED']
                 frame[10:22, 22:26] = C['RED']
                 g_b = int(150 + np.sin(t * np.pi * 4) * 105)
                 frame[11:14, 7:9] = [g_b, 0, 0]
                 frame[11:14, 23:25] = [g_b, 0, 0]
-            elif scene_idx == 4:  # преследование Бадди
+
+            # СЦЕНА 4: Преследование Бадди
+            elif scene_idx == 4:
                 size = int(1 + t * 4)
-                frame[16-size:16+size, 6-size:6+size] = C['YLW']
-                frame[16-size:16+size, 26-size:26+size] = C['YLW']
+                for y in range(16-size, 16+size):
+                    for x in range(6-size, 6+size):
+                        if 0 <= y < HEIGHT and 0 <= x < WIDTH:
+                            frame[y, x] = C['YLW']
+                for y in range(16-size, 16+size):
+                    for x in range(26-size, 26+size):
+                        if 0 <= y < HEIGHT and 0 <= x < WIDTH:
+                            frame[y, x] = C['YLW']
                 hx = int(20 - t * 4)
-                frame[18:22, hx] = C['WHT']
-                frame[17, hx] = C['CHRM']
-                frame[22, hx - (f_idx%2)] = C['WHT']
-                frame[22, hx + (f_idx%2)] = C['WHT']
-            elif scene_idx == 5:  # вывеска автомастерской
+                if 0 <= hx < WIDTH:
+                    frame[18:22, hx] = C['WHT']
+                    frame[17, hx] = C['CHRM']
+                    if hx-1 >= 0: frame[22, hx-1] = C['WHT']
+                    if hx+1 < WIDTH: frame[22, hx+1] = C['WHT']
+
+            # СЦЕНА 5: Вывеска автомастерской
+            elif scene_idx == 5:
                 neon = C['PNK'] if (f_idx % 12 > 2) else C['BLK']
                 frame[10, 4:28] = neon
                 frame[11:15, 6] = neon
                 frame[11:15, 14] = neon
-                frame[20:25, 2:30] = [30, 30, 40]
-            else:                 # сцены 6-18: ночное шоссе, дождь, свет фар
-                shift = (f_idx * 2) % 32
+                frame[20:25, 2:30] = C['BLK']
+
+            # СЦЕНА 6: Взрыв и пожар на заправке
+            elif scene_idx == 6:
+                fire_radius = int(t * 18)
                 for y in range(HEIGHT):
-                    if (y + shift) % 16 < 6 and 14 <= (y * WIDTH // HEIGHT) <= 18:
-                        frame[y, 15:17] = C['YLW']
-                    if scene_idx % 2 == 0:
-                        if (y + f_idx) % 10 == 0:
-                            frame[y, :, 0] = 50
-                    else:
-                        frame[int(t*31), int((np.sin(y)+1)*15)] = C['BLU']
+                    for x in range(WIDTH):
+                        if np.hypot(x - 16, y - 32) < fire_radius:
+                            frame[y, x] = C['YLW'] if (y + f_idx) % 3 == 0 else C['ORG']
+                if t < 0.6:
+                    frame[14:28, 13:19] = C['BLK']
+
+            # СЦЕНА 7: Ослепление дальним светом
+            elif scene_idx == 7:
+                frame[:] = [int(t * 40)] * 3
+                glow = int(4 + t * 12)
+                for y in range(HEIGHT):
+                    for x in range(WIDTH):
+                        if np.hypot(x - 8, y - 16) < glow or np.hypot(x - 24, y - 16) < glow:
+                            frame[y, x] = C['WHT']
+
+            # СЦЕНА 8: Дождь и дворники
+            elif scene_idx == 8:
+                for i in range(15):
+                    rx = (i * 7 + f_idx * 2) % WIDTH
+                    ry = (i * 11 + f_idx * 3) % HEIGHT
+                    frame[ry, rx] = C['BLU']
+                w_pos = int(16 + np.sin(t * np.pi * 2) * 14)
+                for y in range(10, 25):
+                    if 0 <= w_pos < WIDTH:
+                        frame[y, w_pos] = C['BLK']
+
+            # СЦЕНА 9: Магнитола
+            elif scene_idx == 9:
+                frame[14:18, 4:28] = C['BLK']
+                freq_x = int(10 + np.sin(t * np.pi * 6) * 8)
+                frame[15:17, 6:26] = C['GRN'] if f_idx % 2 == 0 else C['BLK']
+                if 0 <= freq_x < WIDTH:
+                    frame[15:17, freq_x] = C['YLW']
+
+            # СЦЕНА 10: Преследование Мучи (ИСПРАВЛЕНА)
+            elif scene_idx == 10:
+                frame[:, 0:4] = frame[:, 28:32] = C['BLK']
+                y_pos = int(HEIGHT - t * 20)
+                if y_pos < 0: y_pos = 0
+                if y_pos + 4 > HEIGHT: y_pos = HEIGHT - 4
+                frame[y_pos:y_pos+4, 8:24] = C['RED']
+                if y_pos+1 < HEIGHT:
+                    frame[y_pos+1, 10:13] = frame[y_pos+1, 19:22] = C['YLW']
+
+            # СЦЕНА 11: Силуэт Арни
+            elif scene_idx == 11:
+                frame[18:24, 10:22] = C['BLK']
+                frame[12:18, 13:19] = C['BLK']
+                frame[17:23, 9:23] = C['BLK']
+                if f_idx % 10 > 7:
+                    frame[14, 15] = frame[14, 16] = C['B_RED']
+
+            # СЦЕНА 12: Camaro
+            elif scene_idx == 12:
+                frame[:, :12] = C['RED']
+                crash_x = int(24 - t * 8)
+                if crash_x < 0: crash_x = 0
+                frame[:, crash_x:] = C['CHRM']
+                for _ in range(3):
+                    y = np.random.randint(10, 22)
+                    frame[y, crash_x] = C['YLW']
+
+            # СЦЕНА 13: Разбитое стекло
+            elif scene_idx == 13:
+                frame[:] = C['BLK']
+                num_cracks = int(t * 12)
+                for i in range(num_cracks):
+                    angle = (i * 30) * np.pi / 180
+                    for d in range(16):
+                        cx = int(16 + np.cos(angle) * d)
+                        cy = int(16 + np.sin(angle) * d)
+                        if 0 <= cx < WIDTH and 0 <= cy < HEIGHT:
+                            frame[cy, cx] = C['WHT']
+
+            # СЦЕНА 14: Бульдозер
+            elif scene_idx == 14:
+                heavy_y = int(t * 16)
+                frame[0:heavy_y, :] = C['YLW']
+                if heavy_y+2 <= HEIGHT:
+                    frame[heavy_y:heavy_y+2, :] = C['BLK']
+                frame[20:, :] = C['RED']
+
+            # СЦЕНА 15: Дым из-под капота
+            elif scene_idx == 15:
+                frame[16:, 4:28] = C['RED']
+                for y in range(0, 16):
+                    for x in range(WIDTH):
+                        if (x + y + f_idx) % 4 == 0:
+                            frame[y, x] = C['CHRM']
+
+            # СЦЕНА 16: Ночное шоссе
+            elif scene_idx == 16:
+                for y in range(12, HEIGHT):
+                    w = int((y - 12) * 0.8)
+                    frame[y, 16-w:16+w] = C['BLK']
+                    if (y + f_idx) % 8 == 0:
+                        frame[y, 16] = C['YLW']
+                frame[12:14, 15:18] = C['RED']
+
+            # СЦЕНА 17: Нож мясника
+            elif scene_idx == 17:
+                for i in range(20):
+                    lx = 6 + i
+                    ly = int(10 + t * 4 + i * 0.5)
+                    if ly < HEIGHT:
+                        frame[ly, lx] = C['CHRM']
+                if t > 0.5:
+                    drop_y = int(15 + (t - 0.5) * 20)
+                    if drop_y < HEIGHT:
+                        frame[drop_y, 16] = C['B_RED']
+
+            # СЦЕНА 18: Финальная утилизация
+            elif scene_idx == 18:
+                size = int(14 * (1.0 - t)) + 2
+                if size > 2:
+                    y1, y2 = max(0, 16-size), min(HEIGHT, 16+size)
+                    x1, x2 = max(0, 16-size), min(WIDTH, 16+size)
+                    frame[y1:y2, x1:x2] = C['RED']
+                    frame[y1, x1:x2] = C['CHRM']
+                    if y2-1 >= 0:
+                        frame[y2-1, x1:x2] = C['CHRM']
+                else:
+                    frame[15:17, 15:17] = C['BLK']
+
             scene_frames.append(frame.tolist())
         all_scenes.append(scene_frames)
     return all_scenes
 
+# ------------------------- ГЕНЕРИРУЕМ СЦЕНЫ -------------------------
 ALL_SCENES = generate_scenes()
 ACTIVE_SCENE = 6   # можно менять от 0 до 18
 
-# ------------------------- ОСНОВНОЙ КЛАСС -------------------------
+# ------------------------- ОСНОВНОЙ КЛАСС ИГРЫ -------------------------
 class ChristineComicGame:
     def __init__(self, root):
         self.root = root
         self.root.title("CHRISTINE: ПИКСЕЛЬНЫЙ КВЕСТ")
-        self.root.geometry("1000x720")
+        self.root.geometry("1000x760")
         self.root.configure(bg="#2b2b2b")
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
-        # Игровые параметры
         self.repair = 50
         self.sanity = 80
         self.fuel = 60
         self.reputation = 50
         self.game_active = True
 
-        # Анимация
         self.frames = ALL_SCENES[ACTIVE_SCENE]
         self.current_frame = 0
         self.anim_id = None
 
-        # Создание интерфейса
         self.create_widgets()
         self.start_animation()
         self.update_indicators()
         self.add_initial_dialog()
 
     def create_widgets(self):
-        # Левая панель: холст с анимацией
         left_frame = tk.Frame(self.root, bg="#1a1a1a", bd=2, relief="flat")
         left_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
 
@@ -137,7 +279,6 @@ class ChristineComicGame:
         self.canvas.pack(pady=10)
         self.canvas.bind("<Motion>", self.mouse_glitch)
 
-        # Индикаторы (под холстом)
         stat_frame = tk.Frame(left_frame, bg="#1a1a1a")
         stat_frame.pack(fill="x", pady=5)
         self.rep_canvas, self.rep_bar, self.rep_lbl = self._indicator(stat_frame, "РЕМ", 120, "#ff5555")
@@ -145,33 +286,24 @@ class ChristineComicGame:
         self.fuel_canvas, self.fuel_bar, self.fuel_lbl = self._indicator(stat_frame, "ТОП", 80, "#ffff55")
         self.rep2_canvas, self.rep2_bar, self.rep2_lbl = self._indicator(stat_frame, "РЕП", 80, "#ff88ff")
 
-        # Правая панель: диалоги в стиле комиксов (облачко)
         right_frame = tk.Frame(self.root, bg="#2b2b2b")
         right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-
-        # Облачко диалога (белый прямоугольник с тенью)
         dialog_bg = tk.Frame(right_frame, bg="#ffffff", bd=2, relief="ridge")
         dialog_bg.pack(fill="both", expand=True, pady=(0, 10))
-        # Имитация хвостика облачка (упрощённо)
         self.dialog_text = tk.Text(dialog_bg, bg="#ffffff", fg="#000000", font=("Comic Sans MS", 12),
                                    wrap="word", bd=0, relief="flat", padx=10, pady=10)
         self.dialog_text.pack(fill="both", expand=True)
         self.dialog_text.config(state="disabled")
 
-        # Нижняя панель: терминал (видимый)
         term_frame = tk.Frame(self.root, bg="#000000", bd=2, relief="sunken")
         term_frame.pack(side="bottom", fill="x", padx=10, pady=10)
-
         tk.Label(term_frame, text="> ТЕРМИНАЛ <", font=("Courier New", 8, "bold"),
                  fg="#00ff00", bg="#000000").pack(anchor="w", padx=5, pady=(5,0))
-
-        # Область вывода терминала
         self.term_out = tk.Text(term_frame, bg="#000000", fg="#00ff00", font=("Courier New", 10),
-                                height=4, wrap="word", bd=0, relief="flat")
+                                height=5, wrap="word", bd=0, relief="flat")
         self.term_out.pack(fill="x", padx=5, pady=2)
         self.term_out.config(state="disabled")
 
-        # Строка ввода
         input_row = tk.Frame(term_frame, bg="#000000")
         input_row.pack(fill="x", padx=5, pady=5)
         tk.Label(input_row, text="$", font=("Courier New", 12, "bold"), fg="#00ff00", bg="#000000").pack(side="left")
@@ -222,7 +354,6 @@ class ChristineComicGame:
         self.append_dialog("Кристина жива и жаждет действий.")
         self.append_dialog("Введите 'помощь' в терминале, чтобы увидеть команды.")
 
-    # ------------------------- АНИМАЦИЯ И ГЛИТЧ -------------------------
     def start_animation(self):
         frame_data = self.frames[self.current_frame]
         img = Image.fromarray(np.array(frame_data, dtype=np.uint8), mode='RGB')
@@ -237,17 +368,13 @@ class ChristineComicGame:
         x = event.x // PIXEL_SIZE
         y = event.y // PIXEL_SIZE
         if 0 <= x < WIDTH and 0 <= y < HEIGHT and self.game_active:
-            # Сохраняем исходный пиксель
             original = self.frames[self.current_frame][y][x].copy()
-            # Меняем на розовый
             self.frames[self.current_frame][y][x] = [255, 0, 255]
-            # Возврат через 150 мс
             def restore():
                 if self.current_frame < len(self.frames):
                     self.frames[self.current_frame][y][x] = original
             self.root.after(150, restore)
 
-    # ------------------------- ИГРОВАЯ ЛОГИКА -------------------------
     def apply_effect(self, dr, ds, df, drp, desc):
         if not self.game_active:
             return
@@ -275,7 +402,7 @@ class ChristineComicGame:
             return
 
         if cmd in ("ремонт", "repair"):
-            self.apply_effect(15, -10, -5, 0, "Вы провели ремонт в гараже. Кристина блестит на солнце.")
+            self.apply_effect(15, -10, -5, 0, "Вы провели ремонт в гараже. Кристина блестит.")
         elif cmd in ("свидание", "date"):
             if random.random() < 0.6:
                 self.apply_effect(-5, 20, -5, 10, "Свидание с Ли прошло чудесно. Вы счастливы.")
