@@ -349,7 +349,7 @@ def generate_scenes():
                         frame[cy:min(24, cy+2), 4:28] = C['RED']
                         frame[cy, 11:21] = C['B_RED']
                         if cy+2 < 24: frame[cy+2, 8:24] = C['BLK']
-                        if cy+3 < 24: frame[cy+3, 8:24] = C['CHRM']  # Исправлено с ty+3 на cy+3!
+                        if cy+3 < 24: frame[cy+3, 8:24] = C['CHRM']
                         if cy+2 < 24:
                             frame[cy+1:min(24, cy+3), 5:8] = C['WHT']
                             frame[cy+1:min(24, cy+3), 24:27] = C['WHT']
@@ -365,7 +365,7 @@ def generate_scenes():
                                             frame[target_y, x] = C['BLK'] if d % 2 == 0 else C['ORG']
                         if 36 <= f_idx < 44 and cy + 4 >= 20:
                             steam_stage = (f_idx - 36) % 6
-                            for px_pipe in [8, 23]:
+                            for px_pipe in [8, 23]:  # <-- ИСПРАВЛЕНО
                                 if steam_stage > 0 and cy - 1 >= 0:
                                     frame[cy - 1, px_pipe] = C['WHT']
                                 if steam_stage > 2 and cy - 2 >= 0:
@@ -403,7 +403,6 @@ def generate_scenes():
                         frame[ty+1, 24] = frame[ty+2, 24] = frame[ty+3, 25] = text_glow
                         # E (x: 27..28)
                         frame[ty:ty+5, 27] = frame[ty, 27:29] = frame[ty+2, 27:29] = frame[ty+4, 27:29] = text_glow
-
 
 
             # СЦЕНА 7: Ослепление дальним светом
