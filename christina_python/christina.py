@@ -266,13 +266,61 @@ def generate_scenes():
 
 
 
-            # СЦЕНА 5: Вывеска автомастерской
+                        # --- СЦЕНА 5: Мастерская Дарнелла (Чистый неон без перекрытия приборов) ---
             elif scene_idx == 5:
-                neon = C['PNK'] if (f_idx % 12 > 2) else C['BLK']
-                frame[10, 4:28] = neon
-                frame[11:15, 6] = neon
-                frame[11:15, 14] = neon
-                frame[20:25, 2:30] = C['BLK']
+                # Вся нижняя часть экрана (строки 16-32) остается строго черной,
+                # чтобы не мешать вашим индикаторам (РЕМ, РАС, ТОП) внизу!
+                
+                # 1. МЕРЦАЮЩИЙ НЕОН «DARNELL'S» (Строго в верхней части, y от 3 до 8)
+                # Реализуем глитч неона: вывеска горит розовым, но циклично сбоит и тухнет
+                if (12 <= f_idx <= 14) or (28 <= f_idx <= 29) or (42 <= f_idx <= 45):
+                    neon_color = [15, 5, 10]  # Выключенный, едва заметный в темноте неон
+                else:
+                    # Рабочий сочный розово-пурпурный неон с легким мерцанием
+                    neon_flicker = int(220 + np.sin(f_idx * 1.5) * 35)
+                    neon_color = [neon_flicker, 20, int(neon_flicker * 0.6)]
+
+                # Прорисовываем буквы строго по центру по горизонтали (x от 3 до 29)
+                ny = 3  # Подняли строку повыше, подальше от ваших приборов
+                
+                # Буква D (x=3)
+                frame[ny:ny+5, 3] = frame[ny, 3:6] = frame[ny+4, 3:6] = neon_color
+                frame[ny+1:ny+4, 6] = neon_color
+                
+                # Буква A (x=8)
+                frame[ny:ny+5, 8] = frame[ny:ny+5, 11] = frame[ny, 9:11] = frame[ny+2, 9:11] = neon_color
+                
+                # Буква R (x=13)
+                frame[ny:ny+5, 13] = frame[ny, 13:16] = frame[ny+2, 13:16] = neon_color
+                frame[ny+1, 16] = frame[ny+3, 15] = frame[ny+4, 16] = neon_color
+                
+                # Буква N (x=18)
+                frame[ny:ny+5, 18] = frame[ny:ny+5, 22] = neon_color
+                frame[ny+1, 19] = frame[ny+2, 20] = frame[ny+3, 21] = neon_color
+                
+                # Буква E (x=24)
+                frame[ny:ny+5, 24] = frame[ny, 24:28] = frame[ny+2, 24:27] = frame[ny+4, 24:28] = neon_color
+
+                # 2. ОКОНЧАНИЕ ВЫВЕСКИ ( 'S ) НА ВТОРОЙ СТРОКЕ
+                ny_s = 9
+                nx_s = 13  # Центрируем под основным словом
+                
+                # Апостроф ( ' )
+                frame[ny_s, nx_s] = frame[ny_s+1, nx_s] = neon_color
+                
+                # Буква S
+                nx_s2 = 15
+                frame[ny_s, nx_s2:nx_s2+3] = frame[ny_s+2, nx_s2:nx_s2+3] = frame[ny_s+4, nx_s2:nx_s2+3] = neon_color
+                frame[ny_s+1, nx_s2] = frame[ny_s+3, nx_s2+2] = neon_color
+
+                # 3. ЭФФЕКТ СВЕТОВОГО СВЕЧЕНИЯ (Мягкий туман вокруг вывески, y от 14 до 16)
+                # Чтобы середина экрана не казалась пустой, добавим туда едва заметную
+                # фиолетовую дымку, которая затухает, не доходя до строки с индикаторами
+                if not ((12 <= f_idx <= 14) or (28 <= f_idx <= 29) or (42 <= f_idx <= 45)):
+                    glow_y = 15
+                    glow_brightness = int(25 + np.sin(f_idx * 0.5) * 15)
+                    frame[glow_y, 4:28] = [glow_brightness, 5, int(glow_brightness * 0.6)]
+
 
             # СЦЕНА 6: Взрыв и пожар на заправке
             elif scene_idx == 6:
