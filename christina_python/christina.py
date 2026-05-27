@@ -324,15 +324,90 @@ def generate_scenes():
                     #zastavka 456 78 9)localhost
 
 
-            # СЦЕНА 6: Взрыв и пожар на заправке
+            # --- СЦЕНА 6: Взрыв, плавление кузова и проезд по луже с паром ---
             elif scene_idx == 6:
-                fire_radius = int(t * 18)
-                for y in range(HEIGHT):
+                # Строки 24-32 строго черные, бережём индикаторы (РЕМ, РАС, ТОП) внизу!
+                
+                # 1. ОТРИСОВКА ЛУЖИ НА ПЕРЕДНЕМ ПЛАНЕ (y=21..23, постоянно на асфальте)
+                frame[21, 6:26] = [20, 20, 40]   # Темно-синяя вода лужи
+                frame[22, 4:28] = [20, 20, 40]
+
+                # Эпицентр взрыва бензоколонки (x=16, y=12)
+                center_x, center_y = 16, 12
+                fire_radius = int(1 + (f_idx / 40) * 22) if f_idx < 40 else 22
+
+                # 2. ОТРИСОВКА БУШУЮЩЕГО ПЛАМЕНИ ВЗРЫВА (y до 20-й строки)
+                for y in range(0, 21):
                     for x in range(WIDTH):
-                        if np.hypot(x - 16, y - 32) < fire_radius:
-                            frame[y, x] = C['YLW'] if (y + f_idx) % 3 == 0 else C['ORG']
-                if t < 0.6:
-                    frame[14:28, 13:19] = C['BLK']
+                        dist = np.hypot(x - center_x, y - center_y)
+                        if dist < fire_radius:
+                            if dist < fire_radius * 0.25:
+                                frame[y, x] = C['WHT']
+                            elif dist < fire_radius * 0.65:
+                                ylw_flicker = int(220 + np.sin(f_idx * 1.5 + x) * 35)
+                                frame[y, x] = [ylw_flicker, int(ylw_flicker * 0.85), 0]
+                            else:
+                                org_flicker = int(190 + np.cos(f_idx * 1.1 - y) * 45)
+                                frame[y, x] = [org_flicker, int(org_flicker * 0.4), 10]
+
+                # 3. ВЫЕЗД КРИСТИНЫ, ПЛАВЛЕНИЕ И ПРОЕЗД ПО ВОДЕ (Кадры 30-49)
+                if f_idx >= 30:
+                    car_progress = (f_idx - 30) / 19
+                    cy = int(9 + car_progress * 5) # Машина движется вперед/вниз
+                    
+                    if 0 <= cy < 23:
+                        # Базовый силуэт машины
+                        frame[cy:cy+2, 4:28] = C['RED']       # Капот
+                        frame[cy, 11:21] = C['B_RED']         # Выштамповка
+                        if cy+2 < 21: frame[cy+2, 8:24] = C['BLK']
+                        if cy+3 < 21: frame[cy+3, 8:24] = C['CHRM']  # Решетка
+                        if cy+2 < 21:
+                            frame[cy+1:cy+3, 5:8] = C['WHT']   # Фары
+                            frame[cy+1:cy+3, 24:27] = C['WHT']
+                        if cy+4 < 21: frame[cy+4, 4:28] = C['CHRM']  # Бампер
+
+                        # ЭФФЕКТ ТЕКУЩЕЙ КРАСКИ (с 36-го кадра)
+                        if f_idx >= 36:
+                            melt_intensity = (f_idx - 36)
+                            for x in range(4, 28):
+                                if (x + f_idx) % 3 == 0:
+                                    drop_length = np.random.randint(1, max(2, melt_intensity // 2))
+                                    for d in range(1, drop_length + 1):
+                                        target_y = cy + 2 + d
+                                        if target_y < 21:
+                                            frame[target_y, x] = C['BLK'] if d % 2 == 0 else C['ORG']
+                                if f_idx % 2 == 0 and (cy+3 < 21) and (cy+4 < 21):
+                                    if np.random.rand() > 0.4:
+                                        frame[cy+3, x] = C['BLK']
+                                        frame[cy+4, x] = C['ORG']
+
+                        # --- ЭФФЕКТЫ ОТ ЛУЖИ: БРЫЗГИ И СИЗЫЙ ПАР (Кадры 42-49) ---
+                        # Когда бампер Кристины (cy+4) налетает на лужу (y=21)
+                        if cy + 4 >= 21:
+                            # 1. Сизый пар/дым от раскаленного капота (поднимается вверх над машиной)
+                            for py in range(max(0, cy - 3), cy):
+                                for px in range(4, 28):
+                                    # Хаотичное шахматное заполнение серых пикселей пара
+                                    if (px + py + f_idx) % 3 == 0:
+                                        frame[py, px] = [140, 140, 150] # Цвет пара
+
+                            # 2. Белые/хромовые брызги воды, летящие из-под колес по бокам
+                            for splash_id in range(4):
+                                # Брызги летят влево (x=1..3) и вправо (x=28..31)
+                                sx = np.random.randint(1, 4) if splash_id < 2 else np.random.randint(28, 32)
+                                sy = np.random.randint(20, 23)
+                                frame[sy, sx] = C['WHT'] if f_idx % 2 == 0 else C['CHRM']
+
+                # 4. ЛЕТЯЩИЕ ИСКРЫ И ОБЛОМКИ БЕНЗОКОЛОНКИ
+                if f_idx >= 10:
+                    for i in range(2):
+                        spark_speed = (f_idx - 10) * 1.5
+                        angle = (i * 180 + f_idx * 5) * np.pi / 180
+                        sx = int(center_x + np.cos(angle) * spark_speed)
+                        sy = int(center_y + np.sin(angle) * spark_speed * 0.6)
+                        if 0 <= sx < WIDTH and 0 <= sy < 21:
+                            frame[sy, sx] = C['WHT'] if f_idx % 2 == 0 else C['YLW']
+
 
             # СЦЕНА 7: Ослепление дальним светом
             elif scene_idx == 7:
