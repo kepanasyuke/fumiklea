@@ -436,7 +436,7 @@ def generate_scenes():
                     frame[ty+4, 27:30] = text_glow
 
 
-            # СЦЕНА 7: Ослепление дальним светом
+            # СЦЕНА 8: Ослепление дальним светом
             elif scene_idx == 7:
                 frame[:] = [int(t * 40)] * 3
                 glow = int(4 + t * 12)
@@ -445,7 +445,7 @@ def generate_scenes():
                         if np.hypot(x - 8, y - 16) < glow or np.hypot(x - 24, y - 16) < glow:
                             frame[y, x] = C['WHT']
 
-            # СЦЕНА 8: Дождь и дворники
+            # СЦЕНА 8.2: Дождь и дворники
             elif scene_idx == 8:
                 for i in range(15):
                     rx = (i * 7 + f_idx * 2) % WIDTH
