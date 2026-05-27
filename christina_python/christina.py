@@ -476,7 +476,7 @@ def generate_scenes():
                     # Плавный наезд машины на камеру (cy смещается с 8 до 12 строки)
                     t_rush = (f_idx - 42) / 7
                     cy = int(8 + t_rush * 4)
-                    
+                   #ostalnoe na localhost dogruzgau.ru 
                     if 0 <= cy < 24:
                         # Отрисовка вашей любимой аккуратной геометрии кузова
                         frame[cy:min(24, cy+2), 4:28] = C['RED']       
