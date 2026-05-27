@@ -198,10 +198,14 @@ def generate_scenes():
                             frame[y_base + 6, (x_pipe - 2) : (x_pipe + 3)] = [60, 60, 65]
 
 
-                                     # --- СЦЕНА 4: Преследование Бадди (Фары -> Крупный план в конце) ---
+                                                # --- СЦЕНА 4: Преследование Бадди (Фары Кристины и неоновое имя) ---
             elif scene_idx == 4:
-                # 1. РАСЧЕТ ПРИБЛИЖЕНИЯ КРИСТИНЫ (Фары разрастаются по центру)
-                headlight_radius = int(2 + t * 9)
+                # Вся матрица по умолчанию залита глубокой ночной темнотой
+                
+                # 1. РАСЧЕТ ПРИБЛИЖЕНИЯ КРИСТИНЫ (Идеально круглые фары разрастаются)
+                headlight_radius = int(2 + t * 10)
+                
+                # Четко фиксируем центры фар, чтобы левая фара была идеально ровной
                 left_center_x, left_center_y = 7, 16
                 right_center_x, right_center_y = 24, 16
 
@@ -212,44 +216,54 @@ def generate_scenes():
                         
                         if dist_left < headlight_radius or dist_right < headlight_radius:
                             min_dist = min(dist_left, dist_right)
+                            # Ослепительно белое ядро внутри фары
                             if min_dist < headlight_radius * 0.4:
-                                frame[y, x] = C['WHT']  # Ослепительное ядро фары
+                                frame[y, x] = C['WHT']
                             else:
-                                flash = int(210 + np.sin(f_idx * 0.9) * 45)
+                                # Внешнее жёлтое гало фары зловеще мерцает
+                                flash = int(215 + np.sin(f_idx * 0.8) * 40)
                                 frame[y, x] = [flash, int(flash * 0.85), 10]
 
-                # 2. ФАЗА СКРИМЕРА: БАДДИ ПОЯВЛЯЕТСЯ ТОЛЬКО В КОНЦЕ (кадры 35-49)
-                # В начале сцены (до 35 кадра) на экране ТОЛЬКО круглые чистые фары.
+                # 2. ФАЗА ИМЕНИ: В КОНЦЕ ПОЯВЛЯЕТСЯ ГЛИТЧУЮЩЕЕ ИМЯ ЖЕРТВЫ (кадры 35-49)
+                # До 35 кадра на экране ТОЛЬКО чистые расширяющиеся фары машины.
                 if f_idx >= 35:
-                    # Бадди резко возникает на переднем плане в левой части экрана (x от 0 до 14)
-                    # Его фигура повернута вправо, лицом к надвигающемуся свету Кристины
-                    for y in range(10, HEIGHT):
-                        for x in range(0, 15):
-                            dist_to_profile = np.hypot(x - 5, y - 18)
-                            
-                            # Отрисовка плеч кожаной куртки Бадди внизу экрана
-                            if y >= 24 and x <= 13:
-                                frame[y, x] = C['BLK']
-                                # Желтые блики света фар на складках куртки справа
-                                if x == 11 or x == 12:
-                                    frame[y, x] = C['YLW']
-                            
-                            # Округлая голова крупным планом
-                            elif dist_to_profile < 7:
-                                frame[y, x] = C['BLK']  # Теневой силуэт головы
-                                
-                                # ПРАВЫЙ КРАЙ ПРОФИЛЯ: Жестко залит хромовым светом фар
-                                # Прорисовывает четкую линию лба, носа и подбородка
-                                if x >= 10:
-                                    frame[y, x] = C['CHRM']
-                                
-                                # Глаз Бадди, зажмуренный от ужаса и слепящего света
-                                if y == 16 and x == 10:
-                                    frame[y, x] = C['BLK']
-                                    
-                                # Приоткрытый в немом шоке рот
-                                if y == 19 and 9 <= x <= 10:
-                                    frame[y, x] = C['BLK']
+                    # Эффект зловещей текстовой метки Кристины. 
+                    # Буквы прорисованы вручную по пиксельной сетке, чтобы быть читаемыми!
+                    # Добавим мелкую дрожь (глитч) тексту за счет изменения координат от кадра к кадру
+                    glitch_x = 1 if (f_idx % 2 == 0) else 0
+                    glitch_y = 1 if (f_idx % 3 == 0) else 0
+                    
+                    # Задаем базовое смещение для центрирования надписи "BUDDY"
+                    tx = 2 + glitch_x
+                    ty = 13 + glitch_y
+                    
+                    # Цвет текста: Ярко-красный/пурпурный глитч поверх фар Кристины
+                    text_color = C['B_RED'] if (f_idx % 4 > 0) else C['WHT']
+                    
+                    # Матрица букв "B U D D Y" (высота 6 пикселей)
+                    # Буква B
+                    frame[ty:ty+6, tx] = frame[ty, tx:tx+3] = frame[ty+2, tx:tx+3] = frame[ty+5, tx:tx+3] = text_color
+                    frame[ty+1, tx+3] = frame[ty+3, tx+3] = frame[ty+4, tx+3] = text_color
+                    
+                    # Буква U (сдвиг +5 пикселей)
+                    tx_u = tx + 5
+                    frame[ty:ty+5, tx_u] = frame[ty:ty+5, tx_u+3] = frame[ty+5, tx_u+1:tx_u+3] = text_color
+                    
+                    # Буква D (сдвиг +10 пикселей)
+                    tx_d1 = tx + 10
+                    frame[ty:ty+6, tx_d1] = frame[ty, tx_d1:tx_d1+3] = frame[ty+5, tx_d1:tx_d1+3] = text_color
+                    frame[ty+1:ty+5, tx_d1+3] = text_color
+                    
+                    # Вторая буква D (сдвиг +15 пикселей)
+                    tx_d2 = tx + 15
+                    frame[ty:ty+6, tx_d2] = frame[ty, tx_d2:tx_d2+3] = frame[ty+5, tx_d2:tx_d2+3] = text_color
+                    frame[ty+1:ty+5, tx_d2+3] = text_color
+                    
+                    # Буква Y (сдвиг +20 пикселей)
+                    tx_y = tx + 20
+                    frame[ty:ty+3, tx_y] = frame[ty:ty+3, tx_y+4] = text_color
+                    frame[ty+3, tx_y+1:tx_y+4] = frame[ty+4:ty+6, tx_y+2] = text_color
+
 
 
             # СЦЕНА 5: Вывеска автомастерской
