@@ -4,6 +4,10 @@ import math
 import random
 import traceback
 
+# ---------- Чтобы звук работал добавила до инициализации ----------
+pygame.mixer.pre_init(frequency=22050, size=8, channels=1)
+pygame.init()
+
 # ---------- Простая и надёжная инициализация ----------
 pygame.init()
 try:
