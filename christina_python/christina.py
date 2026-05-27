@@ -374,7 +374,7 @@ def generate_scenes():
 
             # --- СЦЕНА 7: Отдельный затухающий титр имени CHRISTINE (Выверенный центр) ---
             elif scene_idx == 7:
-                # 1. РАСЧЕТ ЯРКОСТИ ТЕКСТА КРИСТИНИ (Имя гаснет к 42 кадру, уступая место машине)
+                # 1. РАСЧЕТ ЯРКОСТИ ТЕКСТА КРИСТИНИ (Имя гаснет к 42 кадру)
                 if f_idx < 15:
                     glow = int((f_idx / 15) * 255)
                 elif 15 <= f_idx < 35:
@@ -386,7 +386,7 @@ def generate_scenes():
                 
                 # Рисуем буквы, пока они видны на экране (до 42 кадра)
                 if glow > 0 and f_idx < 42:
-                    ty = 11  # Базовая высота текстовой строки
+                    ty = 11  # Базовая высотационной строки
                     melt1 = int(2 + np.sin(f_idx * 0.4) * 2)  
                     melt2 = int(2 + np.cos(f_idx * 0.5) * 1.5)
                     
@@ -446,59 +446,55 @@ def generate_scenes():
 
                 # 4. ДЕЛИКАТНЫЙ ГОЛУБОЙ ХВОСТИК НАД НАДПИСЬЮ (Кадры 15-37)
                 if 15 <= f_idx < 38:
-                    # Уменьшенный шаг вращения и более компактная эллиптическая орбита
                     angle = (f_idx - 15) * 0.18
                     radius_x = 10 - (f_idx - 15) * 0.2
                     radius_y = 5 - (f_idx - 15) * 0.1
                     
-                    # Голова (Белый пиксель) и мягкий голубой шлейф
                     spark_x = int(16 + np.cos(angle) * radius_x)
                     spark_y = int(13 + np.sin(angle) * radius_y)
                     trail_x = int(16 + np.cos(angle - 0.2) * radius_x)
                     trail_y = int(13 + np.sin(angle - 0.2) * radius_y)
                     
                     if 0 <= trail_y < 24 and 0 <= trail_x < WIDTH and f_idx < 38:
-                        frame[trail_y, trail_x] = C['BLU']  # Голубой хвостик
+                        frame[trail_y, trail_x] = C['BLU']  
                     if 0 <= spark_y < 24 and 0 <= spark_x < WIDTH and f_idx < 38:
-                        frame[spark_y, spark_x] = C['WHT']  # Белая головка
+                        frame[spark_y, spark_x] = C['WHT']  
 
                 # 5. МАЛЕНЬКАЯ ЗВЕЗДОЧКА В ЦЕНТРЕ (Кадры 38-41)
                 elif 38 <= f_idx < 42:
                     sx, sy = 16, 13
                     frame[sy, sx] = C['WHT']
-                    # Маленькие голубые лучики вспышки
                     if sy - 1 >= 0: frame[sy - 1, sx] = C['BLU']
                     if sy + 1 < 24: frame[sy + 1, sx] = C['BLU']
                     if sx - 1 >= 0: frame[sy, sx - 1] = C['BLU']
                     if sx + 1 < WIDTH: frame[sy, sx + 1] = C['BLU']
 
-                # --- 6. КРИСТИНА ИЗ "SHOW ME" НАДВИГАЕТСЯ ИЗ ТЕМНОТЫ (Кадры 42-49) ---
+                # --- 6. КРИСТИНА НАДВИГАЕТСЯ ИЗ ТЕМНОТЫ ПО ФОРМЕ №1 (Кадры 42-49) ---
                 if f_idx >= 42:
-                    # Вся область очищается под чистый черный ночной переулок
+                    # Полная очистка рабочей зоны перед появлением машины
                     frame[0:24, :] = C['BLK']
                     
-                    # Масштаб приближения машины на зрителя за оставшиеся 8 кадров
+                    # Плавный наезд машины на камеру (cy смещается с 8 до 12 строки)
                     t_rush = (f_idx - 42) / 7
+                    cy = int(8 + t_rush * 4)
                     
-                    # Рассчитываем, как красный капот Кристины разрастается из глубины
-                    scale_y = int(8 + t_rush * 14)
-                    if 0 <= scale_y < 24:
-                        frame[0:scale_y, 2:30] = C['RED']  # Кузов Кристины
+                    if 0 <= cy < 24:
+                        # Отрисовка вашей любимой аккуратной геометрии кузова
+                        frame[cy:min(24, cy+2), 4:28] = C['RED']       
+                        frame[cy, 11:21] = C['B_RED']         
                         
-                        # Хромированная идеальная решетка радиатора восстанавливающегося Плимута
-                        if scale_y - 3 >= 0:
-                            frame[scale_y-3:scale_y, 6:26] = C['CHRM']
-                        # Тяжелый блестящий бампер снизу
-                        if scale_y - 1 >= 0:
-                            frame[scale_y-1, 4:28] = C['CHRM']
+                        # Ниша радиатора и решетка
+                        if cy+2 < 24: frame[cy+2, 8:24] = C['BLK']
+                        if cy+3 < 24: frame[cy+3, 8:24] = C['CHRM']
+                        
+                        # Яростные белые фары плавно увеличиваются в размерах (СКОБКА ИСПРАВЛЕНА!)
+                        if cy+2 < 24:
+                            frame[cy+1:min(24, cy+3), 5:8] = C['WHT']
+                            frame[cy+1:min(24, cy+3), 24:27] = C['WHT']
                             
-                        # Ослепительные белые фары яростно зажигаются в упор перед экраном!
-                        glare_radius = int(1 + t_rush * 4)
-                        for y in range(HEIGHT):
-                            for x in range(WIDTH):
-                                if np.hypot(x - 7, y - 10) < glare_radius or np.hypot(x - 25, y - 10) < glare_radius:
-                                    if y < 24:
-                                        frame[y, x] = C['WHT']
+                        # Хромированный передний бампер по низу кузова
+                        if cy+4 < 24: frame[cy+4, 4:28] = C['CHRM']
+
 
 
 
