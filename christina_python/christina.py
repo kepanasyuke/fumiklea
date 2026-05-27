@@ -332,7 +332,7 @@ def generate_scenes():
                 if f_idx < 44:
                     frame[22, 6:26] = C['BLU']
 
-                # Эпицентр взрыва смещен в левый верхний угол, куда уходит лесенка букв
+                # Эпицентр взрыва смещен в левый upper corner, куда уходит лесенка букв
                 center_x, center_y = 6, 4
 
                 # --- АКТ 1: БУКВЫ "HR HR" ЛЕСЕНКОЙ В ТЕМНОТЕ (Кадры 0-14) ---
@@ -346,10 +346,10 @@ def generate_scenes():
                     frame[ty3:ty3+4, tx3+4] = frame[ty3, tx3+4:tx3+7] = frame[ty3+2, tx3+4:tx3+6] = text_color
                     frame[ty3+1, tx3+6] = frame[ty3+3, tx3+5] = frame[ty3+4, tx3+6] = text_color
                     
-                    # Средняя ступенька (x=11, y=9) — звук летит по диагонали вверх-влево
+                    # Средняя ступенька (x=11, y=9) — исправлено tx3 на tx2!
                     tx2, ty2 = 11, 9
                     frame[ty2:ty2+4, tx2] = frame[ty2:ty2+4, tx2+2] = frame[ty2+2, tx2+1] = text_color
-                    frame[ty2:ty2+4, tx2+4] = frame[ty2, tx2+4:tx3+7] = frame[ty2+2, tx2+4:tx2+6] = text_color
+                    frame[ty2:ty2+4, tx2+4] = frame[ty2, tx2+4:tx2+7] = frame[ty2+2, tx2+4:tx2+6] = text_color
                     frame[ty2+1, tx2+6] = frame[ty2+3, tx2+5] = frame[ty2+4, tx2+6] = text_color
                     
                     # Верхняя ступенька (x=6, y=4) — упирается прямо в эпицентр будущего взрыва!
@@ -394,7 +394,7 @@ def generate_scenes():
                             # Белый пар над лужей
                             if f_idx >= 36 and cy + 4 >= 20:
                                 steam_stage = (f_idx - 36) % 6
-                                for px_pipe in:
+                                for px_pipe in [8, 23]:
                                     if steam_stage > 0 and cy - 1 >= 0:
                                         frame[cy - 1, px_pipe] = C['WHT']
                                     if steam_stage > 2 and cy - 2 >= 0:
