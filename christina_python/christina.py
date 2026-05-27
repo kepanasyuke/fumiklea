@@ -320,6 +320,7 @@ def generate_scenes():
                     glow_y = 15
                     glow_brightness = int(25 + np.sin(f_idx * 0.5) * 15)
                     frame[glow_y, 4:28] = [glow_brightness, 5, int(glow_brightness * 0.6)]
+                    #zastavka 456 78 9)
 
 
             # СЦЕНА 6: Взрыв и пожар на заправке
