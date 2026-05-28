@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кристина: Одержимый Ретро-Квест</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            /* Салон Фурии: виниловый угольный оттенок */
+            background: radial-gradient(circle, #1a1f26 0%, #0d1117 100%);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Разрешаем выравнивание по верху для скролла */
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            /* ПРИНУДИТЕЛЬНО РАЗРЕШАЕМ СВOБОДНУЮ ПРОКРУТКУ ВСЕЙ СТРАНИЦЫ */
+            overflow-y: auto !important; 
+        }
+
+        /* Главное окно мыслей / Торпедо квеста */
+        .thought-window {
+            max-width: 950px;
+            width: 100%;
+            background: #11141a;
+            border: 3px solid #000000;
+            box-shadow: 12px 12px 0 rgba(0, 0, 0, 0.5);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            margin-bottom: 40px; /* Отступ снизу, чтобы страница красиво скроллилась */
+        }
+
+        /* Сине-зелёная полоса Sega */
+        .sega-stripes {
+            height: 8px;
+            background: repeating-linear-gradient(90deg, #0055ff, #0055ff 20px, #00cc88, #00cc88 40px);
+            margin: -24px -24px 0 -24px;
+            width: calc(100% + 48px);
+            border-bottom: 2px solid #000;
+        }
+
+        /* Рабочий макет: Матрица слева, диалоги справа */
+        .game-layout {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        /* Контейнер светодиодной LED матрицы */
+        .matrix-container {
+            background: #000;
+            border: 4px solid #3a4254;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #matrixCanvas {
+            image-rendering: pixelated;
+            background: #000;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.1);
+        }
+
+        .scene-indicator {
+            color: #5a7e9a;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Лента диалогов */
+        .dialogue-area {
+            flex: 1;
+            background: #0d0f13;
+            border: 2px solid #1f2430;
+            padding: 20px;
+            height: 360px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scrollbar-width: thin;
+            scrollbar-color: #00cc88 #0d0f13;
+        }
+
+        /* СТИЛЬ 17: Кристина */
+        .christine-pixelbox {
+            font-family: 'Courier New', monospace;
+            background: #fff;
+            border: 3px solid #000;
+            padding: 12px 16px;
+            box-shadow: 5px 5px 0 #990000;
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #111;
+            max-width: 85%;
+            align-self: flex-start;
+        }
+
+        /* СТИЛЬ 8: Ответ игрока */
+        .christine-typewriter {
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            background: #1a1d24;
+            border: 2px solid #3a4254;
+            padding: 12px 16px;
+            box-shadow: 5px 5px 0 #222;
+            color: #e2e8f0;
+            max-width: 85%;
+            align-self: flex-end;
+            border-left: 5px solid #0055ff;
+        }
+
+        /* СТИЛЬ 18: Действия Кристины */
+        .christine-highlight {
+            font-family: monospace;
+            padding: 8px 16px;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            width: fit-content;
+            max-width: 90%;
+            align-self: center;
+            text-align: center;
+        }
+
+        .christine-highlight-animated {
+            color: #ffffff;
+            font-weight: bold;
+            border: 2px solid #ff8844;
+            background: linear-gradient(90deg, #ff8844, #ffaa66, #ffcc88, #ff8844);
+            background-size: 200% 100%;
+            animation: gradientShift 3s linear infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        /* Терминал Sega */
+        .sega-terminal {
+            background: #06090e;
+            border: 3px solid #000000;
+            padding: 14px;
+            box-shadow: inset 0 0 15px rgba(42, 255, 110, 0.15);
+        }
+
+        .terminal-output {
+            background: #000000;
+            color: #2aff6e;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            padding: 12px;
+            height: 110px;
+            overflow-y: auto;
+            border: 2px solid #2aff6e;
+            margin-bottom: 12px;
+            text-shadow: 0 0 4px rgba(42, 255, 110, 0.5);
+        }
+
+        .terminal-input-line {
+            display: flex;
+            gap: 10px;
+            background: #0a0d14;
+            border: 2px solid #2aff6e;
+            padding: 8px 12px;
+            align-items: center;
+        }
+
+        .terminal-prompt { color: #2aff6e; font-weight: bold; }
+        .terminal-input { background: transparent; border: none; color: #ffffff; flex: 1; outline: none; }
+
+        /* Интерфейсные кнопки */
+        .test-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+        button { background: #161b22; border: 2px solid #30363d; color: #c9d1d9; font-family: monospace; font-weight: bold; padding: 8px 16px; cursor: pointer; transition: 0.15s; }
+        button:hover { background: #21262d; border-color: #8b949e; color: #ffffff; }
+        #sendBtn { background: #1b4726; border-color: #2aff6e; color: #2aff6e; }
+        #sendBtn:hover { background: #2aff6e; color: #000; }
+        #btnClear { border-color: #ff4444; color: #ff4444; }
+        #btnClear:hover { background: #ff4444; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="thought-window">
+    <div class="sega-stripes"></div>
+    
+    <div class="game-layout">
+        <div class="matrix-container">
+            <div class="scene-indicator" id="sceneIndicator">SCENE: 00 | FRAME: 00</div>
+            <canvas id="matrixCanvas" width="320" height="320"></canvas>
+        </div>
+        <div class="dialogue-area" id="dialogueArea"></div>
+    </div>
+
+    <div class="sega-terminal">
+        <div class="terminal-output" id="termOutput">
+            &gt; [СИНХРОНИЗАЦИЯ] Подключение к движку Кристины...<br>
+        </div>
+        <div class="terminal-input-line">
+            <span class="terminal-prompt">C:\&gt;</span>
+            <input type="text" class="terminal-input" id="cmdInput" placeholder="введите команду...">
+            <button id="sendBtn">ВВОД</button>
+        </div>
+    </div>
+
+    <div class="test-buttons">
+        <button id="btnPrevScene">◀ Пред. Сцена</button>
+        <button id="btnNextScene">След. Сцена ▶</button>
+        <button id="btnClear">Очистить лог</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    const dialogueDiv = document.getElementById('dialogueArea');
+    const termOut = document.getElementById('termOutput');
+    const cmdInput = document.getElementById('cmdInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const sceneIndicator = document.getElementById('sceneIndicator');
+
+    let gameData = null;
+    let currentScene = 6; 
+    let currentFrame = 0;
+    const pixelSize = 10;
+    // === ФУНКЦИИ ДОБАВЛЕНИЯ СООБЩЕНИЙ КВЕСТА ===
+    function addChristineMessage(text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'christine-pixelbox';
+        msgDiv.textContent = text;
+        dialogueDiv.appendChild(msgDiv);
+        dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+    }
+
+    function addUserMessage(text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'christine-typewriter';
+        msgDiv.textContent = text;
+        dialogueDiv.appendChild(msgDiv);
+        dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+    }
+
+    function addActionMessage(text, bgColor = null, textColor = null) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'christine-highlight';
+        if (!bgColor) {
+            const hue = Math.floor(Math.random() * 360);
+            bgColor = `hsl(${hue}, 70%, 85%)`;
+        }
+        msgDiv.style.backgroundColor = bgColor;
+        msgDiv.style.color = textColor || '#111';
+        msgDiv.innerHTML = text;
+        dialogueDiv.appendChild(msgDiv);
+        dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+    }
+
+    function addAnimatedActionMessage(text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'christine-highlight christine-highlight-animated';
+        msgDiv.innerHTML = text;
+        dialogueDiv.appendChild(msgDiv);
+        dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+    }
+
+    function appendTerm(text) {
+        termOut.innerHTML += `&gt; ${text}<br>`;
+        termOut.scrollTop = termOut.scrollHeight;
+    }
+
+    // === СИНХРОНИЗАЦИЯ С PYTHON ДВИЖКОМ (FETCH API) ===
+    async function loadMatrixData() {
+        try {
+            // Запрашиваем скомпилированные кадры с Python-сервера
+            const response = await fetch('http://localhost:8000/api/matrix');
+            gameData = await response.json();
+            
+            appendTerm("Подключение установлено. Графика успешно загружена.");
+            appendTerm(`Параметры: РЕМ:${gameData.stats.rem}% | РАС:${gameData.stats.ras}% | ТОП:${gameData.stats.top}%`);
+            
+            // Запуск стартовых диалогов
+            addChristineMessage("Кристина: Я здесь. Ты готов?");
+            addUserMessage("Вы: Да, поехали.");
+            addAnimatedActionMessage("Двигатель запущен, вибрация по кузову.");
+            
+            // Запуск игрового цикла рендеринга (25 кадров в секунду)
+            setInterval(renderNextFrame, 40);
+        } catch (error) {
+            appendTerm("ОШИБКА: Движок Python не отвечает. Запустите python3 christina.py!");
+            console.error(error);
+        }
+    }
+
+    // === ПОПИКСЕЛЬНЫЙ РЕНДЕР КАДРА НА CANVAS ===
+    function renderNextFrame() {
+        if (!gameData || !gameData.scenes[currentScene]) return;
+
+        const frameData = gameData.scenes[currentScene][currentFrame];
+        
+        // Полная очистка холста перед новым кадром
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Обходим сетку 32х32 светодиода
+        for (let y = 0; y < 32; y++) {
+            for (let x = 0; x < 32; x++) {
+                const rgb = frameData[y][x];
+                ctx.fillStyle = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+                // Оставляем микроскопический зазор в 1 пиксель для эффекта LED-диодов
+                ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize - 1, pixelSize - 1);
+            }
+        }
+
+        // Обновление индикатора над табло
+        sceneIndicator.textContent = `SCENE: ${String(currentScene).padStart(2, '0')} | FRAME: ${String(currentFrame).padStart(2, '0')}`;
+
+        // Циклический сдвиг кадров внутри сцены
+        currentFrame = (currentFrame + 1) % gameData.scenes[currentScene].length;
+    }
+
+    // === ОБРАБОТКА ТЕКСТОВЫХ КОМАНД ИЗ ТЕРМИНАЛА ===
+    function processCommand(cmd) {
+        const c = cmd.trim().toLowerCase();
+        if (c === '') return;
+        appendTerm(c);
+
+        if (c === 'привет') {
+            addChristineMessage("Кристина: Привет, водитель. Заводись.");
+        } 
+        else if (c === 'осмотр') {
+            addActionMessage("Кристина осматривает подвеску – стойки в порядке.", "#d9ead3", "#1e3a2f");
+            addChristineMessage("Кристина: Подвеска крепкая, но амортизаторы скоро сдадут.");
+        }
+        else if (c === 'ремонт') {
+            addAnimatedActionMessage("Ремонт начат. Кристина урчит от удовольствия.");
+            addUserMessage("Вы: Сейчас подтяну карбюратор.");
+            addChristineMessage("Кристина: Чувствую силу, детка.");
+        }
+        else if (c === 'гонка') {
+            addChristineMessage("Кристина: Гонка? Это моя стихия!");
+            addActionMessage("Двигатель взревел, покрышки дымятся.", "#f4cccc", "#990000");
+            addUserMessage("Вы: Только осторожно, Кристина.");
+        }
+        else if (c === 'помощь') {
+            addUserMessage("Доступные команды: привет, осмотр, ремонт, гонка, помощь");
+            appendTerm('Список команд отправлен в игровой лог.');
+        }
+        else {
+            addActionMessage(`Кристина не понимает команду "${cmd}".`, "#ffe599", "#5c2e00");
+        }
+    }
+
+    function handleCommand() {
+        const cmd = cmdInput.value;
+        cmdInput.value = '';
+        processCommand(cmd);
+        cmdInput.focus();
+    }
+
+    // === ИНТЕРФЕЙСНЫЕ КНОПКИ И СОБЫТИЯ ===
+    sendBtn.addEventListener('click', handleCommand);
+    cmdInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleCommand();
+    });
+
+    document.getElementById('btnNextScene').onclick = () => {
+        if (gameData) {
+            currentScene = (currentScene + 1) % gameData.scenes.length;
+            currentFrame = 0;
+            appendTerm(`Смена локации: Сцена ${currentScene}`);
+        }
+    };
+
+    document.getElementById('btnPrevScene').onclick = () => {
+        if (gameData) {
+            currentScene = (currentScene - 1 + gameData.scenes.length) % gameData.scenes.length;
+            currentFrame = 0;
+            appendTerm(`Возврат локации: Сцена ${currentScene}`);
+        }
+    };
+
+    document.getElementById('btnClear').onclick = () => {
+        dialogueDiv.innerHTML = '';
+        appendTerm('Диалог полностью очищен.');
+    };
+
+    // Автоматический старт коннектора при загрузке страницы
+    loadMatrixData();
+</script>
+</body>
+</html>
