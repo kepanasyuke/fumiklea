@@ -832,126 +832,157 @@ def generate_scenes():
             #         if 0 <= w_pos < WIDTH:
             #             frame[y, w_pos] = C['BLK']
 
-                        # --- СЦЕНА 9: Ночное шоссе Кристины и ОНО в желтом дождевике ---
+            # --- СЦЕНА 9: Улетающие шары и финальный знак STOP ---
             elif scene_idx == 9:
                 # Строки 24-32 строго черные, бережём индикаторы в самом низу!
 
-                # === 1. УЛУЧШЕННАЯ ЦВЕТОВАЯ ПАЛИТРА С ТЕНЯМИ ===
-                COLOR_SKY = [5, 5, 18]         # Мрачное ночное небо
-                COLOR_GRASS = [10, 28, 12]     # Ночная обочина
-                COLOR_ROAD = [40, 42, 45]      # Текстурный серый асфальт
+                # === 1. ЦВЕТОВАЯ ПАЛИТРА ===
+                COLOR_SKY =   [10, 15, 30]       # Мрачное ночное небо
+                COLOR_GRASS = [15, 45, 15]       # Ночная обочина
+                COLOR_ROAD =  [40, 45, 50]       # Серый асфальт
+                COLOR_YLW =   [235, 195, 15]     # Желтый плащ Пеннивайза
+                COLOR_FACE =  [240, 240, 245]    # Бледное лицо клоуна
+                COLOR_BOOTS = [20, 20, 20]       # Черные сапоги
                 
-                COLOR_YLW_BRG = [245, 210, 0]  # Яркий желтый (свет на плаще)
-                COLOR_YLW_SHD = [160, 130, 0]  # Темный желтый (складки и тени плаща)
-                
-                COLOR_RED = [230, 15, 15]      # Красный шар
-                COLOR_FACE = [240, 235, 230]   # Бледное лицо клоуна
+                # Цвета огромных воздушных шаров
+                COLOR_RED =   [240, 10, 15]      # Красный шар
+                COLOR_BLU =   [10, 100, 240]     # Синий шар
+                COLOR_GRN =   [15, 220, 20]      # Зеленый шар
 
-                # Заливаем базовые слои
-                frame[0:14, :] = COLOR_SKY
-                frame[14:24, :] = COLOR_GRASS
+                # === АКТ 1: НОЧНОЕ ШОССЕ И УЛЕТАЮЩИЕ ШАРЫ (t <= 0.75) ===
+                if t <= 0.75:
+                    # Рендеринг неба и земли
+                    frame[0:8, :] = COLOR_SKY     
+                    frame[8:24, :] = COLOR_GRASS  
 
-                # Рисуем широкое полотно дороги (трапеция)
-                for y in range(14, 24):
-                    road_w = 6 + int((y - 14) * 1.1)
-                    frame[y, 16 - road_w : 16 + road_w] = COLOR_ROAD
+                    # Отрисовка клина дороги
+                    for y in range(8, 24):
+                        road_w = 3 + int((y - 8) * 1.2)
+                        x_start = max(0, 16 - road_w)
+                        x_end = min(WIDTH, 16 + road_w)
+                        frame[y, x_start:x_end] = COLOR_ROAD
 
-                # === 2. ДВУХРЯДНАЯ ДОРОЖНАЯ РАЗМЕТКА ===
-                shift = (f_idx * 2) % 6
-                for y in range(14, 24):
-                    if (y + shift) % 6 < 3:
-                        road_w = 6 + int((y - 14) * 1.1)
-                        lx = 16 - int(road_w * 0.5)
-                        rx = 16 + int(road_w * 0.5)
-                        if 0 <= lx < WIDTH: frame[y, lx] = C['WHT']
-                        if 0 <= rx < WIDTH: frame[y, rx] = C['WHT']
+                    # Движение двухрядной разметки
+                    shift = (f_idx * 2) % 12
+                    for y in range(8, 24):
+                        if (y + shift) % 12 < 6:
+                            road_w = 3 + int((y - 8) * 1.2)
+                            lx = 16 - int(road_w * 0.5)
+                            rx = 16 + int(road_w * 0.5)
+                            if 0 <= lx < WIDTH: frame[y, lx] = C['WHT']
+                            if 0 <= rx < WIDTH: frame[y, rx] = C['WHT']
 
-                # === 3. СВЕТ ОТ СОБСТВЕННЫХ ФАР ===
-                for y in range(15, 24):
-                    road_w = 6 + int((y - 14) * 1.1)
-                    intensity = int((y - 14) / 9.0 * 100)
-                    for x in range(16 - road_w, 16 + road_w):
-                        frame[y, x, 0] = min(255, frame[y, x, 0] + intensity)
-                        frame[y, x, 1] = min(255, frame[y, x, 1] + int(intensity * 0.9))
+                    # Свет фар автомобиля
+                    for y in range(10, 24):
+                        road_w = 3 + int((y - 8) * 1.2)
+                        intensity = int((y - 9) / 14.0 * 120) 
+                        x_start = max(0, 16 - road_w)
+                        x_end = min(WIDTH, 16 + road_w)
+                        for x in range(x_start, x_end):
+                            frame[y, x, 0] = min(255, frame[y, x, 0] + intensity)
+                            frame[y, x, 1] = min(255, frame[y, x, 1] + int(intensity * 0.95))
 
-                # === 4. МАКСИМАЛЬНО ДЕТАЛИЗИРОВАННЫЙ ПЕРСОНАЖ ===
-                if t < 0.88:
-                    man_y = 12 + int(t * 7)  
-                    current_road_w = 6 + int((man_y - 14) * 1.1)
-                    man_x = 16 + current_road_w + 1  
+                    # Позиция Пеннивайза на обочине
+                    man_y = 11 + int(t * 7)  
+                    current_road_w = 3 + int((man_y - 8) * 1.2)
+                    man_x = min(WIDTH - 5, 16 + current_road_w + 2) 
 
-                    # Колебание шара на ветру
-                    shaking = int(np.sin(f_idx * 0.5) * 1)
-
-                    if 0 <= man_y < 24 and 0 <= man_x < WIDTH:
-                        
-                        # --- ОБЪЕМНЫЙ КРАСНЫЙ ШАР С БЛИКОМ ---
-                        bx, by = man_x + 3 + shaking, man_y - 6
-                        
-                        if 0 <= by < 14 and 0 <= bx < WIDTH:
-                            # Округлая форма шара
-                            if bx > 0 and bx + 1 < WIDTH:
-                                frame[by, bx] = COLOR_RED
-                                frame[by, bx+1] = COLOR_RED
-                            if 0 <= by+1 < 24 and bx-1 >= 0 and bx+2 < WIDTH:
-                                frame[by+1, bx-1] = COLOR_RED
-                                frame[by+1, bx] = C['WHT']     # Блик света на шарике!
-                                frame[by+1, bx+1:bx+3] = COLOR_RED
-                            if 0 <= by+2 < 24 and bx > 0 and bx + 1 < WIDTH:
-                                frame[by+2, bx:bx+2] = COLOR_RED
-                            
-                            # Реалистичная зигзагообразная нить к руке
-                            if 0 <= by+3 < 24 and bx >= 0: frame[by+3, bx] = [120, 120, 120]
-                            if 0 <= by+4 < 24 and bx+1 < WIDTH: frame[by+4, bx+1] = [120, 120, 120]
-                            if 0 <= by+5 < 24 and bx >= 0: frame[by+5, bx] = [120, 120, 120]
-
-                        # --- ТЕНЬ НА ЗЕМЛЕ ПОД ПЕРСОНАЖЕМ ---
-                        # Рисуем темное пятно на траве под ногами
+                    if 0 <= man_y < 24 and 3 <= man_x < WIDTH - 3:
+                        # Тень под ногами
                         if 0 <= man_y + 4 < 24:
-                            for sx in range(max(0, man_x - 2), min(WIDTH, man_x + 3)):
-                                frame[man_y + 4, sx] = [5, 15, 5]
+                            for sx in range(man_x - 2, man_x + 3):
+                                frame[man_y + 4, sx] = [max(0, frame[man_y + 4, sx][c] - 50) for c in range(3)]
 
-                        # --- АНАТОМИЧЕСКИЙ ДОЖДЕВИК С РЕЛЬЕФОМ ---
-                        # Строка y-2: Верхушка желтого капюшона
+                        # Фигура Пеннивайза в дождевике
+                        if 0 <= man_y - 4 < 24: frame[man_y - 4, man_x] = COLOR_YLW
+                        if 0 <= man_y - 3 < 24: frame[man_y - 3, man_x - 1:man_x + 2] = COLOR_YLW
                         if 0 <= man_y - 2 < 24:
-                            frame[man_y - 2, man_x] = COLOR_YLW_BRG
-                            if man_x + 1 < WIDTH: frame[man_y - 2, man_x + 1] = COLOR_YLW_SHD # Теневой пиксель
-
-                        # Строка y-1: Глубокий капюшон, лицо и зловещие глаза
-                        if 0 <= man_y - 1 < 24:
-                            if man_x - 1 >= 0: frame[man_y - 1, man_x - 1] = COLOR_YLW_BRG
-                            frame[man_y - 1, man_x] = COLOR_FACE         # Бледная маска лица
-                            if man_x + 1 < WIDTH: frame[man_y - 1, man_x + 1] = [255, 0, 0] # Красный пиксель глаза!
-                            if man_x + 2 < WIDTH: frame[man_y - 1, man_x + 2] = COLOR_YLW_SHD
-
-                        # Строка y: Плечи и рука (Освещенная часть слева, теневая справа)
-                        if 0 <= man_y < 24:
-                            if man_x - 1 >= 0: frame[man_y, man_x - 1] = COLOR_YLW_BRG # Блик от фар
-                            frame[man_y, man_x] = COLOR_YLW_BRG
-                            if man_x + 1 < WIDTH: frame[man_y, man_x + 1] = COLOR_YLW_SHD # Складка куртки
-                            # Прорисованная объемная рука, держащая нитку
-                            if man_x + 2 < WIDTH: frame[man_y, man_x + 2] = COLOR_YLW_BRG
-                            if man_x + 3 < WIDTH: frame[man_y, man_x + 3] = COLOR_YLW_SHD
-
-                        # Строка y+1: Средняя часть плаща (Объем за счет градиента)
-                        if 0 <= man_y + 1 < 24:
-                            if man_x - 2 >= 0: frame[man_y + 1, man_x - 2] = COLOR_YLW_BRG
-                            if man_x - 1 >= 0: frame[man_y + 1, man_x - 1] = COLOR_YLW_BRG
-                            frame[man_y + 1, man_x] = COLOR_YLW_SHD
-                            if man_x + 1 < WIDTH: frame[man_y + 1, man_x + 1] = COLOR_YLW_SHD
-
-                        # Строка y+2: Подол плаща у земли
-                        if 0 <= man_y + 2 < 24:
-                            for tx in range(max(0, man_x - 2), min(WIDTH, man_x)):
-                                frame[man_y + 2, tx] = COLOR_YLW_BRG # Освещенный подол
-                            for tx in range(max(0, man_x), min(WIDTH, man_x + 2)):
-                                frame[man_y + 2, tx] = COLOR_YLW_SHD # Подол в тени
-
-                        # Строка y+3: Обувь
+                            frame[man_y - 2, man_x - 1] = COLOR_YLW
+                            frame[man_y - 2, man_x] = COLOR_FACE
+                            frame[man_y - 2, man_x + 1] = COLOR_YLW
+                        if 0 <= man_y - 1 < 24: frame[man_y - 1, man_x - 1:man_x + 2] = COLOR_YLW
+                        if 0 <= man_y < 24: frame[man_y, man_x - 1:man_x + 2] = COLOR_YLW
+                        if 0 <= man_y + 1 < 24: frame[man_y + 1, man_x - 2:man_x + 3] = COLOR_YLW
+                        if 0 <= man_y + 2 < 24: frame[man_y + 2, man_x - 2:man_x + 3] = COLOR_YLW
                         if 0 <= man_y + 3 < 24:
-                            if man_x - 1 >= 0: frame[man_y + 3, man_x - 1] = C['BLK']
-                            frame[man_y + 3, man_x] = C['BLK']
-                            if man_x + 1 < WIDTH: frame[man_y + 3, man_x + 1] = C['BLK']
+                            frame[man_y + 3, man_x - 1] = COLOR_BOOTS
+                            frame[man_y + 3, man_x + 1] = COLOR_BOOTS
+
+                        # --- 🎈 СВЯЗКА ТРЕХ ШАРОВ, УЛЕТАЮЩИХ ВВЕРХ ---
+                        # Скорость взлета шаров пропорциональна времени t
+                        fly_up = int(t * 18)
+                        shaking = int(np.sin(f_idx * 0.4) * 1)
+                        
+                        bx = man_x - 4 + shaking  # Сдвинуты левее относительно клоуна
+                        by = man_y - 12 - fly_up  # Стремительно летят вверх
+
+                        # 🔴 1. КРАСНЫЙ ШАР (Центральный)
+                        if 0 <= by < 24 and 0 <= bx < WIDTH:
+                            if bx+1 < WIDTH: frame[by, bx+1:bx+3] = COLOR_RED
+                            if 0 <= by+1 < 24 and bx+3 < WIDTH:
+                                frame[by+1, bx] = COLOR_RED
+                                frame[by+1, bx+1:bx+3] = C['WHT'] # Блик
+                                frame[by+1, bx+3] = COLOR_RED
+                            if 0 <= by+2 < 24 and bx+3 < WIDTH: frame[by+2, bx:bx+4] = COLOR_RED
+                            if 0 <= by+3 < 24 and bx+2 < WIDTH: frame[by+3, bx+1:bx+3] = COLOR_RED
+
+                        # 🔵 2. СИНИЙ ШАР (Левее и чуть выше)
+                        sbx, sby = bx - 3, by - 2
+                        if 0 <= sby < 24 and 0 <= sbx < WIDTH:
+                            if sbx+1 < WIDTH: frame[sby, sbx+1:sbx+3] = COLOR_BLU
+                            if 0 <= sby+1 < 24 and sbx+3 < WIDTH: frame[sby+1, sbx:sbx+4] = COLOR_BLU
+                            if 0 <= sby+2 < 24 and sbx+3 < WIDTH: frame[sby+2, sbx:sbx+4] = COLOR_BLU
+                            if 0 <= sby+3 < 24 and sbx+2 < WIDTH: frame[sby+3, sbx+1:sbx+3] = COLOR_BLU
+
+                        # 🟢 3. ЗЕЛЕНЫЙ ШАР (Правее и чуть ниже)
+                        zbx, zby = bx + 3, by + 1
+                        if 0 <= zby < 24 and 0 <= zbx < WIDTH:
+                            if zbx+1 < WIDTH: frame[zby, zbx+1:zbx+3] = COLOR_GRN
+                            if 0 <= zby+1 < 24 and zbx+3 < WIDTH: frame[zby+1, zbx:zbx+4] = COLOR_GRN
+                            if 0 <= zby+2 < 24 and zbx+3 < WIDTH: frame[zby+2, zbx:zbx+4] = COLOR_GRN
+                            if 0 <= zby+3 < 24 and zbx+2 < WIDTH: frame[zby+3, zbx+1:zbx+3] = COLOR_GRN
+
+                # === АКТ 2: ЗНАК STOP НА ВЕСЬ ЭКРАН (t > 0.75) ===
+                else:
+                    # Полная тьма на заднем плане, ничего лишнего
+                    frame[0:24, :] = C['BLK']
+
+                    # Рисуем гигантский красный восьмиугольник знака STOP
+                    # Координаты: центр экрана, строки с 2 по 21
+                    for y in range(2, 22):
+                        # Формируем скосы восьмиугольника сверху и снизу
+                        if y == 2 or y == 21:    shield_w = 6   # Узкие края
+                        elif y == 3 or y == 20:  shield_w = 10
+                        elif y == 4 or y == 19:  shield_w = 12
+                        else:                    shield_w = 14  # Максимальная ширина 28 пикселей
+                        
+                        frame[y, 16 - shield_w : 16 + shield_w] = COLOR_RED
+
+                    # Отрисовка английских букв S T O P белым цветом (y с 9 по 14)
+                    # Буква 'S' (x: 4-7)
+                    frame[9, 4:8] = C['WHT']
+                    frame[10, 4] = C['WHT']
+                    frame[11, 4:8] = C['WHT']
+                    frame[12, 7] = C['WHT']
+                    frame[13, 4:8] = C['WHT']
+
+                    # Буква 'T' (x: 10-13)
+                    frame[9, 10:14] = C['WHT']
+                    frame[10:14, 11] = C['WHT']
+                    frame[10:14, 12] = C['WHT']
+
+                    # Буква 'O' (x: 16-19)
+                    frame[9, 16:20] = C['WHT']
+                    frame[10:13, 16] = C['WHT']
+                    frame[10:13, 19] = C['WHT']
+                    frame[13, 16:20] = C['WHT']
+
+                    # Буква 'P' (x: 22-25)
+                    frame[9, 22:26] = C['WHT']
+                    frame[10, 22] = C['WHT']
+                    frame[10, 25] = C['WHT']
+                    frame[11, 22:26] = C['WHT']
+                    frame[12:14, 22] = C['WHT']
 
 
             # СЦЕНА 9: Магнитола
