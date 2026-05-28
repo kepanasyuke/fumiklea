@@ -908,7 +908,7 @@ def generate_scenes():
                             frame[man_y + 3, man_x - 1] = COLOR_BOOTS
                             frame[man_y + 3, man_x + 1] = COLOR_BOOTS
 
-                        # --- 🎈 СВЯЗКА ТРЕХ ШАРОВ, УЛЕТАЮЩИХ ВВЕРХ ---
+                        # --- СВЯЗКА ТРЕХ ШАРОВ, УЛЕТАЮЩИХ ВВЕРХ ---
                         # Скорость взлета шаров пропорциональна времени t
                         fly_up = int(t * 18)
                         shaking = int(np.sin(f_idx * 0.4) * 1)
@@ -916,7 +916,7 @@ def generate_scenes():
                         bx = man_x - 4 + shaking  # Сдвинуты левее относительно клоуна
                         by = man_y - 12 - fly_up  # Стремительно летят вверх
 
-                        # 🔴 1. КРАСНЫЙ ШАР (Центральный)
+                        # 1. КРАСНЫЙ ШАР (Центральный) не работает
                         if 0 <= by < 24 and 0 <= bx < WIDTH:
                             if bx+1 < WIDTH: frame[by, bx+1:bx+3] = COLOR_RED
                             if 0 <= by+1 < 24 and bx+3 < WIDTH:
@@ -926,7 +926,7 @@ def generate_scenes():
                             if 0 <= by+2 < 24 and bx+3 < WIDTH: frame[by+2, bx:bx+4] = COLOR_RED
                             if 0 <= by+3 < 24 and bx+2 < WIDTH: frame[by+3, bx+1:bx+3] = COLOR_RED
 
-                        # 🔵 2. СИНИЙ ШАР (Левее и чуть выше)
+                        # 2. СИНИЙ ШАР (Левее и чуть выше) не работает пока
                         sbx, sby = bx - 3, by - 2
                         if 0 <= sby < 24 and 0 <= sbx < WIDTH:
                             if sbx+1 < WIDTH: frame[sby, sbx+1:sbx+3] = COLOR_BLU
@@ -934,7 +934,7 @@ def generate_scenes():
                             if 0 <= sby+2 < 24 and sbx+3 < WIDTH: frame[sby+2, sbx:sbx+4] = COLOR_BLU
                             if 0 <= sby+3 < 24 and sbx+2 < WIDTH: frame[sby+3, sbx+1:sbx+3] = COLOR_BLU
 
-                        # 🟢 3. ЗЕЛЕНЫЙ ШАР (Правее и чуть ниже)
+                        # 3. ЗЕЛЕНЫЙ ШАР (Правее и чуть ниже)
                         zbx, zby = bx + 3, by + 1
                         if 0 <= zby < 24 and 0 <= zbx < WIDTH:
                             if zbx+1 < WIDTH: frame[zby, zbx+1:zbx+3] = COLOR_GRN
