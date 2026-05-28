@@ -1,31 +1,67 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-CHRISTINE: ПИКСЕЛЬНЫЙ КВЕСТ (КОМИКС-СТИЛЬ)
-- 19 анимированных сцен (дождь, бампер, спидометр, погоня, взрыв...)
-- Диалоги справа (белое облачко)
-- Терминал внизу с вводом команд (видимый)
-- Глитч при наведении на пиксели
-"""
-
-import tkinter as tk
 import numpy as np
-from PIL import Image, ImageTk
-import random
-# tt надо добавить отладку в конце на  трасировку на локалке ушло время лучше с утра-днем сцены подгружаю полдня еще где-то к концу дня будет готовчик
-# ------------------------- ПАРАМЕТРЫ -------------------------
+import json
+import http.server
+import socketserver
+import threading
+import webbrowser
+import time
+
+# --- ГЛОБАЛЬНЫЕ КОНСТАНТЫ МАТРИЦЫ ---
 WIDTH, HEIGHT = 32, 32
-PIXEL_SIZE = 14
 TOTAL_FRAMES = 50
 TOTAL_SCENES = 19
 
-# ------------------------- ЦВЕТА -------------------------
+# --- ПАЛИТРА ЦВЕТОВ КРИСТИНЫ ---
 C = {
-    'BLK': [0, 0, 0],       'RED': [200, 0, 0],     'B_RED': [255, 30, 30],
-    'YLW': [255, 215, 0],   'ORG': [255, 100, 0],   'CHRM': [192, 192, 192],
-    'WHT': [255, 255, 255], 'BLU': [0, 100, 200],   'GRN': [0, 150, 50],
-    'PNK': [230, 0, 120]
+    'BLK': [0, 0, 0],         # Глухая ночная тьма
+    'WHT': [255, 255, 255],   # Ослепительные фары / Ядро взрыва
+    'RED': [220, 10, 10],     # Кузов Кристины (Плимут Fury)
+    'B_RED': [130, 0, 0],     # Кроваво-красная выштамповка / Текст
+    'CHRM': [180, 190, 200],  # Полированный блестящий хром бамперов
+    'BLU': [10, 30, 90],      # Глубокая ночная лужа / Лобовое стекло
+    'YLW': [240, 200, 10],    # Пламя взрыва / Стрелка радиолы
+    'ORG': [240, 90, 10],     # Раскалённый обгоревший металл / Искры
+    'GRN': [0, 200, 20]       # Мертвенно-зелёная подсветка приборов салона
 }
+
+# --- СОСТОЯНИЕ ИГРОКА (СТАТУС-БАРЫ В СТРОКАХ 24-32) ---
+player_stats = {
+    "rem": 100,  # Ремонт кузова Кристины (%)
+    "ras": 0,    # Рассудок водителя (Арни) (%)
+    "top": 80    # Топливо в баке (%)
+}
+
+def render_status_bars(frame):
+    """
+    Строго отрисовывает нижнюю часть матрицы (строки 24-32),
+    чтобы параметры были видны прямо на светодиодном табло, 
+    не мешая основной анимации сцен сверху.
+    """
+    # Очищаем нижнюю зону (строки 24-31) в чёрный цвет
+    frame[24:32, :] = C['BLK']
+    
+    # Отрисовка полосы РЕМОНТА (Строка 25, x: 2..12)
+    rem_pixels = int((player_stats["rem"] / 100) * 10)
+    frame[25, 2:2+rem_pixels] = C['RED']
+    
+    # Отрисовка полосы РАССУДКА (Строка 27, x: 2..12)
+    ras_pixels = int((player_stats["ras"] / 100) * 10)
+    frame[27, 2:2+ras_pixels] = C['GRN']
+    
+    # Отрисовка полосы ТОПЛИВА (Строка 29, x: 2..12)
+    top_pixels = int((player_stats["top"] / 100) * 10)
+    frame[29, 2:2+top_pixels] = C['YLW']
+
+
+def generate_scenes():
+    all_scenes = []
+    for scene_idx in range(TOTAL_SCENES):
+        scene_frames = []
+        for f_idx in range(TOTAL_FRAMES):
+            # Создаем пустой черный кадр
+            frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+            t = f_idx / TOTAL_FRAMES
+
 
 # ------------------------- ГЕНЕРАЦИЯ СЦЕН (С ИСПРАВЛЕНИЕМ ГРАНИЦ) -------------------------
 def generate_scenes():
@@ -48,7 +84,7 @@ def generate_scenes():
                 frame[13, 11:21] = C['B_RED']       # Выштамповка на капорте
                 frame[14:16, 8:24] = C['BLK']       # Ниша под решетку (между фарами)
                 frame[15, 8:24] = C['CHRM']         # Хромированная решетка
-                # подгружаю импорты 
+
                 # 3. Синхронизированный СМЯТЫЙ бампер (вмятина всегда зафиксирована)
                 # Базовый бампер шел по строке 16-17. Сминаем центр (от 11 до 21 пикселя) вверх на 2 строки.
                 for x in range(4, 28):
@@ -371,6 +407,7 @@ def generate_scenes():
                                 if steam_stage > 4 and cy - 3 >= 0:
                                     if (px_pipe + f_idx) % 2 == 0:
                                         frame[cy - 3, (px_pipe - 2) : (px_pipe + 3)] = C['WHT']
+
             # --- СЦЕНА 7: Отдельный затухающий титр имени CHRISTINE (Выверенный центр) ---
             elif scene_idx == 7:
                 # 1. РАСЧЕТ ЯРКОСТИ ТЕКСТА КРИСТИНИ (Имя гаснет к 42 кадру)
@@ -476,7 +513,7 @@ def generate_scenes():
                     # Плавный наезд машины на камеру (cy смещается с 8 до 12 строки)
                     t_rush = (f_idx - 42) / 7
                     cy = int(8 + t_rush * 4)
-                   #ostalnoe na localhost dogruzgau.ru 
+                    
                     if 0 <= cy < 24:
                         # Отрисовка вашей любимой аккуратной геометрии кузова
                         frame[cy:min(24, cy+2), 4:28] = C['RED']       
@@ -494,8 +531,7 @@ def generate_scenes():
                         # Хромированный передний бампер по низу кузова
                         if cy+4 < 24: frame[cy+4, 4:28] = C['CHRM']
 
-            #возможные сцены
-                        # # --- СЦЕНА 8: Салон Кристины (Вариант 1: Мрачный Неонуар) ---
+            # # --- СЦЕНА 8: Салон Кристины (Вариант 1: Мрачный Неонуар) ---
             # elif scene_idx == 8:
             #     # Строки 24-32 строго черные, бережём индикаторы (РЕМ, РАС, ТОП) в самом низу!
 
@@ -812,25 +848,93 @@ def generate_scenes():
             #     frame[22, 5:12] = C['BLK']
             #     frame[19, 5:12] = C['BLK']
 
-            # # СЦЕНА 8: Ослепление дальним светом
-            # elif scene_idx == 7:
-            #     frame[:] = [int(t * 40)] * 3
-            #     glow = int(4 + t * 12)
-            #     for y in range(HEIGHT):
-            #         for x in range(WIDTH):
-            #             if np.hypot(x - 8, y - 16) < glow or np.hypot(x - 24, y - 16) < glow:
-            #                 frame[y, x] = C['WHT']
-
-            # # СЦЕНА 8.2: Дождь и дворники
+            # # --- СЦЕНА 8: Салон Кристины (Наклонные дворники, блики и силуэты салона) ---
             # elif scene_idx == 8:
-            #     for i in range(15):
-            #         rx = (i * 7 + f_idx * 2) % WIDTH
-            #         ry = (i * 11 + f_idx * 3) % HEIGHT
-            #         frame[ry, rx] = C['BLU']
-            #     w_pos = int(16 + np.sin(t * np.pi * 2) * 14)
-            #     for y in range(10, 25):
-            #         if 0 <= w_pos < WIDTH:
-            #             frame[y, w_pos] = C['BLK']
+            #     # Строки 24-32 строго черные, бережём индикаторы (РЕМ, РАС, ТОП) в самом низу!
+
+            #     # 1. ЛОБОВОЕ СТЕКЛО И РЕДКИЙ ПОНЯТНЫЙ ДОЖДЬ (Строки 0-14)
+            #     # Базовый глубокий синий цвет лобового стекла
+            #     frame[0:15, :] = [10, 20, 60]
+                
+            #     # МЯГКИЕ ДИАГОНАЛЬНЫЕ БЛИКИ НА СТЕКЛЕ (Эффект света ночных фонарей)
+            #     # Две тонкие полосы бликов плавно бегут слева направо по кадрам
+            #     glint_shift = (f_idx // 2) % 16
+            #     for gy in range(0, 15):
+            #         gx1 = gy + glint_shift
+            #         gx2 = gy + glint_shift + 12
+            #         if 0 <= gx1 < WIDTH: frame[gy, gx1] = [20, 45, 110]  # Светло-синий блик
+            #         if 0 <= gx2 < WIDTH: frame[gy, gx2] = [20, 45, 110]
+
+            #     # Крупные вертикальные капли дождя (3 штуки, без визуального мусора)
+            #     drop1_y = (f_idx) % 15
+            #     drop2_y = (f_idx + 5) % 15
+            #     drop3_y = (f_idx + 10) % 15
+            #     frame[drop1_y, 4] = C['WHT']
+            #     frame[drop2_y, 16] = C['WHT']
+            #     frame[drop3_y, 28] = C['WHT']
+
+            #     # 2. АНИМАЦИЯ НАКЛОННЫХ ДВОРНИКОВ (Движение наискосок веером)
+            #     # w_phase меняется от 0 до 8 (угол наклона щеток)
+            #     w_cycle = f_idx % 16
+            #     w_phase = w_cycle if w_cycle < 8 else (15 - w_cycle)
+                
+            #     for wy in range(3, 15):
+            #         # Чем выше по стеклу (меньше wy), тем сильнее сдвиг по иксу вбок
+            #         tilt = int((14 - wy) * (w_phase * 0.25))
+                    
+            #         # Левый дворник (водительский)
+            #         wx1 = 6 + tilt
+            #         # Правый дворник (пассажирский) — смещен вправо
+            #         wx2 = 20 + tilt
+                    
+            #         if 0 <= wx1 < WIDTH: frame[wy, wx1] = C['BLK']
+            #         if 0 <= wx2 < WIDTH: frame[wy, wx2] = C['BLK']
+
+            #     # 3. МОНОЛИТНАЯ ПАНЕЛЬ САЛОНА И СИДЕНЬЯ (Строки 15-23)
+            #     # Торпедо покрашено в глубокий темно-красный цвет
+            #     frame[15:24, :] = C['B_RED']
+                
+            #     # Тонкая хромированная линия-молдинг разделяет стекло и торпедо
+            #     frame[15, :] = C['CHRM']
+
+            #     # СИЛУЭТЫ СПИНОК СИДЕНИЙ ПЛИМУТА (Черные пиксели выступают по бокам панели)
+            #     # Левое сиденье (Водительское, y=16..23, x=0..3)
+            #     frame[16:24, 0:3] = C['BLK']
+            #     # Правое сиденье (Пассажирское, y=16..23, x=29..31)
+            #     frame[16:24, 29:32] = C['BLK']
+
+            #     # Зеленые круглые шкалы приборов (Слева и Справа)
+            #     frame[18:21, 6:8] = C['GRN']
+            #     frame[18:21, 24:26] = C['GRN']
+                
+            #     # Белая точка-стрелка внутри каждого спидометра
+            #     frame[19, 7] = C['WHT']
+            #     frame[19, 25] = C['WHT']
+
+            #     # 4. АККУРАТНЫЙ СИЛУЭТ РУЛЯ (Строго перед водителем, перекрывает левый прибор)
+            #     # Центр руля на x=7, y=19. Тонкое черное кольцо
+            #     frame[18:21, 4] = C['BLK']   # Левая дуга руля
+            #     frame[18:21, 10] = C['BLK']  # Правая дуга руля
+            #     frame[17, 5:10] = C['BLK']   # Верхний обод
+            #     frame[21, 5:10] = C['BLK']   # Нижний обод
+            #     frame[19, 5:10] = C['BLK']   # Горизонтальная спица руля
+            #     frame[19, 7] = C['CHRM']     # Хромированная сердцевина
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             # --- СЦЕНА 9: Улетающие шары и финальный знак STOP ---
             elif scene_idx == 9:
@@ -908,7 +1012,7 @@ def generate_scenes():
                             frame[man_y + 3, man_x - 1] = COLOR_BOOTS
                             frame[man_y + 3, man_x + 1] = COLOR_BOOTS
 
-                        # --- СВЯЗКА ТРЕХ ШАРОВ, УЛЕТАЮЩИХ ВВЕРХ ---
+                        # --- 🎈 СВЯЗКА ТРЕХ ШАРОВ, УЛЕТАЮЩИХ ВВЕРХ ---
                         # Скорость взлета шаров пропорциональна времени t
                         fly_up = int(t * 18)
                         shaking = int(np.sin(f_idx * 0.4) * 1)
@@ -916,7 +1020,7 @@ def generate_scenes():
                         bx = man_x - 4 + shaking  # Сдвинуты левее относительно клоуна
                         by = man_y - 12 - fly_up  # Стремительно летят вверх
 
-                        # 1. КРАСНЫЙ ШАР (Центральный) не работает
+                        # 🔴 1. КРАСНЫЙ ШАР (Центральный)
                         if 0 <= by < 24 and 0 <= bx < WIDTH:
                             if bx+1 < WIDTH: frame[by, bx+1:bx+3] = COLOR_RED
                             if 0 <= by+1 < 24 and bx+3 < WIDTH:
@@ -926,7 +1030,7 @@ def generate_scenes():
                             if 0 <= by+2 < 24 and bx+3 < WIDTH: frame[by+2, bx:bx+4] = COLOR_RED
                             if 0 <= by+3 < 24 and bx+2 < WIDTH: frame[by+3, bx+1:bx+3] = COLOR_RED
 
-                        # 2. СИНИЙ ШАР (Левее и чуть выше) не работает пока
+                        # 🔵 2. СИНИЙ ШАР (Левее и чуть выше)
                         sbx, sby = bx - 3, by - 2
                         if 0 <= sby < 24 and 0 <= sbx < WIDTH:
                             if sbx+1 < WIDTH: frame[sby, sbx+1:sbx+3] = COLOR_BLU
@@ -934,7 +1038,7 @@ def generate_scenes():
                             if 0 <= sby+2 < 24 and sbx+3 < WIDTH: frame[sby+2, sbx:sbx+4] = COLOR_BLU
                             if 0 <= sby+3 < 24 and sbx+2 < WIDTH: frame[sby+3, sbx+1:sbx+3] = COLOR_BLU
 
-                        # 3. ЗЕЛЕНЫЙ ШАР (Правее и чуть ниже)
+                        # 🟢 3. ЗЕЛЕНЫЙ ШАР (Правее и чуть ниже)
                         zbx, zby = bx + 3, by + 1
                         if 0 <= zby < 24 and 0 <= zbx < WIDTH:
                             if zbx+1 < WIDTH: frame[zby, zbx+1:zbx+3] = COLOR_GRN
@@ -1089,17 +1193,18 @@ def generate_scenes():
 
 # ------------------------- ГЕНЕРИРУЕМ СЦЕНЫ -------------------------
 ALL_SCENES = generate_scenes()
-ACTIVE_SCENE = 5   # можно менять от 0 до 18
+ACTIVE_SCENE = 9 # можно менять от 0 до 18
 
 # ------------------------- ОСНОВНОЙ КЛАСС ИГРЫ -------------------------
 class ChristineComicGame:
     def __init__(self, root):
         self.root = root
         self.root.title("CHRISTINE: ПИКСЕЛЬНЫЙ КВЕСТ")
-        self.root.geometry("1000x760")
-        self.root.configure(bg="#2b2b2b")
+        self.root.geometry("1500x950")            # Большое окно как в JS
+        self.root.configure(bg="#2b2b2b")          # Тёмный фон
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
+        # Параметры игры
         self.repair = 50
         self.sanity = 80
         self.fuel = 60
@@ -1116,75 +1221,116 @@ class ChristineComicGame:
         self.add_initial_dialog()
 
     def create_widgets(self):
-        left_frame = tk.Frame(self.root, bg="#1a1a1a", bd=2, relief="flat")
-        left_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        # Основной контейнер (вертикальное расположение: верхняя часть, затем терминал)
+        main_panel = tk.Frame(self.root, bg="#2b2b2b")
+        main_panel.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+
+        # Верхняя часть: слева анимация + индикаторы, справа диалоговое окно
+        top_frame = tk.Frame(main_panel, bg="#2b2b2b")
+        top_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+
+        # --- Левая панель (анимация + индикаторы) ---
+        left_frame = tk.Frame(top_frame, bg="#2b2b2b")
+        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 20))
 
         self.canvas = tk.Canvas(left_frame, width=WIDTH*PIXEL_SIZE, height=HEIGHT*PIXEL_SIZE,
-                                bg="black", highlightthickness=0)
+                                bg="black", highlightthickness=0, bd=0)
         self.canvas.pack(pady=10)
         self.canvas.bind("<Motion>", self.mouse_glitch)
 
-        stat_frame = tk.Frame(left_frame, bg="#1a1a1a")
-        stat_frame.pack(fill="x", pady=5)
-        self.rep_canvas, self.rep_bar, self.rep_lbl = self._indicator(stat_frame, "РЕМ", 120, "#ff5555")
-        self.san_canvas, self.san_bar, self.san_lbl = self._indicator(stat_frame, "РАС", 120, "#55ff55")
-        self.fuel_canvas, self.fuel_bar, self.fuel_lbl = self._indicator(stat_frame, "ТОП", 80, "#ffff55")
-        self.rep2_canvas, self.rep2_bar, self.rep2_lbl = self._indicator(stat_frame, "РЕП", 80, "#ff88ff")
+        # Панель индикаторов (4 штуки)
+        stat_frame = tk.Frame(left_frame, bg="#2b2b2b")
+        stat_frame.pack(fill="x", pady=15)
+        self.rep_canvas, self.rep_bar, self.rep_lbl = self._indicator(stat_frame, "РЕМ", 150, "#ff5555")
+        self.san_canvas, self.san_bar, self.san_lbl = self._indicator(stat_frame, "РАС", 150, "#55ff55")
+        self.fuel_canvas, self.fuel_bar, self.fuel_lbl = self._indicator(stat_frame, "ТОП", 100, "#ffff55")
+        self.rep2_canvas, self.rep2_bar, self.rep2_lbl = self._indicator(stat_frame, "РЕП", 100, "#ff88ff")
 
-        right_frame = tk.Frame(self.root, bg="#2b2b2b")
-        right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-        dialog_bg = tk.Frame(right_frame, bg="#ffffff", bd=2, relief="ridge")
-        dialog_bg.pack(fill="both", expand=True, pady=(0, 10))
-        self.dialog_text = tk.Text(dialog_bg, bg="#ffffff", fg="#000000", font=("Comic Sans MS", 12),
-                                   wrap="word", bd=0, relief="flat", padx=10, pady=10)
+        # --- Правая панель (диалоговое окно в стиле JS) ---
+        right_frame = tk.Frame(top_frame, bg="#2b2b2b")
+        right_frame.pack(side="right", fill="both", expand=True)
+
+        # Диалоговый контейнер с белым фоном и рамкой как в JS
+        dialog_bg = tk.Frame(right_frame, bg="#ffffff", bd=2, relief="solid")
+        dialog_bg.pack(fill="both", expand=True)
+
+        self.dialog_text = tk.Text(dialog_bg, bg="#ffffff", fg="#000000", font=("Courier New", 15),
+                                   wrap="word", bd=0, relief="flat", padx=12, pady=12)
         self.dialog_text.pack(fill="both", expand=True)
         self.dialog_text.config(state="disabled")
 
-        term_frame = tk.Frame(self.root, bg="#000000", bd=2, relief="sunken")
-        term_frame.pack(side="bottom", fill="x", padx=10, pady=10)
-        tk.Label(term_frame, text="> ТЕРМИНАЛ <", font=("Courier New", 8, "bold"),
-                 fg="#00ff00", bg="#000000").pack(anchor="w", padx=5, pady=(5,0))
-        self.term_out = tk.Text(term_frame, bg="#000000", fg="#00ff00", font=("Courier New", 10),
-                                height=5, wrap="word", bd=0, relief="flat")
-        self.term_out.pack(fill="x", padx=5, pady=2)
+        # --- Три стиля диалогов (имитация JS-стилей 17, 8, 18) ---
+        # Стиль 17: Кристина (пиксельная коробка с тенью, жирный шрифт)
+        self.dialog_text.tag_configure("christine", foreground="#000000", background="#fefefe",
+                                       font=("Courier New", 15, "bold"), lmargin1=15, lmargin2=15,
+                                       borderwidth=2, relief="solid", spacing3=8)
+        # Стиль 8: Ответ игрока (печатная машинка, серая рамка)
+        self.dialog_text.tag_configure("user", foreground="#222222", background="#fefefe",
+                                       font=("Courier New", 15), lmargin1=15, lmargin2=15,
+                                       borderwidth=1, relief="solid", spacing3=8)
+        # Стиль 18: Действие (тёмный фон, подсветка слов)
+        self.dialog_text.tag_configure("action", foreground="#dcdcdc", background="#1e1e2e",
+                                       font=("Courier New", 14), lmargin1=15, lmargin2=15,
+                                       borderwidth=0, relief="flat", spacing3=8)
+
+        # --- Нижний терминал (как в JS: чёрный фон, зелёный текст) ---
+        term_frame = tk.Frame(main_panel, bg="#000000", bd=2, relief="sunken")
+        term_frame.pack(side="bottom", fill="x", pady=(5, 0))
+
+        tk.Label(term_frame, text="> ТЕРМИНАЛ <", font=("Courier New", 12, "bold"),
+                 fg="#00ff00", bg="#000000").pack(anchor="w", padx=12, pady=(8, 0))
+
+        self.term_out = tk.Text(term_frame, bg="#000000", fg="#00ff00", font=("Courier New", 13),
+                                height=9, wrap="word", bd=0, relief="flat")
+        self.term_out.pack(fill="x", padx=12, pady=5)
         self.term_out.config(state="disabled")
 
         input_row = tk.Frame(term_frame, bg="#000000")
-        input_row.pack(fill="x", padx=5, pady=5)
-        tk.Label(input_row, text="$", font=("Courier New", 12, "bold"), fg="#00ff00", bg="#000000").pack(side="left")
-        self.input_entry = tk.Entry(input_row, font=("Courier New", 12), bg="#000000", fg="#00ff00",
+        input_row.pack(fill="x", padx=12, pady=8)
+        tk.Label(input_row, text="$", font=("Courier New", 15, "bold"), fg="#00ff00", bg="#000000").pack(side="left")
+        self.input_entry = tk.Entry(input_row, font=("Courier New", 15), bg="#000000", fg="#00ff00",
                                     insertbackground="#00ff00", relief="flat")
-        self.input_entry.pack(side="left", fill="x", expand=True, padx=5)
+        self.input_entry.pack(side="left", fill="x", expand=True, padx=10)
         self.input_entry.bind("<Return>", self.process_command)
 
         self.append_term("Система готова. Введите 'помощь'.")
 
     def _indicator(self, parent, label, width, color):
-        cv = tk.Canvas(parent, width=width, height=12, bg="#000000", highlightthickness=1, highlightbackground="#00ff00")
-        cv.pack(side="left", padx=5)
-        bar = cv.create_rectangle(0,0,0,12, fill=color, outline="")
-        lbl = tk.Label(parent, text=f"{label} 50%", font=("Courier New",9,"bold"), fg="#00ff00", bg="#1a1a1a")
-        lbl.pack(side="left", padx=2)
+        """Создаёт индикатор (полоску + текст)"""
+        cv = tk.Canvas(parent, width=width, height=20, bg="#000000", highlightthickness=1, highlightbackground="#00ff00")
+        cv.pack(side="left", padx=8)
+        bar = cv.create_rectangle(0, 0, 0, 20, fill=color, outline="")
+        lbl = tk.Label(parent, text=f"{label} 50%", font=("Courier New", 12, "bold"),
+                       fg="#00ff00", bg="#2b2b2b")
+        lbl.pack(side="left", padx=5)
         return cv, bar, lbl
 
     def update_indicators(self):
-        self.rep_canvas.coords(self.rep_bar, 0, 0, int(120 * self.repair / 100), 12)
+        self.rep_canvas.coords(self.rep_bar, 0, 0, int(150 * self.repair / 100), 20)
         self.rep_lbl.config(text=f"РЕМ {self.repair}%")
-        self.san_canvas.coords(self.san_bar, 0, 0, int(120 * self.sanity / 100), 12)
+        self.san_canvas.coords(self.san_bar, 0, 0, int(150 * self.sanity / 100), 20)
         self.san_lbl.config(text=f"РАС {self.sanity}%")
-        self.fuel_canvas.coords(self.fuel_bar, 0, 0, int(80 * self.fuel / 100), 12)
+        self.fuel_canvas.coords(self.fuel_bar, 0, 0, int(100 * self.fuel / 100), 20)
         self.fuel_lbl.config(text=f"ТОП {self.fuel}%")
-        self.rep2_canvas.coords(self.rep2_bar, 0, 0, int(80 * self.reputation / 100), 12)
+        self.rep2_canvas.coords(self.rep2_bar, 0, 0, int(100 * self.reputation / 100), 20)
         self.rep2_lbl.config(text=f"РЕП {self.reputation}%")
 
-    def append_dialog(self, text):
+    def add_christine_message(self, text):
+        self._add_message(text, "christine")
+    def add_user_message(self, text):
+        self._add_message(text, "user")
+    def add_action_message(self, text):
+        self._add_message(text, "action")
+    def _add_message(self, text, tag):
         self.dialog_text.config(state="normal")
         if self.dialog_text.get("1.0", tk.END).strip():
             self.dialog_text.insert(tk.END, "\n\n")
-        self.dialog_text.insert(tk.END, text)
+        self.dialog_text.insert(tk.END, text, tag)
         self.dialog_text.see(tk.END)
         self.dialog_text.config(state="disabled")
 
+    def append_dialog(self, text):
+        self.add_user_message(text)
     def append_term(self, text):
         self.term_out.config(state="normal")
         if self.term_out.get("1.0", tk.END).strip():
@@ -1194,10 +1340,10 @@ class ChristineComicGame:
         self.term_out.config(state="disabled")
 
     def add_initial_dialog(self):
-        self.append_dialog("=== CHRISTINE: ПИКСЕЛЬНЫЙ КВЕСТ ===")
-        self.append_dialog("Вы за рулём Плимут-Фьюри 1958 года.")
-        self.append_dialog("Кристина жива и жаждет действий.")
-        self.append_dialog("Введите 'помощь' в терминале, чтобы увидеть команды.")
+        self.add_christine_message("=== CHRISTINE: ПИКСЕЛЬНЫЙ КВЕСТ ===")
+        self.add_action_message("Вы за рулём Плимут-Фьюри 1958 года.")
+        self.add_christine_message("Кристина жива и жаждет действий.")
+        self.add_user_message("Введите 'помощь' в терминале, чтобы увидеть команды.")
 
     def start_animation(self):
         frame_data = self.frames[self.current_frame]
@@ -1207,7 +1353,7 @@ class ChristineComicGame:
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, anchor="nw", image=self.photo)
         self.current_frame = (self.current_frame + 1) % TOTAL_FRAMES
-        self.anim_id = self.root.after(50, self.start_animation)
+        self.anim_id = self.root.after(60, self.start_animation)
 
     def mouse_glitch(self, event):
         x = event.x // PIXEL_SIZE
@@ -1228,15 +1374,39 @@ class ChristineComicGame:
         self.fuel = max(0, min(100, self.fuel + df))
         self.reputation = max(0, min(100, self.reputation + drp))
         self.update_indicators()
-        self.append_dialog(desc)
+        self.add_action_message(desc)
         self.append_term(f"РЕМ: {dr:+d}% | РАС: {ds:+d}% | ТОП: {df:+d}% | РЕП: {drp:+d}%")
         if self.repair <= 0 or self.sanity <= 0:
             self.game_over()
 
     def game_over(self):
         self.game_active = False
-        self.append_dialog("\n*** ИГРА ОКОНЧЕНА ***")
+        self.add_christine_message("\n*** ИГРА ОКОНЧЕНА ***")
         self.append_term("Игра окончена. Перезапустите программу.")
+
+    def show_epilogue(self):
+        epilogues = [
+            "Бумага пахла бензином и старыми сигаретами. На обратной стороне был номер телефона, который никто не берёт уже двадцать лет.",
+            "Она не была просто машиной. Кристина была обещанием. И проклятием.",
+            "В зеркале заднего вида я иногда вижу не дорогу, а её улыбку — металлическую, с намёком на ржавчину.",
+            "Механик сказал: «Утилизируй». Но я знал: если вставить ключ зажигания, она заведётся с пол-оборота.",
+            "Последняя фраза из рации: «...не гони, сынок. Она уже выбрала тебя».",
+            "Я выключил двигатель, но мотор всё равно стучал. Где-то в груди.",
+            "Полицейский протокол гласил: «водитель не обнаружен». На сиденье остался только след от подушки.",
+            "Кристина улыбнулась фарами. Я поклялся, что никогда больше не сяду за руль. На следующее утро ключи сами оказались у меня в кармане.",
+            "Старая запись на кассете: «Она любит только тех, кто не боится её любить».",
+            "На свалке она стояла три года. А когда я пришёл, фары вспыхнули сами собой.",
+            "Чек из автомастерской: «Снять проклятие – 500 баксов. Не помогает».",
+            "Запах кожи и перегара. Иногда мне кажется, что я до сих пор еду по тому шоссе.",
+            "Ночью радио ловит только одну волну. Оттуда шепчет: «Ты мой, детка».",
+            "Кристина не имела двигателя. Она имела душу.",
+            "Последняя страница дневника: «Если читаешь это — беги. Машина уже знает, где ты».",
+            "В бардачке нашли приглашение на гонку 1978 года. Подпись: «Приз – бессмертие».",
+            "После аварии её списали. Но по ночам я слышу, как она заводится в гараже соседа.",
+            "Ключ от зажигания до сих пор у меня. И он теплее, чем положено металлу."
+        ]
+        ep = random.choice(epilogues)
+        self.add_action_message(ep)
 
     def process_command(self, event):
         cmd = self.input_entry.get().strip().lower()
@@ -1261,18 +1431,66 @@ class ChristineComicGame:
         elif cmd in ("продать", "sell"):
             self.apply_effect(-30, -40, 0, -20, "Вы попытались продать Кристину. Она в ярости!")
         elif cmd in ("статус", "status"):
-            self.append_dialog(f"Ремонт: {self.repair}% | Рассудок: {self.sanity}% | Топливо: {self.fuel}% | Репутация: {self.reputation}%")
+            self.add_user_message(f"Ремонт: {self.repair}% | Рассудок: {self.sanity}% | Топливо: {self.fuel}% | Репутация: {self.reputation}%")
+        elif cmd in ("эпилог", "epilogue"):
+            self.show_epilogue()
         elif cmd in ("помощь", "help"):
-            self.append_dialog("Доступные команды: ремонт, свидание, круиз, продать, статус, помощь")
+            self.add_user_message("Доступные команды: ремонт, свидание, круиз, продать, статус, эпилог, помощь")
         else:
-            self.append_dialog(f"Неизвестная команда: {cmd}")
+            self.add_user_message(f"Неизвестная команда: {cmd}")
 
     def on_close(self):
         if self.anim_id:
             self.root.after_cancel(self.anim_id)
         self.root.destroy()
 
+# ------------------------- СИНХРОНИЗАЦИЯ И СЕРВЕР СВЯЗИ -------------------------
+
+class ChristineWebHandler(http.server.SimpleHTTPRequestHandler):
+    """Локальный API-сервер для мгновенной передачи матриц и параметров в HTML/JS интерфейс"""
+    def do_GET(self):
+        if self.path == '/api/matrix':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            # Разрешаем кросс-доменные запросы, чтобы JS из index.html мог забирать данные без блокировок
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            
+            # Передаем всю сгенерированную попиксельную графику и параметры квеста в JS
+            response_data = {
+                "scenes": ALL_SCENES,
+                "stats": player_stats
+            }
+            self.wfile.write(json.dumps(response_data).encode('utf-8'))
+        else:
+            # Обычная раздача статических файлов (index.html) из текущей папки проекта
+            super().do_GET()
+
+def start_server():
+    """Запуск TCP-сервера на порту 8000 с автоматическим открытием веб-интерфейса"""
+    PORT = 8000
+    handler = ChristineWebHandler
+    # Позволяет повторно использовать порт без ожидания таймаутов операционной системы
+    socketserver.TCPServer.allow_reuse_address = True
+    with socketserver.TCPServer(("", PORT), handler) as httpd:
+        print(f"\n[ДВИЖОК КРИСТИНЫ] Локальный сервер связи успешно запущен на http://localhost:{PORT}")
+        # Автоматически открываем браузер со стильным окном игры при старте скрипта
+        webbrowser.open(f"http://localhost:{PORT}/index.html")
+        httpd.serve_forever()
+
+# ------------------------- ТОЧКА ВХОДА (СТАРТ ИГРЫ) -------------------------
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = ChristineComicGame(root)
-    root.mainloop()
+    print("[КРИСТИНА] Инициализация графического движка и компиляция кадров...")
+    
+    # Запускаем трансляцию кадров в веб-интерфейс в отдельном независимом фоновом потоке
+    server_thread = threading.Thread(target=start_server, daemon=True)
+    server_thread.start()
+    
+    print("[КРИСТИНА] Движок успешно запущен. Для остановки нажмите Ctrl + C.")
+    
+    # Основной цикл Python остается полностью свободным для обработки игровой логики квеста
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n[КРИСТИНА] Игра успешно остановлена.")
