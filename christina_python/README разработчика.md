@@ -12,7 +12,7 @@
 
 * **Сцена 0: Одержимый огонь (Помятая Форма №1)** — Кристина объята ядовитым пламенем, глитчующие искры и оранжевые всполохи V8 пробиваются сквозь обугленный кузов.
   
-<img width="256" height="256" alt="christine_scene0_black_grid" src="https://github.com/user-attachments/assets/a0c9f734-1c18-45c1-ab23-f2426ab7ae5b" />
+<img width="256" height="256" alt="christine_scene0_black_grid_slow" src="https://github.com/user-attachments/assets/580647d4-898d-4eaf-9d12-4cdbc56b82cb" />
 
 * **Сцена 1: Регенерация бампера (Show Me)** — Легендарная сцена из фильма. Смятый хромированный бампер плавно выпрямляется, металл вправляется на место, а по готовому крылу пробегает ослепительный белый блик.
 
