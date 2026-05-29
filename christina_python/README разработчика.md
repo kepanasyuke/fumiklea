@@ -37,11 +37,11 @@
 ### 🛣️ Блок ночной охоты и саспенса (Сцены 6–10)
 * **Сцена 6: Взрыв заправки** — Кульминация ярости Кристины. Огромный огненный гриб взрыва разрывает экран, пиксели плавятся от белого к оранжевому и желтому. 
 
-<img width="256" height="256" alt="christine_scene7_black_grid_slow" src="https://github.com/user-attachments/assets/74d94b0e-a3b0-4ef5-a4f4-f427431af9e3" />
+<img width="256" height="256" alt="christine_scene6_black_grid_slow" src="https://github.com/user-attachments/assets/0278f8e1-24e0-43f9-8628-e7e6fee41f26" />
 
 * **Сцена 7: Кровавый Титр** — Из пепла и затухающих угольков взрыва плавно рождается и грозно пульсирует неоновое слово `CHRISTINE`.
 
-<img width="256" height="256" alt="christine_scene7_black_grid" src="https://github.com/user-attachments/assets/d64edc13-b526-4468-b68a-d24bc0442650" />
+<img width="256" height="256" alt="christine_scene7_black_grid_slow" src="https://github.com/user-attachments/assets/665b25d5-9de6-40ce-a389-83c775563e9f" />
 
   *Да, с буквой ..она не помещается как N но помещается как Н
 * **Сцена 8: Наклонные дворники и блики** — Вид изнутри салона. Две черные щетки дворников ходят наискосок по веерной дуге, перекрывая капли ливня, а по стеклу скользят блики ночных фонарей.
