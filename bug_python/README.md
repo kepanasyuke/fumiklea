@@ -1,3 +1,5 @@
+<img width="400" height="300" alt="harvard_mark2_crt_animation" src="https://github.com/user-attachments/assets/561e29e3-d29d-4de3-9add-636b73c657ac" />
+
 # 🖥️ HARVARD MARK II - ULTIMATE CRT MONITOR
 
 **Ретро‑симулятор ЭЛТ‑монитора с интерактивной ловлей «жука» в духе 1947 года**
