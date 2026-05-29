@@ -37,7 +37,7 @@
 ### 🛣️ Блок ночной охоты и саспенса (Сцены 6–10)
 * **Сцена 6: Взрыв заправки** — Кульминация ярости Кристины. Огромный огненный гриб взрыва разрывает экран, пиксели плавятся от белого к оранжевому и желтому. 
 
-<img width="256" height="256" alt="christine_scene6_black_grid_slow" src="https://github.com/user-attachments/assets/f5a88bfc-e48c-4c52-982d-011393ace511" />
+<img width="256" height="256" alt="christine_scene7_black_grid_slow" src="https://github.com/user-attachments/assets/74d94b0e-a3b0-4ef5-a4f4-f427431af9e3" />
 
 * **Сцена 7: Кровавый Титр** — Из пепла и затухающих угольков взрыва плавно рождается и грозно пульсирует неоновое слово `CHRISTINE`.
 
