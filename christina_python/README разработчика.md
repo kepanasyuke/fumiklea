@@ -30,14 +30,14 @@
 
 <img width="256" height="256" alt="christine_scene4_black_grid" src="https://github.com/user-attachments/assets/14af7523-b2e1-4de1-a3e1-3dd1c6838650" />
 
-* **Сцена 5: Мастерская Дарнелла** — Неоновая вывеска зловеще мерцает и гаснет, пока по лобовому стеклу стекают синие капли дождя, а хром бампера ловит фиолетовые блики. Можно замедлить 50 кадров сек (так будет в анимации) но пусть пока быстро
+* **Сцена 5: Мастерская Дарнелла** — Неоновая вывеска зловеще мерцает и гаснет, пока по лобовому стеклу стекают синие капли дождя, а хром бампера ловит фиолетовые блики. 
 
 <img width="256" height="256" alt="christine_scene5_black_grid_slow" src="https://github.com/user-attachments/assets/0d473cc4-b7c6-453c-be95-ea3f295e473f" />
 
 ### 🛣️ Блок ночной охоты и саспенса (Сцены 6–10)
 * **Сцена 6: Взрыв заправки** — Кульминация ярости Кристины. Огромный огненный гриб взрыва разрывает экран, пиксели плавятся от белого к оранжевому и желтому. 
 
-<img width="256" height="256" alt="christine_scene6_black_grid" src="https://github.com/user-attachments/assets/88aae72d-7d92-4096-b90e-3cc0feaa6965" />
+<img width="256" height="256" alt="christine_scene6_black_grid_slow" src="https://github.com/user-attachments/assets/f5a88bfc-e48c-4c52-982d-011393ace511" />
 
 * **Сцена 7: Кровавый Титр** — Из пепла и затухающих угольков взрыва плавно рождается и грозно пульсирует неоновое слово `CHRISTINE`.
 
