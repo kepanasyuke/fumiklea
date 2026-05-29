@@ -1384,13 +1384,143 @@ def generate_scenes():
                             frame[y_lid, fx+3:fx+10] = C['CHR_GLOSS']
 
                 # ====================================================================
-                # СИСТЕМНЫЙ БЛОК: СВЕРХПЛОТНАЯ ЛИНЕЙНАЯ ТЕНЬ ПОД КУЗОВОМ (y: 24)
+                # 🛠️ СИСТЕМНЫЙ БЛОК: СВЕРХПЛОТНАЯ ЛИНЕЙНАЯ ТЕНЬ ПОД КУЗОВОМ (y: 24)
                 # ====================================================================
                 # Намертво прижимаем вибрирующий вишневый борт Кристины к укрупненному асфальту шоссе
                 frame[24, 0:WIDTH] = C['BLK']
                 frame[24, cx:min(WIDTH, cx+22)] = C['BLK']
 
-  # Зловещее нависающее веко капота над разбитой оптикой
+            # --- СЦЕНА 12: Мощнейший таран, разрушение оригинальной решетки и трещина (Часть 1) ---
+            elif scene_idx == 12:
+                # Вся матрица 32х32 отдана под макро-деформацию металла и огонь взрыва!
+                frame[0:32, :] = C['BLK']
+
+                # ЛОГИКА ТРЁХ ФАЗ ТАРАНА (Остановка прокрутки фона с 35-го кадра)
+                is_crushing = (f_idx >= 0)
+                is_exploding = (15 <= f_idx < 35)
+                is_stopped = (f_idx >= 35)
+
+                # 1. СКОРОСТНОЙ ХВОЙНЫЙ ЛЕС И ШОССЕ (Замирают намертво с 35-го кадра!)
+                frame[24:32, :] = C['CHRM']  # Укрупненный асфальт внизу
+                
+                scroll_f = 35 if is_stopped else f_idx
+                road_scroll = (scroll_f * 6) % 32
+                bg_scroll = (scroll_f * 2) % 24
+
+                # Отрисовка жирной белой разметки
+                for rx in range(0, WIDTH):
+                    if ((rx + road_scroll) // 12) % 2 == 0:
+                        frame[27:32, rx] = C['WHT']
+
+                # Отрисовка вековых сосен на заднем плане
+                for bx in range(-10, WIDTH + 20, 16):
+                    px = bx - bg_scroll
+                    if -4 <= px < WIDTH + 4:
+                        for tx in range(0, 24):
+                            for tw in range(0, 4):
+                                lx = px + tw
+                                if 0 <= lx < WIDTH:
+                                    frame[tx, lx] = C['WOOD_TRUNK']
+                                    if (tx + scroll_f) % 4 == 0 and 0 <= lx + 1 < WIDTH:
+                                        frame[tx, lx + 1] = C['WOOD_SHADOW']
+                        for hx in range(px - 3, px + 7):
+                            if 0 <= hx < WIDTH:
+                                frame[0:7, hx] = C['WOOD_NEEDLES']
+                                frame[7:14, hx] = C['WOOD_SHADOW']
+
+                # 2. МАТЕМАТИКА ВИБРАЦИИ МОТОРА V8
+                shake_y = 1 if (f_idx % 2 == 0) else -1
+                shake_x = 1 if (f_idx % 3 == 0) else 0
+                cy = 5 + shake_y
+                cx = -2 + shake_x
+
+                # 3. СВЕРХКРУПНЫЙ КУЗОВ КРИСТИНЫ (Строго до границы x <= 16)
+                for y_body in range(max(0, cy + 1), min(24, cy + 20)):
+                    for x_body in range(0, 18):
+                        lx = x_body + cx
+                        if 0 <= lx <= 16:  # Никакого захода в синюю матрицу Бадди
+                            if y_body < cy + 5:    frame[y_body, lx] = C['CHR_GLOSS']
+                            elif cy + 5 <= y_body < cy + 10: frame[y_body, lx] = C['CHR_BASE']
+                            elif cy + 10 <= y_body < cy + 15: frame[y_body, lx] = C['B_RED']
+                            else: frame[y_body, lx] = C['CHR_SHADOW']
+
+                # --- ДОБАВЛЕНО: РАСПОЛЗАЮЩАЯСЯ ОСТРАЯ ТРЕШИНА НА ВИШНЕВОМ КАПОТЕ (С 15 кадра) ---
+                if f_idx >= 15:
+                    # Черная зигзагообразная ломаная линия трещины прямо над фарой
+                    frame[cy+4, cx+5:cx+9] = C['BLK']
+                    frame[cy+5, cx+8:cx+12] = C['BLK']
+                    frame[cy+6, cx+11:cx+14] = C['BLK']
+
+                # Хромированный молдинг-стрела борта Кристины
+                if 0 <= cx + 16 <= 16:
+                    frame[cy+5, 0:cx+17] = C['CHRM']
+                    frame[cy+6, 0:cx+16] = C['BLK']
+
+                # --- 4. СОХРАНЕНА ВАША ОРИГИНАЛЬНАЯ СЕТКА РЕШЕТКИ (С РАЗРУШЕНИЕМ С 15 КАДРА) ---
+                # До 15 кадра решетка целая (сетка из скриншота). С 15 кадра она мнется и ломается
+                if f_idx < 15:
+                    # Прорисовываем вашу текстурную решетку-сетку радиатора (колонки 18-21)
+                    for gx in range(18, 22):
+                        lx = gx + cx
+                        if 0 <= lx <= 16:
+                            for gy in range(cy + 2, cy + 18):
+                                # Точная формула сетки со скриншота: чередование белого хрома и пустот
+                                frame[gy, lx] = C['WHT'] if (lx % 2 == 0 or gy % 2 == 0) else C['BLK']
+                else:
+                    # Решетка разрушена! Куски белой сетки ломаются и летят вниз под днище на асфальт
+                    grille_progress = (f_idx - 15)
+                    for gi in range(3):
+                        drop_x = int(15 - grille_progress * 1.3 - gi * 2)
+                        drop_y = int(cy + 14 + grille_progress * 0.4)
+                        if 0 <= drop_x < WIDTH and 21 <= drop_y <= 25:
+                            frame[drop_y, drop_x] = C['WHT'] # Осколки ломаной белой решетки на дороге
+
+                # Двухполосный передний хромированный бампер Кристины на стыке с асфальтом
+                if 0 <= cx + 21 <= 16:
+                    frame[cy+14:cy+19, cx+21] = C['CHRM']
+                    frame[cy+14:cy+19, cx+20] = C['BLK']
+
+                # --- 5. МАКРО-КУЗОВ БАДДИ (Строго справа от x >= 17) ---
+                crush_depth = min(6, f_idx // 3) if f_idx >= 15 else 0
+                start_b_x = 17 + (crush_depth // 2)
+                for y_buddy in range(cy + 2, cy + 16):
+                    for x_buddy in range(max(17, start_b_x), WIDTH):
+                        if y_buddy < cy + 6:              frame[y_buddy, x_buddy] = C['BLU']
+                        elif cy + 6 <= y_buddy < cy + 12: frame[y_buddy, x_buddy] = C['C_BUDDY_BLUE']
+                        else:                             frame[y_buddy, x_buddy] = C['BLK']
+
+                # --------------------------------------------------------------------
+                #  СИСТЕМНЫЙ БЛОК: ГИГАНТСКАЯ ФАРА ЛОПАЕТСЯ В ВЫЖЖЕННУЮ ДЫРУ (С 15 КАДРА)
+                # --------------------------------------------------------------------
+                fx = 7 + shake_x
+                fy = 3 + shake_y
+
+                # Отрисовка ободка и линзы фары
+                for y_rim in range(max(0, fy + 2), min(24, fy + 12)):
+                    for x_rim in range(max(0, fx + 1), min(WIDTH, fx + 11)):
+                        if x_rim <= 16:  # Удерживаем жесткие границы Кристины
+                            dx = x_rim - (fx + 6)
+                            dy = y_rim - (fy + 7)
+                            dist_sq = dx*dx + dy*dy
+                            
+                            if 16 <= dist_sq <= 30:
+                                # Хромированный ободок фары (темнеет и скалывается при ударе)
+                                frame[y_rim, x_rim] = C['CHRM'] if f_idx < 15 else C['CHR_SHADOW']
+                            elif dist_sq < 9:
+                                # Ядро линзы фары
+                                if f_idx < 15:
+                                    frame[y_rim, x_rim] = C['WHT']  # Ослепительный дальний свет Кристины
+                                else:
+                                    # ИСПРАВЛЕНО: ТЕКСТУРНАЯ ВЫЖЖЕННАЯ ДЫРА (Черно-серое крошево осколков)
+                                    # Создаем глубокую рваную рану на месте лопнувшей оптики
+                                    if (x_rim + y_rim + f_idx) % 3 == 0:
+                                        frame[y_rim, x_rim] = C['CHRM']  # Блестящий осколок стекла
+                                    elif (x_rim + y_rim) % 2 == 0:
+                                        frame[y_rim, x_rim] = [60, 60, 65]  # Серая обгорелая ниша
+                                    else:
+                                        frame[y_rim, x_rim] = C['BLK']  # Абсолютная черная пустота провала
+
+                # Зловещее нависающее веко капота над разбитой оптикой
                 for y_lid in range(fy + 2, fy + 6):
                     if y_lid < 24:
                         frame[y_lid, fx+2:min(17, fx+11)] = C['CHR_BASE']
@@ -1467,7 +1597,6 @@ def generate_scenes():
                 #  СИСТЕМНЫЙ БЛОК: СВЕРХПЛОТНАЯ ЛИНЕЙНАЯ ТЕНЬ ПОД КУЗОВОМ (y: 24)
                 # ====================================================================
                 frame[24, 0:WIDTH] = C['BLK']
-
 
 
 
