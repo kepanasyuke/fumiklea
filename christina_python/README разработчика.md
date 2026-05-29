@@ -52,7 +52,14 @@
   *Да, с буквой ..она не помещается как N но помещается как Н
 * **Сцена 8: Наклонные дворники и блики** — Вид изнутри салона. Две черные щетки дворников ходят наискосок по веерной дуге, перекрывая капли ливня, а по стеклу скользят блики ночных фонарей.
 
+<img width="256" height="256" alt="christine_scene8_variant2_black_grid_slow" src="https://github.com/user-attachments/assets/931de82c-c418-41b1-80cc-f5916e8bcc5c" />
+<img width="256" height="256" alt="christine_scene8_variant3_black_grid_slow" src="https://github.com/user-attachments/assets/a492f5ce-9529-45d5-af6a-b80399e0c05a" />
+<img width="256" height="256" alt="christine_scene8_variant4_black_grid_slow" src="https://github.com/user-attachments/assets/20866012-8c75-4dd9-b560-6da615ec069b" />
+<img width="256" height="256" alt="christine_scene8_variant5_black_grid_slow" src="https://github.com/user-attachments/assets/643c436a-44e6-4adb-926e-77a4c76a15d4" />
+<img width="256" height="256" alt="christine_scene8_variant1_black_grid_slow" src="https://github.com/user-attachments/assets/e681d4a9-5403-4dda-a4a3-0223f2be6adc" />
 <img width="256" height="256" alt="christine_scene8_variant6_black_grid_slow" src="https://github.com/user-attachments/assets/52d025d3-cf55-4c73-9f01-3b7fe787117d" />
+
+Пока в доработке.
 
 * **Сцена 9: Ночное шоссе (Пеннивайз и Взгляд из машины)** — Самая детализированная хоррор-сцена. Тёплый свет фар плавно нарастает к капоту, на правой обочине стоит Пеннивайз в жёлтом дождевике, чьи красные шары улетают точкой в верхний угол. В финале сцена переключается на гигантский центрированный знак `STOP` с белым окаймлением и облегчённой буквой `T`, под которым **зловеще закрываются живые анатомические глаза**.
 
