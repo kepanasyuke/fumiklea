@@ -1384,11 +1384,91 @@ def generate_scenes():
                             frame[y_lid, fx+3:fx+10] = C['CHR_GLOSS']
 
                 # ====================================================================
-                # 🛠️ СИСТЕМНЫЙ БЛОК: СВЕРХПЛОТНАЯ ЛИНЕЙНАЯ ТЕНЬ ПОД КУЗОВОМ (y: 24)
+                # СИСТЕМНЫЙ БЛОК: СВЕРХПЛОТНАЯ ЛИНЕЙНАЯ ТЕНЬ ПОД КУЗОВОМ (y: 24)
                 # ====================================================================
                 # Намертво прижимаем вибрирующий вишневый борт Кристины к укрупненному асфальту шоссе
                 frame[24, 0:WIDTH] = C['BLK']
                 frame[24, cx:min(WIDTH, cx+22)] = C['BLK']
+
+  # Зловещее нависающее веко капота над разбитой оптикой
+                for y_lid in range(fy + 2, fy + 6):
+                    if y_lid < 24:
+                        frame[y_lid, fx+2:min(17, fx+11)] = C['CHR_BASE']
+                        if y_lid == fy + 2:
+                            frame[y_lid, fx+3:min(17, fx+10)] = C['CHR_GLOSS']
+
+                # --- 6. МОЩНЫЙ ПРОЖЕКТОР ФАРЫ (Гаснет наглухо после 15 кадра) ---
+                if f_idx < 15:
+                    start_x = fx + 6
+                    start_y = fy + 7
+                    for lx in range(start_x, WIDTH):
+                        dist_x = lx - start_x
+                        ly_top = start_y - int(dist_x * 0.7)
+                        ly_bot = start_y + int(dist_x * 0.7)
+                        
+                        fade_factor = max(0.15, 1.0 - (dist_x / 18.0))
+                        add_r = int(160 * fade_factor)
+                        add_g = int(140 * fade_factor)
+                        add_b = int(70 * fade_factor)
+                        
+                        for ly in range(max(0, ly_top), min(24, ly_bot + 1)):
+                            if 0 <= lx < WIDTH and 0 <= ly < 24:
+                                frame[ly, lx, 0] = min(255, int(frame[ly, lx, 0]) + add_r)
+                                frame[ly, lx, 1] = min(255, int(frame[ly, lx, 1]) + add_g)
+                                frame[ly, lx, 2] = min(255, int(frame[ly, lx, 2]) + add_b)
+
+                # --- 7. ПИРОТЕХНИЧЕСКИЙ ВЗРЫВ БЕНЗОБАКА НА СТЫКЕ МАШИН (Кадры 15-34) ---
+                if 15 <= f_idx < 35:
+                    fire_radius = int(2 + (f_idx - 15) * 0.85) if f_idx < 28 else int(15 - (f_idx - 28) * 0.8)
+                    ex, ey = 17, cy + 8  
+                    
+                    for y in range(0, 24):
+                        for x in range(WIDTH):
+                            dist = np.hypot(x - ex, y - ey)
+                            if dist < fire_radius:
+                                if dist < fire_radius * 0.3:
+                                    frame[y, x] = C['WHT']  # Ослепительно белое ядро взрыва
+                                elif dist < fire_radius * 0.65:
+                                    frame[y, x] = C['YLW'] if (x + y + f_idx) % 2 == 0 else C['ORG']
+                                else:
+                                    frame[y, x] = C['ORG'] if (x - f_idx) % 3 != 0 else C['RED']
+
+                # --- 8. КРУПНЫЕ ГОРЯЩИЕ ОБЛОМКИ СИНЕГО МЕТАЛЛА В ОГНЕННОМ ВЕЕРЕ ---
+                if is_exploding:
+                    spark_time = f_idx - 15
+                    epicenter_x = 17
+                    epicenter_y = cy + 8
+                    for i in range(7):
+                        angle = i * (np.pi / 3.5) - (f_idx * 0.1)
+                        dist = int(1 + spark_time * 1.15)
+                        sx = int(epicenter_x + np.cos(angle) * dist)
+                        sy = int(epicenter_y + np.sin(angle) * dist - (spark_time * 0.35))
+                        
+                        if 0 <= sx < WIDTH - 1 and 0 <= sy < 23:
+                            frame[sy:sy+2, sx:sx+2] = C['YLW'] if f_idx % 2 == 0 else C['ORG']
+                            hx = int(sx - np.cos(angle) * 2)
+                            hy = int(sy - np.sin(angle) * 2)
+                            if 0 <= hx < WIDTH and 0 <= hy < 24:
+                                frame[hy, hx] = C['ORG']
+
+                # --- 9. ФАЗА ПОЛНОЙ ОСТАНОВКИ И ГУСТОЙ КОПОТИ (Кадры 35-49) ---
+                if is_stopped:
+                    ex, ey = 17, cy + 8
+                    # Густой черный дым копоти поднимается вертикально вверх из выжженной раны фары
+                    for sy in range(0, cy + 7):
+                        smoke_x = int(12 + np.sin(sy * 0.4 + f_idx * 0.8) * 2)
+                        if 0 <= smoke_x < WIDTH:
+                            frame[sy, smoke_x] = C['BLK']
+                    
+                    # Небольшие тлеющие багровые угольки на стыке разрушенных бамперов
+                    frame[ey:ey+2, 16:18] = C['ORG'] if f_idx % 2 == 0 else C['B_RED']
+
+                # ====================================================================
+                #  СИСТЕМНЫЙ БЛОК: СВЕРХПЛОТНАЯ ЛИНЕЙНАЯ ТЕНЬ ПОД КУЗОВОМ (y: 24)
+                # ====================================================================
+                frame[24, 0:WIDTH] = C['BLK']
+
+
 
 
             # СЦЕНА 10: Преследование Мучи (ИСПРАВЛЕНА)
