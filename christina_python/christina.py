@@ -1251,6 +1251,145 @@ def generate_scenes():
                                 if n2_y - 2 >= 0 and n2_x + 3 < WIDTH:
                                     frame[n2_y - 2, n2_x + 1 : n2_x + 4] = [C['YLW']] * 3
 
+            # --- СЦЕНА 11: Одержимая фара Кристины (Максимальный Ultra-Macro Zoom 32x32) ---
+            elif scene_idx == 11:
+                # Никакого воздуха! Вся матрица 32х32 — это чистый, плотный хоррор-арт в упор
+                frame[0:32, :] = C['BLK']
+
+                # 1. СВЕРХКРУПНОЕ ПРИБЛИЖЕННОЕ ШОССЕ И ГИГАНТСКАЯ РАЗМЕТКА (y: 24..31)
+                frame[24:32, :] = C['CHRM']  # Асфальт прямо перед глазами
+                
+                # Огромные прямоугольники разметки бешено летят влево (скорость 6 пикселей/кадр)
+                road_scroll = (f_idx * 6) % 32
+                for rx in range(0, WIDTH):
+                    # Полосы стали гигантскими (блок в 12 пикселей) для эффекта Extreme Zoom
+                    if ((rx + road_scroll) // 12) % 2 == 0:
+                        frame[27:32, rx] = C['WHT']
+
+                # ИСПРАВЛЕНО: ВЕКОВЫЕ МОЩНЫЕ ДЕРЕВЬЯ В УПОР (Ширина ствола 3-4 пикселя, y: 0..23)
+                bg_scroll = (f_idx * 3) % 32
+                for bx in range(-10, WIDTH + 20, 16):
+                    px = bx - bg_scroll
+                    if -4 <= px < WIDTH + 4:
+                        # Рисуем массивные толстые стволы вековых сосен
+                        for tx in range(0, 24):
+                            for tw in range(0, 4):
+                                lx = px + tw
+                                if 0 <= lx < WIDTH:
+                                    frame[tx, lx] = C['WOOD_TRUNK']
+                                    # Накладываем глубокие фактурные тени на кору
+                                    if (tx + f_idx) % 4 == 0 and 0 <= lx + 1 < WIDTH:
+                                        frame[tx, lx + 1] = C['WOOD_SHADOW']
+                        
+                        # Огромные лапы хвои, нависающие над дорогой сверху
+                        for hx in range(px - 3, px + 7):
+                            if 0 <= hx < WIDTH:
+                                frame[0:7, hx] = C['WOOD_NEEDLES']
+                                frame[7:14, hx] = C['WOOD_SHADOW']
+
+                # 2. ДВУХОСЕВАЯ АГРЕССИВНАЯ ТРЯСКА МОТОРА V8
+                shake_y = 1 if (f_idx % 2 == 0) else -1
+                shake_x = 1 if (f_idx % 3 == 0) else 0
+                cy = 5 + shake_y
+                cx = -2 + shake_x  # Сдвинули Кристину еще левее, чтобы фара заняла центр
+
+                # 3. СВЕРХКРУПНЫЙ КУЗОВ КРИСТИНЫ (Видно еще меньше машины, лак во весь экран)
+                for y_body in range(max(0, cy + 1), min(24, cy + 20)):
+                    for x_body in range(0, 20):
+                        lx = x_body + cx
+                        if 0 <= lx < WIDTH:
+                            # Четырехслойный глубокий градиент вишневого лака
+                            if y_body < cy + 5:
+                                frame[y_body, lx] = C['CHR_GLOSS'] if (lx + f_idx) % 4 != 0 else C['WHT']
+                            elif cy + 5 <= y_body < cy + 10:
+                                frame[y_body, lx] = C['CHR_BASE']
+                            elif cy + 10 <= y_body < cy + 15:
+                                frame[y_body, lx] = C['B_RED']
+                            else:
+                                frame[y_body, lx] = C['CHR_SHADOW']
+
+                # Мощный хромированный молдинг продольной стрелы борта (y: cy+5)
+                if 0 <= cx + 18 < WIDTH:
+                    frame[cy+5, 0:cx+19] = C['CHRM']
+                    glint_x = (f_idx % 12) + cx
+                    if glint_x < cx + 18: frame[cy+5, glint_x:glint_x+2] = C['WHT']
+                    frame[cy+6, 0:cx+18] = C['BLK']  # Глубокая тень под молдингом
+
+                # Стальная решетка радиатора (Ушла глубоко вправо за фару, колонки 18-21)
+                for gx in range(18, 22):
+                    lx = gx + cx
+                    if 0 <= lx < WIDTH:
+                        for gy in range(cy + 2, cy + 18):
+                            frame[gy, lx] = C['CHRM'] if lx % 2 == 0 else C['BLK']
+
+                # Массивный двухполосный хромированный бампер у самой кромки шоссе
+                if 0 <= cx + 21 < WIDTH:
+                    frame[cy+14:cy+19, cx+21] = C['CHRM']
+                    frame[cy+14:cy+19, cx+20] = C['BLK']
+                    frame[cy+15:cy+17, cx+22] = C['CHRM']
+
+                # --- 4. МОЩНЫЙ ПРОЖЕКТОР ФАРЫ С ЭКСПОНЕНЦИАЛЬНЫМ ГРАДИЕНТОМ СВЕТА ВДАЛЬ ---
+                # Икс-центр луча
+                start_x = cx + 11
+                start_y = cy + 7
+                for lx in range(start_x, WIDTH):
+                    dist_x = lx - start_x
+                    # Конус света расширяется по экспоненте, накрывая приближенные вековые деревья
+                    ly_top = start_y - int(dist_x * 0.8)
+                    ly_bot = start_y + int(dist_x * 0.8)
+                    
+                    # Плавная и мягкая хоррор-формула рассеивания света фар во тьму леса
+                    fade_factor = max(0.15, 1.0 - (dist_x / 20.0))
+                    add_r = int(170 * fade_factor)
+                    add_g = int(150 * fade_factor)
+                    add_b = int(75 * fade_factor)
+                    
+                    for ly in range(max(0, ly_top), min(24, ly_bot + 1)):
+                        if 0 <= lx < WIDTH and 0 <= ly < 24:
+                            frame[ly, lx, 0] = min(255, int(frame[ly, lx, 0]) + add_r)
+                            frame[ly, lx, 1] = min(255, int(frame[ly, lx, 1]) + add_g)
+                            frame[ly, lx, 2] = min(255, int(frame[ly, lx, 2]) + add_b)
+
+                # --------------------------------------------------------------------
+                # 🛠️ СИСТЕМНЫЙ БЛОК: ГИГАНТСКАЯ КРУГЛАЯ ФАРА С АГРЕССИВНЫМ «ВЕКОМ» (x5 МАСШТАБ)
+                # --------------------------------------------------------------------
+                # Центр фары-монстра жестко завязан на двухосевую яростную тряску мотора V8
+                fx = 7 + shake_x
+                fy = 3 + shake_y
+
+                # Рисуем массивный, круглый многослойный хромированный ободок вокруг фары (y: fy..fy+10)
+                for y_rim in range(max(0, fy + 2), min(24, fy + 12)):
+                    for x_rim in range(max(0, fx + 1), min(WIDTH, fx + 11)):
+                        dx = x_rim - (fx + 6)
+                        dy = y_rim - (fy + 7)
+                        dist_sq = dx*dx + dy*dy
+                        
+                        if 16 <= dist_sq <= 30:
+                            frame[y_rim, x_rim] = C['CHRM']
+                            if (x_rim + y_rim + f_idx) % 6 == 0:
+                                frame[y_rim, x_rim] = C['WHT']  # Бегущий радиальный блик по хрому ободка
+                        elif 9 <= dist_sq < 16:
+                            frame[y_rim, x_rim] = C['BLK']   # Глубокая тень внутри отражателя
+                        elif dist_sq < 9:
+                            frame[y_rim, x_rim] = C['WHT']   # Ослепительно белое ядро линзы фары
+
+                # --- НАКРЫВАЕМ ВЕРХ ФАРЫ ТЯЖЕЛЫМ ВИШНЕВЫМ ВЕКОМ-НАВЕСОМ КАПОТА ---
+                # Массивный козырек капота набегает сверху (y: fy+2..fy+5), делая взгляд яростным и прищуренным
+                for y_lid in range(fy + 2, fy + 6):
+                    if y_lid < 24:
+                        # Накрываем верхнюю полусферу фары цветом лакированного кузова
+                        frame[y_lid, fx+2:fx+11] = C['CHR_BASE']
+                        # Добавить алый лаковый блик по верхней кромке козырька-века для детализации
+                        if y_lid == fy + 2:
+                            frame[y_lid, fx+3:fx+10] = C['CHR_GLOSS']
+
+                # ====================================================================
+                # 🛠️ СИСТЕМНЫЙ БЛОК: СВЕРХПЛОТНАЯ ЛИНЕЙНАЯ ТЕНЬ ПОД КУЗОВОМ (y: 24)
+                # ====================================================================
+                # Намертво прижимаем вибрирующий вишневый борт Кристины к укрупненному асфальту шоссе
+                frame[24, 0:WIDTH] = C['BLK']
+                frame[24, cx:min(WIDTH, cx+22)] = C['BLK']
+
 
             # СЦЕНА 10: Преследование Мучи (ИСПРАВЛЕНА)
             elif scene_idx == 10:
