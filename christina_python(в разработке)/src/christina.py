@@ -47,6 +47,22 @@ player_stats = {
     "rep": 50    # Репутация Кристины по отношению к нам
 }
 
+# def render_status_bars(frame):
+#     """Они в терминале"""
+#     frame[24:32, :] = C['BLK']
+    
+#     # Отрисовка полосы РЕМОНТА (Строка 25, x: 2..12)
+#     rem_pixels = int((player_stats["rem"] / 100) * 10)
+#     frame[25, 2:2+rem_pixels] = C['RED']
+    
+#     # Отрисовка полосы РАССУДКА (Строка 27, x: 2..12)
+#     ras_pixels = int((player_stats["ras"] / 100) * 10)
+#     frame[27, 2:2+ras_pixels] = C['GRN']
+    
+#     # Отрисовка полосы ТОПЛИВА (Строка 29, x: 2..12)
+#     top_pixels = int((player_stats["top"] / 100) * 10)
+#     frame[29, 2:2+top_pixels] = C['YLW']
+
 # ------------------------- ИГРОВОЙ ДВИЖОК (БЕЗ TkINTER) -------------------------
 class GameEngine:
     def __init__(self, storyboard):
@@ -70,15 +86,15 @@ class GameEngine:
         self.reputation = max(0, min(100, self.reputation + drp))
         self.last_message = response_text
         
-        # СИНХРОНИЗАЦИЯ С МАТРИЦЕЙ: Обновляем глобальные диодные индикаторы
-        global player_stats
-        player_stats["rem"] = self.repair
-        player_stats["ras"] = self.sanity
-        player_stats["top"] = self.fuel
+        # # СИНХРОНИЗАЦИЯ С МАТРИЦЕЙ: Обновляем глобальные диодные индикаторы
+        # global player_stats
+        # player_stats["rem"] = self.repair
+        # player_stats["ras"] = self.sanity
+        # player_stats["top"] = self.fuel
         
-        if self.repair <= 0 or self.sanity <= 0:
-            self.game_active = False
-            self.last_message = "*** КРИТИЧЕСКИЙ СБОЙ: ИГРА ОКОНЧЕНА ***"
+        # if self.repair <= 0 or self.sanity <= 0:
+        #     self.game_active = False
+        #     self.last_message = "*** КРИТИЧЕСКИЙ СБОЙ: ИГРА ОКОНЧЕНА ***"
 
     def process_command(self, cmd):
         cmd = cmd.strip().lower()
@@ -176,15 +192,15 @@ class GameEngine:
         else:
             return {"success": False, "error": f"Кристина блокирует действие: {cmd}"}
 
-# ------------------------- ГЕНЕРАТОР СЦЕН -------------------------
-def generate_scenes():
-    all_scenes = []
-    for scene_idx in range(TOTAL_SCENES):
-        scene_frames = []
-        for f_idx in range(TOTAL_FRAMES):
-            # Создаем пустой черный кадр
-            frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
-            t = f_idx / TOTAL_FRAMES
+# # ------------------------- ГЕНЕРАТОР СЦЕН -------------------------
+# def generate_scenes():
+#     all_scenes = []
+#     for scene_idx in range(TOTAL_SCENES):
+#         scene_frames = []
+#         for f_idx in range(TOTAL_FRAMES):
+#             # Создаем пустой черный кадр
+#             frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+#             t = f_idx / TOTAL_FRAMES
 
 # ------------------------- СТОРИБОРД -------------------------
 class SceneData:
@@ -2097,19 +2113,15 @@ class ChristineWebHandler(http.server.SimpleHTTPRequestHandler):
         global ALL_SCENES
         global player_stats
 
-        # 1. API отдачи пакетов 3D NumPy-матриц для отрисовки на Canvas
+        # 1. API отдачи скомпилированной пиксельной графики NumPy
         if self.path == '/api/matrix':
             self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-
-            scene_idx = self.engine.current_scene
-            if scene_idx < len(ALL_SCENES):
-                for f_idx in range(len(ALL_SCENES[scene_idx])):
-                    frame = np.array(ALL_SCENES[scene_idx][f_idx], dtype=np.uint8)
-                    render_status_bars(frame)
-                    ALL_SCENES[scene_idx][f_idx] = frame.tolist()
-
+            
+            # Больше никакой инжекции полосок в матрицу! Отдаём чистую графику.
+            # Браузер сам заберёт актуальные цифры параметров из этого пакета:
             response = {
                 "scenes": ALL_SCENES, 
                 "stats": player_stats
@@ -2117,12 +2129,14 @@ class ChristineWebHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(response).encode('utf-8'))
             return
 
-        # 2. API получения текущего состояния квеста (Старт / Перезагрузка страницы)
+        # 2. API получения текущего состояния (Синхронный старт текста и сцены)
         elif self.path == '/api/state':
             self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.end_headers()
 
+            # Считываем данные строго ТЕКУЩЕЙ активной сцены, на которой стоит движок!
             current_idx = self.engine.current_scene
             scene_data = self.engine.storyboard.get(current_idx)
 
@@ -2142,6 +2156,7 @@ class ChristineWebHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         else:
+            # Раздача статики (HTML, JS, CSS)
             super().do_GET()
 
     def do_POST(self):
