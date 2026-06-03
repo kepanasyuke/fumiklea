@@ -2,44 +2,29 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кристина: Одержимый Ретро-Квест</title>
+    <title>CHRISTINE - ПИКСЕЛЬНЫЙ КВЕСТ</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin:0; padding:0; box-sizing: border-box; }
         body {
-            /* Салон Фурии: виниловый угольный оттенок */
             background: radial-gradient(circle, #1a1f26 0%, #0d1117 100%);
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Разрешаем выравнивание по верху для скролла */
+            align-items: flex-start;
             min-height: 100vh;
             font-family: 'Courier New', monospace;
             padding: 20px;
-            /* ПРИНУДИТЕЛЬНО РАЗРЕШАЕМ СВOБОДНУЮ ПРОКРУТКУ ВСЕЙ СТРАНИЦЫ */
-            overflow-y: auto !important; 
         }
-
-        /* Главное окно мыслей / Торпедо квеста */
         .thought-window {
-            max-width: 950px;
+            max-width: 1100px;
             width: 100%;
             background: #11141a;
-            border: 3px solid #000000;
-            box-shadow: 12px 12px 0 rgba(0, 0, 0, 0.5);
+            border: 3px solid #000;
+            box-shadow: 12px 12px 0 rgba(0,0,0,0.5);
             padding: 24px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            position: relative;
-            margin-bottom: 40px; /* Отступ снизу, чтобы страница красиво скроллилась */
         }
-
-        /* Сине-зелёная полоса Sega */
         .sega-stripes {
             height: 8px;
             background: repeating-linear-gradient(90deg, #0055ff, #0055ff 20px, #00cc88, #00cc88 40px);
@@ -47,358 +32,454 @@
             width: calc(100% + 48px);
             border-bottom: 2px solid #000;
         }
-
-        /* Рабочий макет: Матрица слева, диалоги справа */
-        .game-layout {
-            display: flex;
-            gap: 24px;
-            align-items: flex-start;
-        }
-
-        /* Контейнер светодиодной LED матрицы */
+        .game-layout { display: flex; gap: 24px; flex-wrap: wrap; }
         .matrix-container {
             background: #000;
             border: 4px solid #3a4254;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
             padding: 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
         }
-
-        #matrixCanvas {
-            image-rendering: pixelated;
-            background: #000;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.1);
+        #matrixCanvas { image-rendering: pixelated; background: #000; cursor: pointer; }
+        .scene-indicator { color: #5a7e9a; font-size: 0.85rem; cursor: pointer; }
+        .stats-panel { display: flex; gap: 15px; margin-top: 10px; width: 100%; flex-wrap: wrap; }
+        .stat {
+            flex: 1; background: #0a0c10; border: 1px solid #2aff6e; padding: 6px 8px;
+            text-align: center; box-shadow: 0 0 8px rgba(42,255,110,0.4); border-radius: 4px;
         }
-
-        .scene-indicator {
-            color: #5a7e9a;
-            font-size: 0.85rem;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        /* Лента диалогов */
+        .stat-label { font-size: 0.7rem; color: #2aff6e; text-shadow: 0 0 4px #2aff6e; }
+        .stat-bar { width: 100%; height: 12px; background: #141923; margin-top: 4px; border-radius: 2px; overflow: hidden; }
+        .stat-fill { height: 100%; transition: width 0.4s; }
+        #repBar { background: #ff4444; }
+        #sanBar { background: #44ff44; }
+        #fuelBar { background: #ffff44; }
+        #rep2Bar { background: #ff44ff; }
+        #aggBar { background: #ff6600; }
+        .stat-value { font-size: 0.75rem; color: #e2e8f0; margin-top: 4px; }
         .dialogue-area {
-            flex: 1;
-            background: #0d0f13;
-            border: 2px solid #1f2430;
-            padding: 20px;
-            height: 360px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            scrollbar-width: thin;
-            scrollbar-color: #00cc88 #0d0f13;
+            flex: 2; background: #0d0f13; border: 2px solid #1f2430; padding: 20px;
+            height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
         }
-
-        /* СТИЛЬ 17: Кристина */
         .christine-pixelbox {
-            font-family: 'Courier New', monospace;
-            background: #fff;
-            border: 3px solid #000;
-            padding: 12px 16px;
-            box-shadow: 5px 5px 0 #990000;
-            font-size: 1.05rem;
-            font-weight: bold;
-            color: #111;
-            max-width: 85%;
-            align-self: flex-start;
+            background: #fff; border: 3px solid #000; padding: 10px 14px;
+            box-shadow: 5px 5px 0 #990000; font-weight: bold; align-self: flex-start; max-width: 85%;
+            white-space: pre-wrap;
         }
-
-        /* СТИЛЬ 8: Ответ игрока */
         .christine-typewriter {
-            font-family: 'Courier New', monospace;
-            font-size: 1rem;
-            background: #1a1d24;
-            border: 2px solid #3a4254;
-            padding: 12px 16px;
-            box-shadow: 5px 5px 0 #222;
-            color: #e2e8f0;
-            max-width: 85%;
-            align-self: flex-end;
-            border-left: 5px solid #0055ff;
+            background: #1a1d24; border: 2px solid #3a4254; padding: 10px 14px;
+            color: #e2e8f0; align-self: flex-end; max-width: 85%; border-left: 5px solid #0055ff;
         }
-
-        /* СТИЛЬ 18: Действия Кристины */
-        .christine-highlight {
-            font-family: monospace;
-            padding: 8px 16px;
-            border: 2px solid rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-            font-size: 0.95rem;
-            width: fit-content;
-            max-width: 90%;
-            align-self: center;
-            text-align: center;
-        }
-
-        .christine-highlight-animated {
-            color: #ffffff;
-            font-weight: bold;
-            border: 2px solid #ff8844;
-            background: linear-gradient(90deg, #ff8844, #ffaa66, #ffcc88, #ff8844);
-            background-size: 200% 100%;
-            animation: gradientShift 3s linear infinite;
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
-        }
-
-        /* Терминал Sega */
-        .sega-terminal {
-            background: #06090e;
-            border: 3px solid #000000;
-            padding: 14px;
-            box-shadow: inset 0 0 15px rgba(42, 255, 110, 0.15);
-        }
-
-        .terminal-output {
-            background: #000000;
-            color: #2aff6e;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            padding: 12px;
-            height: 110px;
-            overflow-y: auto;
-            border: 2px solid #2aff6e;
-            margin-bottom: 12px;
-            text-shadow: 0 0 4px rgba(42, 255, 110, 0.5);
-        }
-
-        .terminal-input-line {
-            display: flex;
-            gap: 10px;
-            background: #0a0d14;
-            border: 2px solid #2aff6e;
-            padding: 8px 12px;
-            align-items: center;
-        }
-
-        .terminal-prompt { color: #2aff6e; font-weight: bold; }
-        .terminal-input { background: transparent; border: none; color: #ffffff; flex: 1; outline: none; }
-
-        /* Интерфейсные кнопки */
-        .test-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
-        button { background: #161b22; border: 2px solid #30363d; color: #c9d1d9; font-family: monospace; font-weight: bold; padding: 8px 16px; cursor: pointer; transition: 0.15s; }
-        button:hover { background: #21262d; border-color: #8b949e; color: #ffffff; }
+        .christine-highlight { background: #2d2a1e; color: #ffdd99; padding: 6px 12px; width: fit-content; align-self: center; }
+        .continue-prompt { background: #1f2430; color: #2aff6e; padding: 6px 12px; text-align: center; border: 1px solid #2aff6e; width: fit-content; align-self: center; margin-top: 8px; }
+        .sega-terminal { background: #06090e; border: 3px solid #000; padding: 14px; transition: all 0.2s; }
+        .terminal-output { background: #000; color: #2aff6e; font-size: 0.9rem; padding: 12px; height: 120px; overflow-y: auto; border: 2px solid #2aff6e; margin-bottom: 12px; transition: all 0.2s; }
+        .terminal-input-line { display: flex; gap: 10px; background: #0a0d14; border: 2px solid #2aff6e; padding: 8px 12px; transition: all 0.2s; }
+        .terminal-prompt { color: #2aff6e; }
+        .terminal-input { background: transparent; border: none; color: #fff; flex: 1; outline: none; font-family: monospace; }
+        button { background: #161b22; border: 2px solid #30363d; color: #c9d1d9; padding: 6px 14px; cursor: pointer; }
+        button:hover { background: #21262d; }
         #sendBtn { background: #1b4726; border-color: #2aff6e; color: #2aff6e; }
-        #sendBtn:hover { background: #2aff6e; color: #000; }
-        #btnClear { border-color: #ff4444; color: #ff4444; }
-        #btnClear:hover { background: #ff4444; color: #fff; }
+        .input-disabled { pointer-events: none; opacity: 0.5; }
+        /* БОРТОВОЙ ЖУРНАЛ */
+        .lore-overlay {
+            background: #050a05; border: 3px solid #2aff6e; box-shadow: 0 0 20px rgba(42,255,110,0.3);
+            border-radius: 6px; margin-bottom: 15px; overflow: hidden; transition: all 0.4s;
+        }
+        .lore-overlay.hidden { display: none; }
+        .crt-scanlines {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%),
+                        linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06));
+            background-size: 100% 4px, 6px 100%; pointer-events: none; z-index: 10;
+        }
+        .lore-window { padding: 15px; color: #2aff6e; text-shadow: 0 0 4px #2aff6e; position: relative; }
+        .lore-header { display: flex; justify-content: space-between; border-bottom: 2px dashed #2aff6e; padding-bottom: 8px; }
+        .lore-close-btn { background: transparent; border: 1px solid #2aff6e; color: #2aff6e; cursor: pointer; }
+        .lore-layout { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        .lore-column { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        .lore-block { background: #020502; border: 1px solid rgba(42,255,110,0.4); border-radius: 4px; padding: 10px; }
+        .block-title { font-size: 0.75rem; border-bottom: 1px solid rgba(42,255,110,0.3); margin-bottom: 8px; }
+        .font-highlight { color: #ffaa00; text-shadow: 0 0 4px #ffaa00; }
+        .archive-scroll { max-height: 150px; overflow-y: auto; }
+        .archive-item { border-bottom: 1px dashed rgba(42,255,110,0.2); padding: 6px 0; }
+        /* ТАЙМЕР */
+        .action-timer {
+            background: #440000; border: 1px solid #ff3333; color: #ff3333; padding: 6px;
+            text-align: center; font-weight: bold; margin-bottom: 10px;
+            animation: flash 0.5s infinite alternate;
+        }
+        .action-timer.hidden { display: none; }
+        @keyframes flash { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+        /* ПОДСВЕТКА СПИКЕРОВ */
+        .msg-christine { color: #ff3333 !important; text-shadow: 0 0 5px #ff1111; }
+        .msg-driver { color: #e2e8f0 !important; }
+        .msg-system, .msg-choice { color: #33ff33 !important; text-shadow: 0 0 5px #00ff00; }
+        .msg-lebay { color: #ffaa00 !important; font-style: italic; }
+        .msg-radio { color: #00ffff !important; font-style: italic; }
+
+        /* ========== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ 25 СХЕМ ========== */
+        .theme-green-phosphor { --term-color: #33ff33; --term-glow: 0 0 8px #00ff00; --term-bg: #030803; --border-color: #1b471b; }
+        .theme-amber-terminal { --term-color: #ffaa00; --term-glow: 0 0 8px #ff8800; --term-bg: #080500; --border-color: #4a2f00; }
+        .theme-blood-fury { --term-color: #ff2222; --term-glow: 0 0 10px #ff0000; --term-bg: #0a0101; --border-color: #5c0404; }
+        .theme-cyberpunk-88 { --term-color: #00ffff; --term-glow: 0 0 8px #00cccc, 0 0 15px #ff00ff; --term-bg: #090212; --border-color: #ff00ff; }
+        .theme-green-phosphor .sega-terminal, .theme-amber-terminal .sega-terminal,
+        .theme-blood-fury .sega-terminal, .theme-cyberpunk-88 .sega-terminal {
+            background: var(--term-bg) !important; border-color: var(--border-color) !important;
+        }
+        .theme-green-phosphor .terminal-output, .theme-amber-terminal .terminal-output,
+        .theme-blood-fury .terminal-output, .theme-cyberpunk-88 .terminal-output {
+            color: var(--term-color) !important; border-color: var(--term-color) !important;
+            text-shadow: var(--term-glow) !important; background: #000 !important;
+        }
+        .theme-green-phosphor .terminal-input-line, .theme-amber-terminal .terminal-input-line,
+        .theme-blood-fury .terminal-input-line, .theme-cyberpunk-88 .terminal-input-line {
+            border-color: var(--term-color) !important; background: var(--term-bg) !important;
+        }
+        .theme-green-phosphor .terminal-prompt, .theme-amber-terminal .terminal-prompt,
+        .theme-blood-fury .terminal-prompt, .theme-cyberpunk-88 .terminal-prompt {
+            color: var(--term-color) !important; text-shadow: var(--term-glow) !important;
+        }
+        .fx-flicker-active .sega-terminal { animation: crtFlicker 0.15s infinite; }
+        @keyframes crtFlicker { 0% { opacity: 0.98; } 50% { opacity: 1; } 100% { opacity: 0.99; } }
+        .fx-bad-signal-active .sega-terminal { animation: badSignal 3s infinite steps(1); }
+        @keyframes badSignal { 0%,95%,100% { transform: translateY(0); filter: blur(0); }
+            96% { transform: translateY(-4px); filter: blur(0.5px); }
+            98% { transform: translateY(3px); filter: blur(1px); } }
+        .fx-total-madness-active .thought-window { animation: matrixMadness 0.4s infinite alternate; }
+        @keyframes matrixMadness {
+            0% { filter: hue-rotate(0deg) contrast(1); }
+            100% { filter: hue-rotate(45deg) contrast(1.2); box-shadow: 0 0 30px #ff0055; }
+        }
     </style>
 </head>
 <body>
-
 <div class="thought-window">
     <div class="sega-stripes"></div>
-    
     <div class="game-layout">
         <div class="matrix-container">
-            <div class="scene-indicator" id="sceneIndicator">SCENE: 00 | FRAME: 00</div>
+            <div class="scene-indicator" id="sceneIndicator">SCENE: -- | FRAME: --</div>
             <canvas id="matrixCanvas" width="320" height="320"></canvas>
+            <div class="stats-panel" id="statsPanel"></div>
         </div>
         <div class="dialogue-area" id="dialogueArea"></div>
     </div>
-
-    <div class="sega-terminal">
-        <div class="terminal-output" id="termOutput">
-            &gt; [СИНХРОНИЗАЦИЯ] Подключение к движку Кристины...<br>
+    <div id="loreOverlay" class="lore-overlay hidden">
+        <div class="crt-scanlines"></div>
+        <div class="lore-window">
+            <div class="lore-header">
+                <span>● PLYMOUTH FURY 1958 // BORD_SYS</span>
+                <button id="closeLoreBtn" class="lore-close-btn">X</button>
+            </div>
+            <div class="lore-layout">
+                <div class="lore-column">
+                    <div class="lore-block"><div class="block-title">[🎯 ТЕКУЩАЯ МИССИЯ]</div><div id="loreObjective" class="block-content"></div></div>
+                    <div class="lore-block"><div class="block-title">[📦 БАРДАЧОК]</div><div id="loreInventory" class="block-content font-highlight"></div></div>
+                </div>
+                <div class="lore-column">
+                    <div class="lore-block full-height"><div class="block-title">[📜 АРХИВ ЛЕБЭЯ]</div><div id="loreArchiveList" class="archive-scroll block-content"></div></div>
+                </div>
+            </div>
         </div>
+    </div>
+    <div class="sega-terminal">
+        <div id="actionTimer" class="action-timer hidden">💥 КРИТИЧЕСКОЕ РЕШЕНИЕ: <span id="timerCount">10</span>s</div>
+        <div class="terminal-output" id="termOutput">[СИСТЕМА] Загрузка...</div>
         <div class="terminal-input-line">
             <span class="terminal-prompt">C:\&gt;</span>
-            <input type="text" class="terminal-input" id="cmdInput" placeholder="введите команду...">
+            <input type="text" class="terminal-input" id="cmdInput" autofocus>
             <button id="sendBtn">ВВОД</button>
         </div>
     </div>
-
-    <div class="test-buttons">
-        <button id="btnPrevScene">◀ Пред. Сцена</button>
-        <button id="btnNextScene">След. Сцена ▶</button>
-        <button id="btnClear">Очистить лог</button>
+    <div class="test-buttons" style="display: flex; flex-direction: column; gap: 10px; border-top: 1px dashed #3a4254; padding-top: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <label for="themeSelect" style="color: #5a7e9a; font-size: 0.85rem; font-weight: bold;">[🎨 ЦВЕТОВАЯ СХЕМА]:</label>
+            <select id="themeSelect" style="background: #161b22; border: 2px solid #30363d; color: #fff; padding: 4px; font-family: monospace; outline: none; cursor: pointer;">
+                <option value="classic-sega">01. Classic Sega (Оригинал)</option>
+                <option value="green-phosphor">02. Green Phosphor (Зеленый фосфор ЭЛТ)</option>
+                <option value="amber-terminal">03. Amber Terminal (Винтажный янтарь)</option>
+                <option value="blood-fury">04. Blood Fury (Кровавое безумие Кристины)</option>
+                <option value="cyberpunk-88">05. Cyberpunk 88 (Неоновый киберпанк)</option>
+            </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <label for="fxSelect" style="color: #5a7e9a; font-size: 0.85rem; font-weight: bold;">[📺 КИНЕСКОПНЫЙ ЭФФЕКТ]:</label>
+            <select id="fxSelect" style="background: #161b22; border: 2px solid #30363d; color: #fff; padding: 4px; font-family: monospace; outline: none; cursor: pointer;">
+                <option value="fx-normal">Вариант A: Без искажений</option>
+                <option value="fx-crt">Вариант B: Сканирующие линии (CRT)</option>
+                <option value="fx-flicker">Вариант C: Аналоговое мерцание</option>
+                <option value="fx-bad-signal">Вариант D: Сбой синхронизации (Шум)</option>
+                <option value="fx-total-madness">Вариант E: Полный психодел (Глитч-апокалипсис)</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <button id="btnClear">Очистить лог</button>
+            <span style="color: #5a7e9a; font-size: 0.75rem; align-self: center;">Комбинаций доступно: 25 стилей</span>
+        </div>
     </div>
 </div>
 
 <script>
+    // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+    let allScenes = null;
+    let currentScene = 0;
+    let targetScene = 0;
+    let currentFrame = 0;
+    let animInterval = null;
+    let expectedCommands = [];
+    let isTypingActive = false;
+    let countdownInterval = null;
+
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     const dialogueDiv = document.getElementById('dialogueArea');
     const termOut = document.getElementById('termOutput');
     const cmdInput = document.getElementById('cmdInput');
     const sendBtn = document.getElementById('sendBtn');
-    const sceneIndicator = document.getElementById('sceneIndicator');
 
-    let gameData = null;
-    let currentScene = 6; 
-    let currentFrame = 0;
-    const pixelSize = 10;
-    // === ФУНКЦИИ ДОБАВЛЕНИЯ СООБЩЕНИЙ КВЕСТА ===
-    function addChristineMessage(text) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'christine-pixelbox';
-        msgDiv.textContent = text;
-        dialogueDiv.appendChild(msgDiv);
-        dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+    function appendTerm(text) { termOut.innerHTML += `&gt; ${text}<br>`; termOut.scrollTop = termOut.scrollHeight; }
+    function addChristineMessage(text) { let d=document.createElement('div'); d.className='christine-pixelbox'; d.textContent=text; dialogueDiv.appendChild(d); dialogueDiv.scrollTop=dialogueDiv.scrollHeight; }
+    function addUserMessage(text) { let d=document.createElement('div'); d.className='christine-typewriter'; d.textContent=text; dialogueDiv.appendChild(d); dialogueDiv.scrollTop=dialogueDiv.scrollHeight; }
+    function addActionMessage(text) { let d=document.createElement('div'); d.className='christine-highlight'; d.textContent=text; dialogueDiv.appendChild(d); dialogueDiv.scrollTop=dialogueDiv.scrollHeight; }
+    function setInputEnabled(en) { cmdInput.disabled=!en; sendBtn.disabled=!en; if(en) cmdInput.focus(); }
+
+    function updateStatsUI(rep,san,fuel,repu,agg) {
+        document.getElementById('repBar').style.width=rep+'%'; document.getElementById('repVal').innerText=rep+'%';
+        document.getElementById('sanBar').style.width=san+'%'; document.getElementById('sanVal').innerText=san+'%';
+        document.getElementById('fuelBar').style.width=fuel+'%'; document.getElementById('fuelVal').innerText=fuel+'%';
+        document.getElementById('rep2Bar').style.width=repu+'%'; document.getElementById('rep2Val').innerText=repu+'%';
+        let aggBar=document.getElementById('aggBar'); if(aggBar) aggBar.style.width=agg+'%';
+        let aggVal=document.getElementById('aggVal'); if(aggVal) aggVal.innerText=agg+'%';
     }
 
-    function addUserMessage(text) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'christine-typewriter';
-        msgDiv.textContent = text;
-        dialogueDiv.appendChild(msgDiv);
-        dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+    function createStatsUI() {
+        let panel=document.getElementById('statsPanel');
+        panel.innerHTML=`
+            <div class="stat"><div class="stat-label">РЕМ</div><div class="stat-bar"><div id="repBar" class="stat-fill"></div></div><div id="repVal" class="stat-value">50%</div></div>
+            <div class="stat"><div class="stat-label">РАС</div><div class="stat-bar"><div id="sanBar" class="stat-fill"></div></div><div id="sanVal" class="stat-value">80%</div></div>
+            <div class="stat"><div class="stat-label">ТОП</div><div class="stat-bar"><div id="fuelBar" class="stat-fill"></div></div><div id="fuelVal" class="stat-value">60%</div></div>
+            <div class="stat"><div class="stat-label">РЕП</div><div class="stat-bar"><div id="rep2Bar" class="stat-fill"></div></div><div id="rep2Val" class="stat-value">50%</div></div>
+            <div class="stat"><div class="stat-label">ЯРС</div><div class="stat-bar"><div id="aggBar" class="stat-fill" style="background:#ff6600"></div></div><div id="aggVal" class="stat-value">30%</div></div>
+        `;
     }
 
-    function addActionMessage(text, bgColor = null, textColor = null) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'christine-highlight';
-        if (!bgColor) {
-            const hue = Math.floor(Math.random() * 360);
-            bgColor = `hsl(${hue}, 70%, 85%)`;
-        }
-        msgDiv.style.backgroundColor = bgColor;
-        msgDiv.style.color = textColor || '#111';
-        msgDiv.innerHTML = text;
-        dialogueDiv.appendChild(msgDiv);
-        dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+    // ==================== ЗВУК ПЕЧАТИ ====================
+    function playTypeSound() { try { let ac=new (window.AudioContext||window.webkitAudioContext)(); let o=ac.createOscillator(); let g=ac.createGain(); o.type='triangle'; o.frequency.value=Math.random()*60+120; g.gain.value=0.02; g.gain.exponentialRampToValueAtTime(0.00001,ac.currentTime+0.04); o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+0.04); } catch(e){} }
+
+    // ==================== TYPEWRITER ====================
+    async function typewriterLine(text, el) {
+        return new Promise(resolve=>{
+            let i=0; el.textContent=''; isTypingActive=true;
+            function type(){
+                if(i<text.length){ el.textContent+=text.charAt(i); playTypeSound(); i++; setTimeout(type,35); }
+                else { isTypingActive=false; resolve(); }
+            }
+            type();
+        });
     }
 
-    function addAnimatedActionMessage(text) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'christine-highlight christine-highlight-animated';
-        msgDiv.innerHTML = text;
-        dialogueDiv.appendChild(msgDiv);
-        dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
-    }
-
-    function appendTerm(text) {
-        termOut.innerHTML += `&gt; ${text}<br>`;
-        termOut.scrollTop = termOut.scrollHeight;
-    }
-
-    // === СИНХРОНИЗАЦИЯ С PYTHON ДВИЖКОМ (FETCH API) ===
-    async function loadMatrixData() {
-        try {
-            // Запрашиваем скомпилированные кадры с Python-сервера
-            const response = await fetch('http://localhost:8000/api/matrix');
-            gameData = await response.json();
-            
-            appendTerm("Подключение установлено. Графика успешно загружена.");
-            appendTerm(`Параметры: РЕМ:${gameData.stats.rem}% | РАС:${gameData.stats.ras}% | ТОП:${gameData.stats.top}%`);
-            
-            // Запуск стартовых диалогов
-            addChristineMessage("Кристина: Я здесь. Ты готов?");
-            addUserMessage("Вы: Да, поехали.");
-            addAnimatedActionMessage("Двигатель запущен, вибрация по кузову.");
-            
-            // Запуск игрового цикла рендеринга (25 кадров в секунду было - должно быть 50 в теории)
-            setInterval(renderNextFrame, 80);
-        } catch (error) {
-            appendTerm("ОШИБКА: Движок Python не отвечает. Запустите python3 christina.py!");
-            console.error(error);
-        }
-    }
-
-    // === ПОПИКСЕЛЬНЫЙ РЕНДЕР КАДРА НА CANVAS ===
-    function renderNextFrame() {
-        if (!gameData || !gameData.scenes[currentScene]) return;
-
-        const frameData = gameData.scenes[currentScene][currentFrame];
-        
-        // Полная очистка холста перед новым кадром
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Обходим сетку 32х32 светодиода
-        for (let y = 0; y < 32; y++) {
-            for (let x = 0; x < 32; x++) {
-                const rgb = frameData[y][x];
-                ctx.fillStyle = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-                // Оставляем микроскопический зазор в 1 пиксель для эффекта LED-диодов
-                ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize - 1, pixelSize - 1);
+    // ==================== ВЫВОД ДИАЛОГА ====================
+    async function displayMessageSteps(steps) {
+        setInputEnabled(false);
+        for(let idx=0; idx<steps.length; idx++){
+            let div=document.createElement('div'); div.className='christine-pixelbox';
+            let u=steps[idx].toUpperCase();
+            if(u.startsWith("КРИСТИНА")) div.classList.add("msg-christine");
+            else if(u.startsWith("ВОДИТЕЛЬ")) div.classList.add("msg-driver");
+            else if(u.startsWith("СИСТЕМА")) div.classList.add("msg-system");
+            else if(u.startsWith("ВЫБОР")) div.classList.add("msg-choice");
+            else if(u.startsWith("ЛЕБЭЙ")) div.classList.add("msg-lebay");
+            else if(u.startsWith("РАДИО")) div.classList.add("msg-radio");
+            dialogueDiv.appendChild(div); dialogueDiv.scrollTop=dialogueDiv.scrollHeight;
+            await typewriterLine(steps[idx], div);
+            if(idx===steps.length-1 && currentScene!==targetScene){ currentScene=targetScene; currentFrame=0; }
+            if(idx<steps.length-1){
+                let p=document.createElement('div'); p.className='continue-prompt'; p.textContent='[ Нажмите Enter для продолжения... ]';
+                dialogueDiv.appendChild(p); dialogueDiv.scrollTop=dialogueDiv.scrollHeight;
+                await new Promise(r=>{ let h=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); document.removeEventListener('keydown',h); p.remove(); cmdInput.value=''; r(); } }; document.addEventListener('keydown',h); });
             }
         }
-
-        // Обновление индикатора над табло
-        sceneIndicator.textContent = `SCENE: ${String(currentScene).padStart(2, '0')} | FRAME: ${String(currentFrame).padStart(2, '0')}`;
-
-        // Циклический сдвиг кадров внутри сцены
-        currentFrame = (currentFrame + 1) % gameData.scenes[currentScene].length;
+        setInputEnabled(true);
     }
 
-    // === ОБРАБОТКА ТЕКСТОВЫХ КОМАНД ИЗ ТЕРМИНАЛА ===
-    function processCommand(cmd) {
-        const c = cmd.trim().toLowerCase();
-        if (c === '') return;
-        appendTerm(c);
-
-        if (c === 'привет') {
-            addChristineMessage("Кристина: Привет, водитель. Заводись.");
-        } 
-        else if (c === 'осмотр') {
-            addActionMessage("Кристина осматривает подвеску – стойки в порядке.", "#d9ead3", "#1e3a2f");
-            addChristineMessage("Кристина: Подвеска крепкая, но амортизаторы скоро сдадут.");
-        }
-        else if (c === 'ремонт') {
-            addAnimatedActionMessage("Ремонт начат. Кристина урчит от удовольствия.");
-            addUserMessage("Вы: Сейчас подтяну карбюратор.");
-            addChristineMessage("Кристина: Чувствую силу, детка.");
-        }
-        else if (c === 'гонка') {
-            addChristineMessage("Кристина: Гонка? Это моя стихия!");
-            addActionMessage("Двигатель взревел, покрышки дымятся.", "#f4cccc", "#990000");
-            addUserMessage("Вы: Только осторожно, Кристина.");
-        }
-        else if (c === 'помощь') {
-            addUserMessage("Доступные команды: привет, осмотр, ремонт, гонка, помощь");
-            appendTerm('Список команд отправлен в игровой лог.');
-        }
-        else {
-            addActionMessage(`Кристина не понимает команду "${cmd}".`, "#ffe599", "#5c2e00");
+    // ==================== ОБРАБОТКА ОТВЕТА СЕРВЕРА ====================
+    async function handleServerResponse(result) {
+        if(countdownInterval) clearInterval(countdownInterval);
+        if(result.success){
+            updateStatsUI(result.stats.repair, result.stats.sanity, result.stats.fuel, result.stats.reputation, result.stats.aggression);
+            if(result.currentScene!==undefined) targetScene=result.currentScene;
+            if(result.message && result.message.startsWith("[БОРТОВОЙ ЖУРНАЛ]")){
+                let overlay=document.getElementById('loreOverlay');
+                overlay.classList.remove('hidden');
+                let parts = result.message.split(" | ");
+                let objText = parts[1].replace("ЦЕЛЬ: ", "");
+                let invText = parts[2].replace("БАРДАЧОК: ", "");
+                let loreText = parts[3].replace("УЛИКИ: ", "");
+                document.getElementById('loreObjective').textContent = objText;
+                document.getElementById('loreInventory').innerHTML = invText === "ПУСТО" ? "В бардачке ничего нет." : `[📦] ${invText}`;
+                let archiveDiv=document.getElementById('loreArchiveList');
+                archiveDiv.innerHTML='';
+                let lines = loreText.split('\n');
+                lines.forEach(l=>{ if(l.trim()){ let it=document.createElement('div'); it.className='archive-item'; it.textContent=`[📄] ${l.replace('- ','')}`; archiveDiv.appendChild(it); } });
+                appendTerm("Бортовой компьютер синхронизирован.");
+                setInputEnabled(true);
+                return;
+            }
+            if(result.message && !result.message_steps) addChristineMessage(result.message);
+            if(result.message_steps && result.message_steps.length) await displayMessageSteps(result.message_steps);
+            if(result.expected){ expectedCommands=result.expected; if(expectedCommands.length) appendTerm(`Ожидание: ${expectedCommands.join(', ').toUpperCase()}`); }
+            if(result.gameActive===false){ addActionMessage("ИГРА ОКОНЧЕНА. Введите 'restart'."); setInputEnabled(true); }
+            else {
+                setInputEnabled(true);
+                let actionScenes=[4,6,12,14,15,16];
+                if(actionScenes.includes(targetScene)){
+                    let timerDiv=document.getElementById('actionTimer');
+                    timerDiv.classList.remove('hidden');
+                    let timeLeft=10;
+                    document.getElementById('timerCount').textContent=timeLeft;
+                    countdownInterval=setInterval(()=>{
+                        timeLeft--;
+                        document.getElementById('timerCount').textContent=timeLeft;
+                        if(timeLeft<=0){
+                            clearInterval(countdownInterval);
+                            timerDiv.classList.add('hidden');
+                            appendTerm("ВРЕМЯ ИСТЕКЛО! Кристина действует сама...");
+                            sendCommand("пропуск");
+                        }
+                    },1000);
+                }
+            }
+        } else {
+            addUserMessage(`Кристина не понимает: ${cmdInput.value.trim()}`);
+            appendTerm(result.error||"Неверная команда");
+            setInputEnabled(true);
         }
     }
 
-    function handleCommand() {
-        const cmd = cmdInput.value;
-        cmdInput.value = '';
-        processCommand(cmd);
+    async function sendCommand(cmd) {
+        if(!cmd.trim()) return;
+        if(countdownInterval) clearInterval(countdownInterval);
+        document.getElementById('actionTimer')?.classList.add('hidden');
+        setInputEnabled(false);
+        appendTerm(cmd);
+        addUserMessage(cmd);
+        try{
+            let resp=await fetch('/api/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:cmd})});
+            let res=await resp.json();
+            await handleServerResponse(res);
+        } catch(e){ appendTerm("Ошибка сервера."); setInputEnabled(true); }
+        cmdInput.value='';
         cmdInput.focus();
     }
 
-    // === ИНТЕРФЕЙСНЫЕ КНОПКИ И СОБЫТИЯ ===
-    sendBtn.addEventListener('click', handleCommand);
-    cmdInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleCommand();
-    });
+    function handleCommand(){ if(isTypingActive){ cmdInput.value=''; return; } let c=cmdInput.value; if(c.trim()) sendCommand(c); else cmdInput.value=''; }
 
-    document.getElementById('btnNextScene').onclick = () => {
-        if (gameData) {
-            currentScene = (currentScene + 1) % gameData.scenes.length;
-            currentFrame = 0;
-            appendTerm(`Смена локации: Сцена ${currentScene}`);
+    // ==================== АНИМАЦИЯ С ГЛИТЧЕМ ====================
+    function startAnimation() {
+        if(animInterval) clearInterval(animInterval);
+        animInterval=setInterval(()=>{
+            if(!allScenes || !allScenes[currentScene]) return;
+            let frames=allScenes[currentScene];
+            if(currentFrame>=frames.length) currentFrame=0;
+            let frame=frames[currentFrame];
+            if(!frame) return;
+            let aggElem=document.getElementById('aggVal');
+            let aggPct=aggElem ? parseInt(aggElem.innerText)/100 : 0.3;
+            let isGlitch=Math.random()<(aggPct*0.4);
+            let maxOffset=Math.floor(aggPct*5);
+            for(let y=0; y<32; y++){
+                let xOffset=0;
+                if(isGlitch && Math.random()<0.3) xOffset=Math.floor(Math.random()*(maxOffset*2+1))-maxOffset;
+                for(let x=0; x<32; x++){
+                    let tx=(x+xOffset+32)%32;
+                    let rgb=frame[y][tx];
+                    if(isGlitch && aggPct>0.8 && Math.random()<0.1){
+                        ctx.fillStyle=`rgb(${255-rgb[0]}, 0, 0)`;
+                    } else {
+                        ctx.fillStyle=`rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+                    }
+                    ctx.fillRect(x*10, y*10, 9, 9);
+                }
+            }
+            document.getElementById('sceneIndicator').textContent=`SCENE: ${String(currentScene).padStart(2,'0')} | FRAME: ${String(currentFrame).padStart(2,'0')}`;
+            currentFrame=(currentFrame+1)%frames.length;
+        },80);
+    }
+
+    // ==================== РАДИО ====================
+    let radioCtx=null, radioSource=null;
+    function toggleRadio(){
+        if(radioCtx){
+            radioSource.stop(); radioCtx.close(); radioCtx=null;
+            appendTerm("Радиоприёмник выключен.");
+            return;
         }
-    };
+        try{
+            radioCtx=new (window.AudioContext||window.webkitAudioContext)();
+            let bufferSize=2*radioCtx.sampleRate;
+            let noiseBuf=radioCtx.createBuffer(1,bufferSize,radioCtx.sampleRate);
+            let data=noiseBuf.getChannelData(0);
+            for(let i=0;i<bufferSize;i++) data[i]=Math.random()*2-1;
+            radioSource=radioCtx.createBufferSource();
+            radioSource.buffer=noiseBuf;
+            radioSource.loop=true;
+            let filter=radioCtx.createBiquadFilter();
+            filter.type='bandpass'; filter.frequency.value=800;
+            let gain=radioCtx.createGain();
+            gain.gain.value=0.015;
+            radioSource.connect(filter); filter.connect(gain); gain.connect(radioCtx.destination);
+            radioSource.start();
+            appendTerm("КРИСТИНА: Радио поймало волну мёртвой зоны...");
+        } catch(e){}
+    }
 
-    document.getElementById('btnPrevScene').onclick = () => {
-        if (gameData) {
-            currentScene = (currentScene - 1 + gameData.scenes.length) % gameData.scenes.length;
-            currentFrame = 0;
-            appendTerm(`Возврат локации: Сцена ${currentScene}`);
-        }
-    };
+    // ==================== ЗАГРУЗКА ДАННЫХ ====================
+    async function loadInitialData(){
+        try{
+            let m=await fetch('/api/matrix'); let md=await m.json(); allScenes=md.scenes; appendTerm("Графика загружена.");
+            let s=await fetch('/api/state'); let st=await s.json();
+            currentScene=st.currentScene; targetScene=st.currentScene;
+            updateStatsUI(st.stats.repair,st.stats.sanity,st.stats.fuel,st.stats.reputation,st.stats.aggression);
+            if(st.intro_steps) await displayMessageSteps(st.intro_steps);
+            setInputEnabled(true);
+            expectedCommands=st.expected||[];
+            if(expectedCommands.length) appendTerm(`Ожидание: ${expectedCommands.join(', ').toUpperCase()}`);
+            startAnimation();
+            appendTerm("СИСТЕМА ПОДСКАЗОК: напишите 'ИНФО' для бортового журнала. Кликните по индикатору сцены — включите радио.");
+        } catch(e){ appendTerm("ОШИБКА: сервер не отвечает."); setInputEnabled(false); }
+    }
 
-    document.getElementById('btnClear').onclick = () => {
-        dialogueDiv.innerHTML = '';
-        appendTerm('Диалог полностью очищен.');
-    };
+    // ==================== ПЕРЕКЛЮЧАТЕЛЬ 25 СТИЛЕЙ ====================
+    const themeSelect = document.getElementById('themeSelect');
+    const fxSelect = document.getElementById('fxSelect');
+    const bodyEl = document.body;
+    function applyCombinedStyle() {
+        bodyEl.classList.remove('theme-green-phosphor', 'theme-amber-terminal', 'theme-blood-fury', 'theme-cyberpunk-88');
+        bodyEl.classList.remove('fx-flicker-active', 'fx-bad-signal-active', 'fx-total-madness-active');
+        const activeTheme = themeSelect.value;
+        const activeFx = fxSelect.value;
+        if (activeTheme !== 'classic-sega') bodyEl.classList.add(`theme-${activeTheme}`);
+        const crtOverlay = document.querySelector('.crt-scanlines');
+        if (crtOverlay) crtOverlay.style.display = (activeFx === 'fx-crt') ? 'block' : 'none';
+        if (activeFx === 'fx-flicker') bodyEl.classList.add('fx-flicker-active');
+        else if (activeFx === 'fx-bad-signal') bodyEl.classList.add('fx-bad-signal-active');
+        else if (activeFx === 'fx-total-madness') bodyEl.classList.add('fx-total-madness-active');
+        if (typeof appendTerm === 'function') appendTerm(`ИНТЕРФЕЙС: стиль [${themeSelect.options[themeSelect.selectedIndex].text}] + [${fxSelect.options[fxSelect.selectedIndex].text}]`);
+    }
+    themeSelect.addEventListener('change', applyCombinedStyle);
+    fxSelect.addEventListener('change', applyCombinedStyle);
 
-    // Автоматический старт коннектора при загрузке страницы
-    loadMatrixData();
+    // ==================== ПРИВЯЗКА СОБЫТИЙ ====================
+    document.getElementById('sendBtn').addEventListener('click',handleCommand);
+    cmdInput.addEventListener('keypress',e=>{ if(e.key==='Enter'){ e.preventDefault(); handleCommand(); } });
+    document.getElementById('btnClear').onclick=()=>{ dialogueDiv.innerHTML=''; appendTerm("Лог очищен."); };
+    document.getElementById('closeLoreBtn').onclick=()=>{ document.getElementById('loreOverlay').classList.add('hidden'); cmdInput.focus(); };
+    document.getElementById('sceneIndicator').addEventListener('click',toggleRadio);
+    createStatsUI();
+    loadInitialData();
+    applyCombinedStyle(); // применение начальной комбинации
 </script>
 </body>
 </html>
