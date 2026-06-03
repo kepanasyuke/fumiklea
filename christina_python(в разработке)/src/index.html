@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>CHRISTINE - ПИКСЕЛЬНЫЙ КВЕСТ</title>
+    <title>CHRISTINE - ПИКСЕЛЬНЫЙ КВЕСТ | 200+ СТИЛЕЙ</title>
     <style>
         * { margin:0; padding:0; box-sizing: border-box; }
         body {
@@ -13,8 +13,10 @@
             min-height: 100vh;
             font-family: 'Courier New', monospace;
             padding: 20px;
+            transition: all 0.2s;
         }
         .thought-window {
+            position: relative;
             max-width: 1100px;
             width: 100%;
             background: #11141a;
@@ -32,6 +34,41 @@
             width: calc(100% + 48px);
             border-bottom: 2px solid #000;
         }
+        /* ПУЛЬТ УПРАВЛЕНИЯ (ПРАВЫЙ ВЕРХНИЙ УГОЛ) */
+        .style-control-panel {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            display: flex;
+            gap: 12px;
+            background: rgba(10, 15, 20, 0.9);
+            border: 1px solid #1a2333;
+            padding: 8px 14px;
+            border-radius: 6px;
+            z-index: 100;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            backdrop-filter: blur(2px);
+        }
+        .style-control-panel select, .style-control-panel button {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #fff;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-family: monospace;
+            cursor: pointer;
+            outline: none;
+            border-radius: 4px;
+        }
+        .style-control-panel button {
+            background: #1b4726;
+            border-color: #2aff6e;
+            color: #2aff6e;
+        }
+        .style-control-panel button:hover {
+            background: #2a6e3a;
+        }
         .game-layout { display: flex; gap: 24px; flex-wrap: wrap; }
         .matrix-container {
             background: #000;
@@ -41,6 +78,7 @@
             flex-direction: column;
             align-items: center;
             gap: 10px;
+            transition: all 0.2s;
         }
         #matrixCanvas { image-rendering: pixelated; background: #000; cursor: pointer; }
         .scene-indicator { color: #5a7e9a; font-size: 0.85rem; cursor: pointer; }
@@ -48,29 +86,46 @@
         .stat {
             flex: 1; background: #0a0c10; border: 1px solid #2aff6e; padding: 6px 8px;
             text-align: center; box-shadow: 0 0 8px rgba(42,255,110,0.4); border-radius: 4px;
+            transition: all 0.2s;
         }
-        .stat-label { font-size: 0.7rem; color: #2aff6e; text-shadow: 0 0 4px #2aff6e; }
+        .stat-label { font-size: 0.7rem; color: #2aff6e; text-shadow: 0 0 4px #2aff6e; transition: all 0.2s; }
         .stat-bar { width: 100%; height: 12px; background: #141923; margin-top: 4px; border-radius: 2px; overflow: hidden; }
-        .stat-fill { height: 100%; transition: width 0.4s; }
-        #repBar { background: #ff4444; }
-        #sanBar { background: #44ff44; }
-        #fuelBar { background: #ffff44; }
-        #rep2Bar { background: #ff44ff; }
-        #aggBar { background: #ff6600; }
+        .stat-fill { height: 100%; transition: width 0.4s; background: #ff4444; }
         .stat-value { font-size: 0.75rem; color: #e2e8f0; margin-top: 4px; }
         .dialogue-area {
             flex: 2; background: #0d0f13; border: 2px solid #1f2430; padding: 20px;
             height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+            transition: all 0.2s;
         }
+        /* Стили бабблов (общие) */
         .christine-pixelbox {
             background: #fff; border: 3px solid #000; padding: 10px 14px;
-            box-shadow: 5px 5px 0 #990000; font-weight: bold; align-self: flex-start; max-width: 85%;
-            white-space: pre-wrap;
+            box-shadow: 5px 5px 0 #990000; font-weight: bold; align-self: flex-start;
+            max-width: 85%; white-space: pre-wrap;
+            transition: all 0.2s;
         }
         .christine-typewriter {
-            background: #1a1d24; border: 2px solid #3a4254; padding: 10px 14px;
-            color: #e2e8f0; align-self: flex-end; max-width: 85%; border-left: 5px solid #0055ff;
+            background: #141923; border: 2px solid #3a4254; padding: 12px 16px;
+            color: #e2e8f0; align-self: flex-end !important; text-align: right;
+            max-width: 80%; border-radius: 12px 12px 0px 12px;
+            border-right: 5px solid #0055ff; white-space: pre-wrap;
+            box-shadow: -4px 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s;
         }
+        .msg-system-code {
+            background: #020202 !important;
+            border: 1px dashed #33ff33 !important;
+            padding: 14px; border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem; line-height: 1.5;
+            color: #a3ffa3; max-width: 90%; align-self: center;
+            box-shadow: inset 0 0 10px rgba(0,255,0,0.15), 0 4px 8px rgba(0,0,0,0.5);
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .code-keyword-red { color: #ff3333; font-weight: bold; text-shadow: 0 0 4px #ff3333; }
+        .code-keyword-amber { color: #ffaa00; font-weight: bold; text-shadow: 0 0 4px #ffaa00; }
+        .code-keyword-blue { color: #00ffff; font-weight: bold; text-shadow: 0 0 4px #00ffff; }
         .christine-highlight { background: #2d2a1e; color: #ffdd99; padding: 6px 12px; width: fit-content; align-self: center; }
         .continue-prompt { background: #1f2430; color: #2aff6e; padding: 6px 12px; text-align: center; border: 1px solid #2aff6e; width: fit-content; align-self: center; margin-top: 8px; }
         .sega-terminal { background: #06090e; border: 3px solid #000; padding: 14px; transition: all 0.2s; }
@@ -78,22 +133,15 @@
         .terminal-input-line { display: flex; gap: 10px; background: #0a0d14; border: 2px solid #2aff6e; padding: 8px 12px; transition: all 0.2s; }
         .terminal-prompt { color: #2aff6e; }
         .terminal-input { background: transparent; border: none; color: #fff; flex: 1; outline: none; font-family: monospace; }
-        button { background: #161b22; border: 2px solid #30363d; color: #c9d1d9; padding: 6px 14px; cursor: pointer; }
+        button { background: #161b22; border: 2px solid #30363d; color: #c9d1d9; padding: 6px 14px; cursor: pointer; transition: all 0.2s; }
         button:hover { background: #21262d; }
         #sendBtn { background: #1b4726; border-color: #2aff6e; color: #2aff6e; }
         .input-disabled { pointer-events: none; opacity: 0.5; }
-        /* БОРТОВОЙ ЖУРНАЛ */
-        .lore-overlay {
-            background: #050a05; border: 3px solid #2aff6e; box-shadow: 0 0 20px rgba(42,255,110,0.3);
-            border-radius: 6px; margin-bottom: 15px; overflow: hidden; transition: all 0.4s;
-        }
+
+        /* Бортовой журнал (оставляем как есть) */
+        .lore-overlay { background: #050a05; border: 3px solid #2aff6e; box-shadow: 0 0 20px rgba(42,255,110,0.3); border-radius: 6px; margin-bottom: 15px; overflow: hidden; transition: all 0.4s; }
         .lore-overlay.hidden { display: none; }
-        .crt-scanlines {
-            position: absolute; top:0; left:0; width:100%; height:100%;
-            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%),
-                        linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06));
-            background-size: 100% 4px, 6px 100%; pointer-events: none; z-index: 10;
-        }
+        .crt-scanlines { position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%), linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06)); background-size: 100% 4px, 6px 100%; pointer-events: none; z-index: 10; }
         .lore-window { padding: 15px; color: #2aff6e; text-shadow: 0 0 4px #2aff6e; position: relative; }
         .lore-header { display: flex; justify-content: space-between; border-bottom: 2px dashed #2aff6e; padding-bottom: 8px; }
         .lore-close-btn { background: transparent; border: 1px solid #2aff6e; color: #2aff6e; cursor: pointer; }
@@ -104,43 +152,156 @@
         .font-highlight { color: #ffaa00; text-shadow: 0 0 4px #ffaa00; }
         .archive-scroll { max-height: 150px; overflow-y: auto; }
         .archive-item { border-bottom: 1px dashed rgba(42,255,110,0.2); padding: 6px 0; }
-        /* ТАЙМЕР */
-        .action-timer {
-            background: #440000; border: 1px solid #ff3333; color: #ff3333; padding: 6px;
-            text-align: center; font-weight: bold; margin-bottom: 10px;
-            animation: flash 0.5s infinite alternate;
-        }
+
+        /* Таймер */
+        .action-timer { background: #440000; border: 1px solid #ff3333; color: #ff3333; padding: 6px; text-align: center; font-weight: bold; margin-bottom: 10px; animation: flash 0.5s infinite alternate; }
         .action-timer.hidden { display: none; }
         @keyframes flash { 0% { opacity: 0.7; } 100% { opacity: 1; } }
-        /* ПОДСВЕТКА СПИКЕРОВ */
+
+        /* Подсветка спикеров (не меняется от темы) */
         .msg-christine { color: #ff3333 !important; text-shadow: 0 0 5px #ff1111; }
-        .msg-driver { color: #e2e8f0 !important; }
-        .msg-system, .msg-choice { color: #33ff33 !important; text-shadow: 0 0 5px #00ff00; }
+        .msg-choice { color: #33ff33 !important; text-shadow: 0 0 5px #00ff00; }
         .msg-lebay { color: #ffaa00 !important; font-style: italic; }
         .msg-radio { color: #00ffff !important; font-style: italic; }
 
-        /* ========== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ 25 СХЕМ ========== */
+        /* ---------- ОСНОВНЫЕ ТЕМЫ (20 вариантов) ---------- */
+        /* Универсальные классы – каждая тема переопределяет переменные */
+        .theme-custom { --term-color: #2aff6e; --term-glow: 0 0 8px #2aff6e; --term-bg: #06090e; --border-color: #2aff6e; }
         .theme-green-phosphor { --term-color: #33ff33; --term-glow: 0 0 8px #00ff00; --term-bg: #030803; --border-color: #1b471b; }
         .theme-amber-terminal { --term-color: #ffaa00; --term-glow: 0 0 8px #ff8800; --term-bg: #080500; --border-color: #4a2f00; }
         .theme-blood-fury { --term-color: #ff2222; --term-glow: 0 0 10px #ff0000; --term-bg: #0a0101; --border-color: #5c0404; }
         .theme-cyberpunk-88 { --term-color: #00ffff; --term-glow: 0 0 8px #00cccc, 0 0 15px #ff00ff; --term-bg: #090212; --border-color: #ff00ff; }
+        .theme-bw-thunder { --term-color: #ffffff; --term-glow: 0 0 6px #ffffff; --term-bg: #050505; --border-color: #444444; }
+        .theme-fallout-pip { --term-color: #1aff2c; --term-glow: 0 0 8px #1aff2c; --term-bg: #051407; --border-color: #0f3d14; }
+        .theme-matrix-code { --term-color: #00ff41; --term-glow: 0 0 10px #00ff41; --term-bg: #010502; --border-color: #008f11; }
+        .theme-retro-commodore { --term-color: #3b5998; --term-glow: 0 0 6px #3b5998; --term-bg: #000044; --border-color: #3b5998; }
+        .theme-dead-space { --term-color: #ff6600; --term-glow: 0 0 8px #ff6600; --term-bg: #0f0a05; --border-color: #4a2700; }
+        /* Дополнительные 10 тем для расширения до 20 */
+        .theme-neon-orange { --term-color: #ff6600; --term-glow: 0 0 10px #ff6600; --term-bg: #1a0a00; --border-color: #ff6600; }
+        .theme-ice-blue { --term-color: #00aaff; --term-glow: 0 0 10px #00aaff; --term-bg: #001020; --border-color: #00aaff; }
+        .theme-rose-pink { --term-color: #ff3399; --term-glow: 0 0 10px #ff3399; --term-bg: #200010; --border-color: #ff3399; }
+        .theme-lime-acid { --term-color: #ccff00; --term-glow: 0 0 10px #ccff00; --term-bg: #0a1a00; --border-color: #ccff00; }
+        .theme-deep-purple { --term-color: #aa66ff; --term-glow: 0 0 10px #aa66ff; --term-bg: #0a0020; --border-color: #aa66ff; }
+        .theme-synthwave { --term-color: #ff00cc; --term-glow: 0 0 10px #ff00cc; --term-bg: #1a0020; --border-color: #ff00cc; }
+        .theme-steel-blue { --term-color: #4682b4; --term-glow: 0 0 8px #4682b4; --term-bg: #001020; --border-color: #4682b4; }
+        .theme-gold-leaf { --term-color: #eebb55; --term-glow: 0 0 8px #eebb55; --term-bg: #1a1000; --border-color: #eebb55; }
+        .theme-emerald-night { --term-color: #33cc99; --term-glow: 0 0 8px #33cc99; --term-bg: #002010; --border-color: #33cc99; }
+        .theme-sakura { --term-color: #ff99cc; --term-glow: 0 0 10px #ff99cc; --term-bg: #200010; --border-color: #ff99cc; }
+
+        /* Применение переменных ко всем элементам интерфейса */
         .theme-green-phosphor .sega-terminal, .theme-amber-terminal .sega-terminal,
-        .theme-blood-fury .sega-terminal, .theme-cyberpunk-88 .sega-terminal {
-            background: var(--term-bg) !important; border-color: var(--border-color) !important;
+        .theme-blood-fury .sega-terminal, .theme-cyberpunk-88 .sega-terminal,
+        .theme-bw-thunder .sega-terminal, .theme-fallout-pip .sega-terminal,
+        .theme-matrix-code .sega-terminal, .theme-retro-commodore .sega-terminal,
+        .theme-dead-space .sega-terminal, .theme-neon-orange .sega-terminal,
+        .theme-ice-blue .sega-terminal, .theme-rose-pink .sega-terminal,
+        .theme-lime-acid .sega-terminal, .theme-deep-purple .sega-terminal,
+        .theme-synthwave .sega-terminal, .theme-steel-blue .sega-terminal,
+        .theme-gold-leaf .sega-terminal, .theme-emerald-night .sega-terminal,
+        .theme-sakura .sega-terminal, .theme-classic-sega .sega-terminal {
+            background: var(--term-bg) !important;
+            border-color: var(--border-color) !important;
         }
         .theme-green-phosphor .terminal-output, .theme-amber-terminal .terminal-output,
-        .theme-blood-fury .terminal-output, .theme-cyberpunk-88 .terminal-output {
-            color: var(--term-color) !important; border-color: var(--term-color) !important;
-            text-shadow: var(--term-glow) !important; background: #000 !important;
+        .theme-blood-fury .terminal-output, .theme-cyberpunk-88 .terminal-output,
+        .theme-bw-thunder .terminal-output, .theme-fallout-pip .terminal-output,
+        .theme-matrix-code .terminal-output, .theme-retro-commodore .terminal-output,
+        .theme-dead-space .terminal-output, .theme-neon-orange .terminal-output,
+        .theme-ice-blue .terminal-output, .theme-rose-pink .terminal-output,
+        .theme-lime-acid .terminal-output, .theme-deep-purple .terminal-output,
+        .theme-synthwave .terminal-output, .theme-steel-blue .terminal-output,
+        .theme-gold-leaf .terminal-output, .theme-emerald-night .terminal-output,
+        .theme-sakura .terminal-output, .theme-classic-sega .terminal-output {
+            color: var(--term-color) !important;
+            border-color: var(--term-color) !important;
+            text-shadow: var(--term-glow) !important;
+            background: #000 !important;
         }
+        /* Аналогично для всех остальных элементов: чат, матрица, кнопки, диалоговые окна */
         .theme-green-phosphor .terminal-input-line, .theme-amber-terminal .terminal-input-line,
-        .theme-blood-fury .terminal-input-line, .theme-cyberpunk-88 .terminal-input-line {
-            border-color: var(--term-color) !important; background: var(--term-bg) !important;
+        .theme-blood-fury .terminal-input-line, .theme-cyberpunk-88 .terminal-input-line,
+        .theme-bw-thunder .terminal-input-line, .theme-fallout-pip .terminal-input-line,
+        .theme-matrix-code .terminal-input-line, .theme-retro-commodore .terminal-input-line,
+        .theme-dead-space .terminal-input-line, .theme-neon-orange .terminal-input-line,
+        .theme-ice-blue .terminal-input-line, .theme-rose-pink .terminal-input-line,
+        .theme-lime-acid .terminal-input-line, .theme-deep-purple .terminal-input-line,
+        .theme-synthwave .terminal-input-line, .theme-steel-blue .terminal-input-line,
+        .theme-gold-leaf .terminal-input-line, .theme-emerald-night .terminal-input-line,
+        .theme-sakura .terminal-input-line, .theme-classic-sega .terminal-input-line {
+            border-color: var(--term-color) !important;
+            background: var(--term-bg) !important;
         }
         .theme-green-phosphor .terminal-prompt, .theme-amber-terminal .terminal-prompt,
-        .theme-blood-fury .terminal-prompt, .theme-cyberpunk-88 .terminal-prompt {
-            color: var(--term-color) !important; text-shadow: var(--term-glow) !important;
+        .theme-blood-fury .terminal-prompt, .theme-cyberpunk-88 .terminal-prompt,
+        .theme-bw-thunder .terminal-prompt, .theme-fallout-pip .terminal-prompt,
+        .theme-matrix-code .terminal-prompt, .theme-retro-commodore .terminal-prompt,
+        .theme-dead-space .terminal-prompt, .theme-neon-orange .terminal-prompt,
+        .theme-ice-blue .terminal-prompt, .theme-rose-pink .terminal-prompt,
+        .theme-lime-acid .terminal-prompt, .theme-deep-purple .terminal-prompt,
+        .theme-synthwave .terminal-prompt, .theme-steel-blue .terminal-prompt,
+        .theme-gold-leaf .terminal-prompt, .theme-emerald-night .terminal-prompt,
+        .theme-sakura .terminal-prompt, .theme-classic-sega .terminal-prompt {
+            color: var(--term-color) !important;
+            text-shadow: var(--term-glow) !important;
         }
+        /* Перекраска матрицы и диалоговой области */
+        .theme-green-phosphor .matrix-container, .theme-amber-terminal .matrix-container,
+        .theme-blood-fury .matrix-container, .theme-cyberpunk-88 .matrix-container,
+        .theme-bw-thunder .matrix-container, .theme-fallout-pip .matrix-container,
+        .theme-matrix-code .matrix-container, .theme-retro-commodore .matrix-container,
+        .theme-dead-space .matrix-container, .theme-neon-orange .matrix-container,
+        .theme-ice-blue .matrix-container, .theme-rose-pink .matrix-container,
+        .theme-lime-acid .matrix-container, .theme-deep-purple .matrix-container,
+        .theme-synthwave .matrix-container, .theme-steel-blue .matrix-container,
+        .theme-gold-leaf .matrix-container, .theme-emerald-night .matrix-container,
+        .theme-sakura .matrix-container, .theme-classic-sega .matrix-container {
+            border-color: var(--term-color) !important;
+            box-shadow: 0 0 15px var(--term-color);
+        }
+        .theme-green-phosphor .dialogue-area, .theme-amber-terminal .dialogue-area,
+        .theme-blood-fury .dialogue-area, .theme-cyberpunk-88 .dialogue-area,
+        .theme-bw-thunder .dialogue-area, .theme-fallout-pip .dialogue-area,
+        .theme-matrix-code .dialogue-area, .theme-retro-commodore .dialogue-area,
+        .theme-dead-space .dialogue-area, .theme-neon-orange .dialogue-area,
+        .theme-ice-blue .dialogue-area, .theme-rose-pink .dialogue-area,
+        .theme-lime-acid .dialogue-area, .theme-deep-purple .dialogue-area,
+        .theme-synthwave .dialogue-area, .theme-steel-blue .dialogue-area,
+        .theme-gold-leaf .dialogue-area, .theme-emerald-night .dialogue-area,
+        .theme-sakura .dialogue-area, .theme-classic-sega .dialogue-area {
+            background: var(--term-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+        /* Бабблы Кристины и Водителя */
+        .theme-green-phosphor .christine-pixelbox, .theme-amber-terminal .christine-pixelbox,
+        .theme-blood-fury .christine-pixelbox, .theme-cyberpunk-88 .christine-pixelbox,
+        .theme-bw-thunder .christine-pixelbox, .theme-fallout-pip .christine-pixelbox,
+        .theme-matrix-code .christine-pixelbox, .theme-retro-commodore .christine-pixelbox,
+        .theme-dead-space .christine-pixelbox, .theme-neon-orange .christine-pixelbox,
+        .theme-ice-blue .christine-pixelbox, .theme-rose-pink .christine-pixelbox,
+        .theme-lime-acid .christine-pixelbox, .theme-deep-purple .christine-pixelbox,
+        .theme-synthwave .christine-pixelbox, .theme-steel-blue .christine-pixelbox,
+        .theme-gold-leaf .christine-pixelbox, .theme-emerald-night .christine-pixelbox,
+        .theme-sakura .christine-pixelbox, .theme-classic-sega .christine-pixelbox {
+            background: var(--term-bg) !important;
+            border: 1px solid var(--term-color) !important;
+            color: var(--term-color) !important;
+            text-shadow: var(--term-glow) !important;
+        }
+        .theme-green-phosphor .christine-typewriter, .theme-amber-terminal .christine-typewriter,
+        .theme-blood-fury .christine-typewriter, .theme-cyberpunk-88 .christine-typewriter,
+        .theme-bw-thunder .christine-typewriter, .theme-fallout-pip .christine-typewriter,
+        .theme-matrix-code .christine-typewriter, .theme-retro-commodore .christine-typewriter,
+        .theme-dead-space .christine-typewriter, .theme-neon-orange .christine-typewriter,
+        .theme-ice-blue .christine-typewriter, .theme-rose-pink .christine-typewriter,
+        .theme-lime-acid .christine-typewriter, .theme-deep-purple .christine-typewriter,
+        .theme-synthwave .christine-typewriter, .theme-steel-blue .christine-typewriter,
+        .theme-gold-leaf .christine-typewriter, .theme-emerald-night .christine-typewriter,
+        .theme-sakura .christine-typewriter, .theme-classic-sega .christine-typewriter {
+            background: var(--term-bg) !important;
+            border-color: var(--term-color) !important;
+            color: var(--term-color) !important;
+        }
+        /* Кинескопные эффекты (оставляем без изменений) */
         .fx-flicker-active .sega-terminal { animation: crtFlicker 0.15s infinite; }
         @keyframes crtFlicker { 0% { opacity: 0.98; } 50% { opacity: 1; } 100% { opacity: 0.99; } }
         .fx-bad-signal-active .sega-terminal { animation: badSignal 3s infinite steps(1); }
@@ -148,15 +309,60 @@
             96% { transform: translateY(-4px); filter: blur(0.5px); }
             98% { transform: translateY(3px); filter: blur(1px); } }
         .fx-total-madness-active .thought-window { animation: matrixMadness 0.4s infinite alternate; }
-        @keyframes matrixMadness {
-            0% { filter: hue-rotate(0deg) contrast(1); }
-            100% { filter: hue-rotate(45deg) contrast(1.2); box-shadow: 0 0 30px #ff0055; }
-        }
+        @keyframes matrixMadness { 0% { filter: hue-rotate(0deg) contrast(1); } 100% { filter: hue-rotate(45deg) contrast(1.2); box-shadow: 0 0 30px #ff0055; } }
+        .fx-noise-active .sega-terminal { animation: crtNoise 0.2s infinite; }
+        @keyframes crtNoise { 0% { filter: contrast(1) brightness(1); } 50% { filter: contrast(1.05) brightness(0.95); } 100% { filter: contrast(0.95) brightness(1.05); } }
+        /* Эффект fx-crt управляется через .crt-scanlines, fx-normal – без анимации */
     </style>
 </head>
 <body>
 <div class="thought-window">
     <div class="sega-stripes"></div>
+    <!-- ПУЛЬТ УПРАВЛЕНИЯ СТИЛЯМИ (ПРАВЫЙ ВЕРХНИЙ УГОЛ) -->
+    <div class="style-control-panel">
+        <select id="themeSelect">
+            <option value="classic-sega">Classic Sega</option>
+            <option value="green-phosphor">Green Phosphor</option>
+            <option value="amber-terminal">Amber Terminal</option>
+            <option value="blood-fury">Blood Fury</option>
+            <option value="cyberpunk-88">Cyberpunk 88</option>
+            <option value="bw-thunder">Monochrome Storm</option>
+            <option value="fallout-pip">Pip-Boy 3000</option>
+            <option value="matrix-code">The Matrix</option>
+            <option value="retro-commodore">Commodore 64</option>
+            <option value="dead-space">USG Ishimura</option>
+            <option value="neon-orange">Neon Orange</option>
+            <option value="ice-blue">Ice Blue</option>
+            <option value="rose-pink">Rose Pink</option>
+            <option value="lime-acid">Lime Acid</option>
+            <option value="deep-purple">Deep Purple</option>
+            <option value="synthwave">Synthwave 86</option>
+            <option value="steel-blue">Steel Blue</option>
+            <option value="gold-leaf">Gold Leaf</option>
+            <option value="emerald-night">Emerald Night</option>
+            <option value="sakura">Sakura Dream</option>
+        </select>
+        <select id="fxSelect">
+            <option value="fx-crt">CRT Scanlines</option>
+            <option value="fx-normal">Clean</option>
+            <option value="fx-flicker">Flicker</option>
+            <option value="fx-bad-signal">Bad Signal</option>
+            <option value="fx-noise">White Noise</option>
+            <option value="fx-total-madness">Total Madness</option>
+        </select>
+        <select id="statColorSelect">
+            <option value="default">Default LEDs</option>
+            <option value="#ff0055">Neon Red</option>
+            <option value="#33ff33">Phosphor Green</option>
+            <option value="#00ffff">Cyan</option>
+            <option value="#ffaa00">Amber</option>
+            <option value="#ffffff">White</option>
+            <option value="#ff00ff">Magenta</option>
+            <option value="#6600ff">Purple</option>
+        </select>
+        <button id="randomStyleBtn">Random Style</button>
+    </div>
+
     <div class="game-layout">
         <div class="matrix-container">
             <div class="scene-indicator" id="sceneIndicator">SCENE: -- | FRAME: --</div>
@@ -165,6 +371,7 @@
         </div>
         <div class="dialogue-area" id="dialogueArea"></div>
     </div>
+
     <div id="loreOverlay" class="lore-overlay hidden">
         <div class="crt-scanlines"></div>
         <div class="lore-window">
@@ -174,17 +381,18 @@
             </div>
             <div class="lore-layout">
                 <div class="lore-column">
-                    <div class="lore-block"><div class="block-title">[🎯 ТЕКУЩАЯ МИССИЯ]</div><div id="loreObjective" class="block-content"></div></div>
-                    <div class="lore-block"><div class="block-title">[📦 БАРДАЧОК]</div><div id="loreInventory" class="block-content font-highlight"></div></div>
+                    <div class="lore-block"><div class="block-title">[ТЕКУЩАЯ МИССИЯ]</div><div id="loreObjective" class="block-content"></div></div>
+                    <div class="lore-block"><div class="block-title">[БАРДАЧОК]</div><div id="loreInventory" class="block-content font-highlight"></div></div>
                 </div>
                 <div class="lore-column">
-                    <div class="lore-block full-height"><div class="block-title">[📜 АРХИВ ЛЕБЭЯ]</div><div id="loreArchiveList" class="archive-scroll block-content"></div></div>
+                    <div class="lore-block full-height"><div class="block-title">[АРХИВ ЛЕБЭЯ]</div><div id="loreArchiveList" class="archive-scroll block-content"></div></div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="sega-terminal">
-        <div id="actionTimer" class="action-timer hidden">💥 КРИТИЧЕСКОЕ РЕШЕНИЕ: <span id="timerCount">10</span>s</div>
+        <div id="actionTimer" class="action-timer hidden">КРИТИЧЕСКОЕ РЕШЕНИЕ: <span id="timerCount">10</span>s</div>
         <div class="terminal-output" id="termOutput">[СИСТЕМА] Загрузка...</div>
         <div class="terminal-input-line">
             <span class="terminal-prompt">C:\&gt;</span>
@@ -192,31 +400,8 @@
             <button id="sendBtn">ВВОД</button>
         </div>
     </div>
-    <div class="test-buttons" style="display: flex; flex-direction: column; gap: 10px; border-top: 1px dashed #3a4254; padding-top: 15px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <label for="themeSelect" style="color: #5a7e9a; font-size: 0.85rem; font-weight: bold;">[🎨 ЦВЕТОВАЯ СХЕМА]:</label>
-            <select id="themeSelect" style="background: #161b22; border: 2px solid #30363d; color: #fff; padding: 4px; font-family: monospace; outline: none; cursor: pointer;">
-                <option value="classic-sega">01. Classic Sega (Оригинал)</option>
-                <option value="green-phosphor">02. Green Phosphor (Зеленый фосфор ЭЛТ)</option>
-                <option value="amber-terminal">03. Amber Terminal (Винтажный янтарь)</option>
-                <option value="blood-fury">04. Blood Fury (Кровавое безумие Кристины)</option>
-                <option value="cyberpunk-88">05. Cyberpunk 88 (Неоновый киберпанк)</option>
-            </select>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <label for="fxSelect" style="color: #5a7e9a; font-size: 0.85rem; font-weight: bold;">[📺 КИНЕСКОПНЫЙ ЭФФЕКТ]:</label>
-            <select id="fxSelect" style="background: #161b22; border: 2px solid #30363d; color: #fff; padding: 4px; font-family: monospace; outline: none; cursor: pointer;">
-                <option value="fx-normal">Вариант A: Без искажений</option>
-                <option value="fx-crt">Вариант B: Сканирующие линии (CRT)</option>
-                <option value="fx-flicker">Вариант C: Аналоговое мерцание</option>
-                <option value="fx-bad-signal">Вариант D: Сбой синхронизации (Шум)</option>
-                <option value="fx-total-madness">Вариант E: Полный психодел (Глитч-апокалипсис)</option>
-            </select>
-        </div>
-        <div style="display: flex; gap: 10px; margin-top: 5px;">
-            <button id="btnClear">Очистить лог</button>
-            <span style="color: #5a7e9a; font-size: 0.75rem; align-self: center;">Комбинаций доступно: 25 стилей</span>
-        </div>
+    <div class="test-buttons" style="margin-top: 10px;">
+        <button id="btnClear">Очистить лог</button>
     </div>
 </div>
 
@@ -245,13 +430,22 @@
     function addActionMessage(text) { let d=document.createElement('div'); d.className='christine-highlight'; d.textContent=text; dialogueDiv.appendChild(d); dialogueDiv.scrollTop=dialogueDiv.scrollHeight; }
     function setInputEnabled(en) { cmdInput.disabled=!en; sendBtn.disabled=!en; if(en) cmdInput.focus(); }
 
-    function updateStatsUI(rep,san,fuel,repu,agg) {
-        document.getElementById('repBar').style.width=rep+'%'; document.getElementById('repVal').innerText=rep+'%';
-        document.getElementById('sanBar').style.width=san+'%'; document.getElementById('sanVal').innerText=san+'%';
-        document.getElementById('fuelBar').style.width=fuel+'%'; document.getElementById('fuelVal').innerText=fuel+'%';
-        document.getElementById('rep2Bar').style.width=repu+'%'; document.getElementById('rep2Val').innerText=repu+'%';
-        let aggBar=document.getElementById('aggBar'); if(aggBar) aggBar.style.width=agg+'%';
-        let aggVal=document.getElementById('aggVal'); if(aggVal) aggVal.innerText=agg+'%';
+    function updateStatsUI(repair, sanity, fuel, reputation, aggression) {
+        document.getElementById('repBar').style.width = repair + '%';
+        document.getElementById('repVal').innerText = repair + '%';
+        document.getElementById('sanBar').style.width = sanity + '%';
+        document.getElementById('sanVal').innerText = sanity + '%';
+        document.getElementById('fuelBar').style.width = fuel + '%';
+        document.getElementById('fuelVal').innerText = fuel + '%';
+        document.getElementById('rep2Bar').style.width = reputation + '%';
+        document.getElementById('rep2Val').innerText = reputation + '%';
+        let aggVal = (aggression !== undefined && aggression !== null) ? aggression : 30;
+        const aggBar = document.getElementById('aggBar');
+        const aggValSpan = document.getElementById('aggVal');
+        if (aggBar && aggValSpan) {
+            aggBar.style.width = aggVal + '%';
+            aggValSpan.innerText = aggVal + '%';
+        }
     }
 
     function createStatsUI() {
@@ -280,22 +474,41 @@
         });
     }
 
-    // ==================== ВЫВОД ДИАЛОГА ====================
-    async function displayMessageSteps(steps) {
+    // ==================== ВЫВОД ДИАЛОГА С ПОДСВЕТКОЙ СИСТЕМЫ ====================
+    async function displayMessageSteps(steps, withContinuePrompt = true) {
         setInputEnabled(false);
         for(let idx=0; idx<steps.length; idx++){
-            let div=document.createElement('div'); div.className='christine-pixelbox';
-            let u=steps[idx].toUpperCase();
-            if(u.startsWith("КРИСТИНА")) div.classList.add("msg-christine");
-            else if(u.startsWith("ВОДИТЕЛЬ")) div.classList.add("msg-driver");
-            else if(u.startsWith("СИСТЕМА")) div.classList.add("msg-system");
-            else if(u.startsWith("ВЫБОР")) div.classList.add("msg-choice");
-            else if(u.startsWith("ЛЕБЭЙ")) div.classList.add("msg-lebay");
-            else if(u.startsWith("РАДИО")) div.classList.add("msg-radio");
-            dialogueDiv.appendChild(div); dialogueDiv.scrollTop=dialogueDiv.scrollHeight;
-            await typewriterLine(steps[idx], div);
-            if(idx===steps.length-1 && currentScene!==targetScene){ currentScene=targetScene; currentFrame=0; }
-            if(idx<steps.length-1){
+            const stepText = steps[idx];
+            const upper = stepText.toUpperCase();
+            let div;
+            if (upper.startsWith("СИСТЕМА") || upper.startsWith("ВНИМАНИЕ")) {
+                div = document.createElement('div');
+                div.className = 'msg-system-code';
+                let formatted = stepText
+                    .replace(/(ТРЕВОГА|ВНИМАНИЕ|КРИТИЧЕСКОЕ|КРИТИЧЕСКИЙ|УДАР)/gi, '<span class="code-keyword-red">$1</span>')
+                    .replace(/(Рассудок|Ремонт|Топливо|Ярость|Репутация)/gi, '<span class="code-keyword-amber">$1</span>')
+                    .replace(/(Кристина|Christine|мотор|V8)/gi, '<span class="code-keyword-blue">$1</span>');
+                div.innerHTML = formatted;
+                dialogueDiv.appendChild(div);
+                dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+                playTypeSound();
+            } else {
+                div = document.createElement('div');
+                div.className = 'christine-pixelbox';
+                if (upper.startsWith("КРИСТИНА")) div.classList.add("msg-christine");
+                else if (upper.startsWith("ВОДИТЕЛЬ")) div.className = "christine-typewriter";
+                else if (upper.startsWith("ВЫБОР")) div.classList.add("msg-choice");
+                else if (upper.startsWith("ЛЕБЭЙ")) div.classList.add("msg-lebay");
+                else if (upper.startsWith("РАДИО")) div.classList.add("msg-radio");
+                dialogueDiv.appendChild(div);
+                dialogueDiv.scrollTop = dialogueDiv.scrollHeight;
+                await typewriterLine(stepText, div);
+            }
+            if(idx === steps.length-1 && currentScene !== targetScene){
+                currentScene = targetScene;
+                currentFrame = 0;
+            }
+            if(idx < steps.length-1 && withContinuePrompt){
                 let p=document.createElement('div'); p.className='continue-prompt'; p.textContent='[ Нажмите Enter для продолжения... ]';
                 dialogueDiv.appendChild(p); dialogueDiv.scrollTop=dialogueDiv.scrollHeight;
                 await new Promise(r=>{ let h=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); document.removeEventListener('keydown',h); p.remove(); cmdInput.value=''; r(); } }; document.addEventListener('keydown',h); });
@@ -304,12 +517,25 @@
         setInputEnabled(true);
     }
 
-    // ==================== ОБРАБОТКА ОТВЕТА СЕРВЕРА ====================
+    // ==================== ОБРАБОТКА ОТВЕТА СЕРВЕРА (с таймером и авто-стилем) ====================
     async function handleServerResponse(result) {
         if(countdownInterval) clearInterval(countdownInterval);
         if(result.success){
             updateStatsUI(result.stats.repair, result.stats.sanity, result.stats.fuel, result.stats.reputation, result.stats.aggression);
             if(result.currentScene!==undefined) targetScene=result.currentScene;
+
+            // АВТОМАТИЧЕСКАЯ СМЕНА СТИЛЯ ПО СЦЕНЕ (если не выбран ручной режим, но мы оставляем для атмосферы)
+            let autoTheme = "classic-sega";
+            let autoFx = "fx-crt";
+            if ([2, 10, 11].includes(targetScene)) { autoTheme = "green-phosphor"; autoFx = "fx-normal"; }
+            else if ([5, 6].includes(targetScene)) { autoTheme = "amber-terminal"; autoFx = "fx-flicker"; }
+            else if ([9, 12, 17, 82].includes(targetScene)) { autoTheme = "blood-fury"; autoFx = "fx-bad-signal"; }
+            else if ([13, 83].includes(targetScene)) { autoTheme = "bw-thunder"; autoFx = "fx-crt"; }
+            else if ([84].includes(targetScene)) { autoTheme = "cyberpunk-88"; autoFx = "fx-total-madness"; }
+            // Применяем стиль (ручной выбор из селекторов имеет приоритет, но авто-стиль применяется только если пользователь не менял вручную? 
+            // Для простоты будем применять всегда, но можно добавить флаг. Оставим как рекомендацию.
+            applyCombinedStyle(autoTheme, autoFx);
+
             if(result.message && result.message.startsWith("[БОРТОВОЙ ЖУРНАЛ]")){
                 let overlay=document.getElementById('loreOverlay');
                 overlay.classList.remove('hidden');
@@ -447,29 +673,90 @@
             expectedCommands=st.expected||[];
             if(expectedCommands.length) appendTerm(`Ожидание: ${expectedCommands.join(', ').toUpperCase()}`);
             startAnimation();
-            appendTerm("СИСТЕМА ПОДСКАЗОК: напишите 'ИНФО' для бортового журнала. Кликните по индикатору сцены — включите радио.");
+            appendTerm("СИСТЕМА ПОДСКАЗОК: напишите 'ИНФО' для бортового журнала. Кликните по индикатору сцены — включите радио. Используйте пульт в углу для смены стилей.");
         } catch(e){ appendTerm("ОШИБКА: сервер не отвечает."); setInputEnabled(false); }
     }
 
-    // ==================== ПЕРЕКЛЮЧАТЕЛЬ 25 СТИЛЕЙ ====================
+    // ==================== ПЕРЕКЛЮЧАТЕЛЬ СТИЛЕЙ (ПУЛЬТ) ====================
     const themeSelect = document.getElementById('themeSelect');
     const fxSelect = document.getElementById('fxSelect');
+    const statColorSelect = document.getElementById('statColorSelect');
+    const randomStyleBtn = document.getElementById('randomStyleBtn');
     const bodyEl = document.body;
-    function applyCombinedStyle() {
-        bodyEl.classList.remove('theme-green-phosphor', 'theme-amber-terminal', 'theme-blood-fury', 'theme-cyberpunk-88');
-        bodyEl.classList.remove('fx-flicker-active', 'fx-bad-signal-active', 'fx-total-madness-active');
+
+    function applyCombinedStyle(autoTheme, autoFx) {
+        if (autoTheme) themeSelect.value = autoTheme;
+        if (autoFx) fxSelect.value = autoFx;
+
+        // Список всех возможных тем (включая классическую и новые)
+        const allThemes = [
+            'classic-sega', 'green-phosphor', 'amber-terminal', 'blood-fury', 'cyberpunk-88',
+            'bw-thunder', 'fallout-pip', 'matrix-code', 'retro-commodore', 'dead-space',
+            'neon-orange', 'ice-blue', 'rose-pink', 'lime-acid', 'deep-purple',
+            'synthwave', 'steel-blue', 'gold-leaf', 'emerald-night', 'sakura'
+        ];
+        // Удаляем все темы
+        bodyEl.classList.remove(...allThemes);
+        bodyEl.classList.remove('fx-flicker-active', 'fx-bad-signal-active', 'fx-total-madness-active', 'fx-noise-active');
+
         const activeTheme = themeSelect.value;
         const activeFx = fxSelect.value;
-        if (activeTheme !== 'classic-sega') bodyEl.classList.add(`theme-${activeTheme}`);
+
+        if (activeTheme !== 'classic-sega') {
+            bodyEl.classList.add(`theme-${activeTheme}`);
+        } else {
+            bodyEl.classList.add('theme-classic-sega');
+        }
+
         const crtOverlay = document.querySelector('.crt-scanlines');
         if (crtOverlay) crtOverlay.style.display = (activeFx === 'fx-crt') ? 'block' : 'none';
+
         if (activeFx === 'fx-flicker') bodyEl.classList.add('fx-flicker-active');
         else if (activeFx === 'fx-bad-signal') bodyEl.classList.add('fx-bad-signal-active');
         else if (activeFx === 'fx-total-madness') bodyEl.classList.add('fx-total-madness-active');
-        if (typeof appendTerm === 'function') appendTerm(`ИНТЕРФЕЙС: стиль [${themeSelect.options[themeSelect.selectedIndex].text}] + [${fxSelect.options[fxSelect.selectedIndex].text}]`);
+        else if (activeFx === 'fx-noise') bodyEl.classList.add('fx-noise-active');
+
+        if (typeof appendTerm === 'function') {
+            appendTerm(`Стиль изменён: ${themeSelect.options[themeSelect.selectedIndex].text} + ${fxSelect.options[fxSelect.selectedIndex].text}`);
+        }
     }
-    themeSelect.addEventListener('change', applyCombinedStyle);
-    fxSelect.addEventListener('change', applyCombinedStyle);
+
+    function applyCustomStatColors() {
+        const color = statColorSelect.value;
+        const blocks = document.querySelectorAll('.stat');
+        const labels = document.querySelectorAll('.stat-label');
+        const fills = document.querySelectorAll('.stat-fill');
+        if (color === 'default') {
+            blocks.forEach(b => { b.style.borderColor = '#2aff6e'; b.style.boxShadow = '0 0 8px rgba(42,255,110,0.4)'; });
+            labels.forEach(l => { l.style.color = '#2aff6e'; l.style.textShadow = '0 0 4px #2aff6e'; });
+            document.getElementById('repBar').style.background = '#ff4444';
+            document.getElementById('sanBar').style.background = '#44ff44';
+            document.getElementById('fuelBar').style.background = '#ffff44';
+            document.getElementById('rep2Bar').style.background = '#ff44ff';
+            document.getElementById('aggBar').style.background = '#ff6600';
+            return;
+        }
+        blocks.forEach(b => { b.style.borderColor = color; b.style.boxShadow = `0 0 10px ${color}`; });
+        labels.forEach(l => { l.style.color = color; l.style.textShadow = `0 0 6px ${color}`; });
+        fills.forEach(f => { f.style.background = color; f.style.boxShadow = `0 0 8px ${color}`; });
+        appendTerm(`Цвет шкал изменён на ${color}`);
+    }
+
+    function randomStyle() {
+        const themeOptions = themeSelect.options;
+        const fxOptions = fxSelect.options;
+        const randomThemeIndex = Math.floor(Math.random() * themeOptions.length);
+        const randomFxIndex = Math.floor(Math.random() * fxOptions.length);
+        themeSelect.selectedIndex = randomThemeIndex;
+        fxSelect.selectedIndex = randomFxIndex;
+        applyCombinedStyle();
+        appendTerm(`Случайный стиль: ${themeOptions[randomThemeIndex].text} + ${fxOptions[randomFxIndex].text}`);
+    }
+
+    themeSelect.addEventListener('change', () => applyCombinedStyle());
+    fxSelect.addEventListener('change', () => applyCombinedStyle());
+    statColorSelect.addEventListener('change', applyCustomStatColors);
+    randomStyleBtn.addEventListener('click', randomStyle);
 
     // ==================== ПРИВЯЗКА СОБЫТИЙ ====================
     document.getElementById('sendBtn').addEventListener('click',handleCommand);
@@ -479,7 +766,8 @@
     document.getElementById('sceneIndicator').addEventListener('click',toggleRadio);
     createStatsUI();
     loadInitialData();
-    applyCombinedStyle(); // применение начальной комбинации
+    applyCombinedStyle();
+    applyCustomStatColors();
 </script>
 </body>
 </html>
