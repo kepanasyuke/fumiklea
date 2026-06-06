@@ -1,3 +1,6 @@
+![Uploading image.png…]()
+![Uploading image.png…]()
+
 # ⭕ Крестики-нолики (Tic‑Tac‑Toe) на JavaFX
 
 **Версия**: 1.0-SNAPSHOT  
