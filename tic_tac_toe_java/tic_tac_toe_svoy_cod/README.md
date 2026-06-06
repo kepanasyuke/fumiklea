@@ -59,6 +59,7 @@
 
 ## 📁 Структура проекта (внутри папки `tic_tac_toe_svoy_cod`)
 tic_tac_toe_svoy_cod/
+
 ├── .mvn/wrapper/ # Maven Wrapper (не требует установки Maven)
 ├── src/
 │ ├── main/
