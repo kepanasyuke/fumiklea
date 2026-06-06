@@ -57,23 +57,6 @@
 
 ---
 
-## 📁 Структура проекта (внутри папки `tic_tac_toe_svoy_cod`)
-tic_tac_toe_svoy_cod/
-
-├── .mvn/wrapper/ # Maven Wrapper (не требует установки Maven)
-├── src/
-│ ├── main/
-│ │ ├── java/com/example/tic_tac_toe_svoy_cod/
-│ │ │ ├── HelloApplication.java # Точка входа (запускает JavaFX)
-│ │ │ └── HelloController.java # Контроллер с игровой логикой
-│ │ └── resources/ # FXML-файлы и стили (если есть)
-│ └── test/ # (пока пусто, но можно добавить тесты)
-├── .gitignore
-├── mvnw, mvnw.cmd # Скрипты для Maven Wrapper
-└── pom.xml # Конфигурация Maven
-
-text
-
 **Главные классы:**
 - `HelloApplication` – загружает FXML и показывает окно.
 - `HelloController` – содержит:
