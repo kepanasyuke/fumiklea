@@ -59,7 +59,7 @@ _)=(/
 
 # 💾 FreaXExplorer v1.91 — Ретро-терминал археологии Unix & Linux
 
-<img width="934" height="710" alt="image" src="https://github.com/user-attachments/assets/007dcca9-2c21-4431-b91c-b2d296fb0010" />
+<img width="942" height="707" alt="image" src="https://github.com/user-attachments/assets/89b420f8-1205-4217-9a18-70d12d5ae71d" />
 
 Элегантное десктопное приложение на **Java Swing**, стилизованное под монохромный зеленый CRT-монитор (люминофор P1, IBM 5151). Программа имитирует низкоуровневую «археологическую» выгрузку исторических артефактов Unix/Linux из архивов **TUHS (The Unix Heritage Society)**.
 
