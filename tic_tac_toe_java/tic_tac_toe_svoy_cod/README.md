@@ -1,5 +1,7 @@
 <img width="536" height="448" alt="image" src="https://github.com/user-attachments/assets/03eb44b7-d2df-4f86-b604-c7bccf31eaa1" />
 
+<img width="540" height="448" alt="image" src="https://github.com/user-attachments/assets/cc260f78-2ff7-4385-afc2-dade2e7225f5" />
+
 # ⭕ Крестики-нолики (Tic‑Tac‑Toe) на JavaFX
 
 **Версия**: 1.0-SNAPSHOT  
