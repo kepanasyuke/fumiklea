@@ -47,5 +47,5 @@ python -m http.server 8000
 
 Может грузится долго, но работать должно.
 
-<img width="1200" height="868" alt="image" src="https://github.com/user-attachments/assets/dfc29de7-562a-4bf7-aa26-bd1ad63104a5" />
+<img width="1436" height="778" alt="image" src="https://github.com/user-attachments/assets/8a3db441-f666-45f2-9f51-8cbe2d294b0b" />
 
