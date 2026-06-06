@@ -46,3 +46,6 @@ python -m http.server 8000
    - `make serve` — чтобы запустить локальный сервер (удобно, если нужно проверить загрузку внешних ресурсов без CORS).
 
 Может грузится долго, но работать должно.
+
+<img width="1200" height="868" alt="image" src="https://github.com/user-attachments/assets/dfc29de7-562a-4bf7-aa26-bd1ad63104a5" />
+
