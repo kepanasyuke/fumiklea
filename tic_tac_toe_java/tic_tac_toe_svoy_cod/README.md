@@ -1,6 +1,3 @@
-Вот полный Markdown для вставки в README. Просто скопируйте всё ниже:
-
-```markdown
 # ⭕ Крестики-нолики (Tic‑Tac‑Toe) на JavaFX
 
 **Версия**: 1.0-SNAPSHOT  
