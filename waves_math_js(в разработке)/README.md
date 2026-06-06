@@ -49,3 +49,9 @@ python -m http.server 8000
 
 <img width="1436" height="778" alt="image" src="https://github.com/user-attachments/assets/8a3db441-f666-45f2-9f51-8cbe2d294b0b" />
 
+<img width="1389" height="876" alt="image" src="https://github.com/user-attachments/assets/7af5d8b9-6771-48a1-829d-d3cd8549e915" />
+
+<img width="1433" height="885" alt="image" src="https://github.com/user-attachments/assets/b12dc072-af23-4288-80e7-6535a7ba420c" />
+
+<img width="1417" height="880" alt="image" src="https://github.com/user-attachments/assets/124c1930-13a4-48d4-9d82-ba36a6d3580e" />
+
