@@ -22,7 +22,7 @@
         }
         body::after {
             content: ''; position: fixed; inset: 0; pointer-events: none;
-            background: radial-gradient(circle, transparent 35%, rgba(0,0,0,0.44) 100%);
+            background: radial-gradient(circle, transparent 38%, rgba(0,0,0,0.46) 100%);
             z-index: 5;
         }
         #info {
@@ -43,14 +43,14 @@
         #controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
             background: var(--panel-bg); backdrop-filter: blur(12px);
-            padding: 10px 18px; border-radius: 999px; color: white;
-            display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;
+            padding: 10px 16px; border-radius: 999px; color: white;
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between;
             align-items: center; z-index: 20; font-family: monospace;
             font-size: 13px; pointer-events: auto; border: 1px solid var(--panel-border);
             box-shadow: 0 16px 44px rgba(0,0,0,0.35);
         }
         .ctrl-group { display: flex; gap: 10px; background: rgba(19, 25, 39, 0.76);
-            padding: 6px 12px; border-radius: 999px; align-items: center;
+            padding: 6px 11px; border-radius: 999px; align-items: center;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); }
         button {
             background: linear-gradient(135deg, #2b3b52, #182536);
@@ -60,6 +60,7 @@
             letter-spacing: 0.04em; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.22);
         }
         button:hover { background: linear-gradient(135deg, #e67e22, #ff9f43); transform: translateY(-1px); box-shadow: 0 10px 24px rgba(230,126,34,0.25); }
+        button:focus-visible { outline: 2px solid rgba(255,179,107,0.8); outline-offset: 2px; }
         button.active { background: linear-gradient(135deg, #27ae60, #2ecc71); box-shadow: 0 10px 24px rgba(39,174,96,0.24); }
         select { background: rgba(15, 22, 34, 0.95); color: white; border: 1px solid rgba(255,179,107,0.42);
             padding: 5px 12px; border-radius: 30px; cursor: pointer; max-width: 260px; }
@@ -483,9 +484,12 @@
     const camera = new THREE.PerspectiveCamera(46, CONFIG.width / CONFIG.height, 0.1, CONFIG.cameraFar);
     camera.position.set(0, 18, 60);
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: CONFIG.useLogarithmicDepth });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     renderer.setSize(CONFIG.width, CONFIG.height);
     renderer.shadowMap.enabled = true;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.outline = 'none';
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
     document.body.appendChild(renderer.domElement);
@@ -497,6 +501,7 @@
     labelRenderer.domElement.style.pointerEvents = 'none';
     document.body.appendChild(labelRenderer.domElement);
     const effectComposer = new EffectComposer(renderer);
+    effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     effectComposer.addPass(new RenderPass(scene, camera));
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(CONFIG.width, CONFIG.height), CONFIG.bloomStrength, CONFIG.bloomRadius, CONFIG.bloomThreshold);
     bloomPass.enabled = true;
@@ -525,6 +530,14 @@
         new THREE.MeshBasicMaterial({ color: 0xffa04d, transparent: true, opacity: 0.16, side: THREE.BackSide, depthWrite: false })
     );
     scene.add(sunHalo);
+
+    const defaultCameraPosition = new THREE.Vector3(0, 18, 60);
+    const defaultCameraTarget = new THREE.Vector3(0, 0, 0);
+    function resetCameraToDefault() {
+        controls.target.copy(defaultCameraTarget);
+        camera.position.copy(defaultCameraPosition);
+        controls.update();
+    }
 
     let planets = [], dwarfPlanets = [], moons = [], comets = [], orbitLines = [], trailLines = [];
     let asteroidField = null, asteroidField2 = null, asteroidField3 = null, dustParticles = null, constellationLabels = [];
@@ -975,14 +988,12 @@
         [...planets, ...dwarfPlanets, ...moons, ...comets].forEach(b => b.reset());
         trailLines.forEach(l => { if (l) { l.geometry.dispose(); l.geometry = new THREE.BufferGeometry(); } });
         updateTrailVisuals();
-        controls.target.set(0,0,0); camera.position.set(0,18,60); controls.update();
+        resetCameraToDefault();
     }
 
     function focusOn(targetName) {
         if (targetName === 'Солнце') {
-            controls.target.set(0,0,0);
-            camera.position.set(0,18,60);
-            controls.update();
+            resetCameraToDefault();
             return;
         }
         const allBodies = [...planets, ...dwarfPlanets, ...moons, ...comets];
@@ -1086,28 +1097,57 @@
         requestAnimationFrame(animate);
     }
 
+    function validateSceneBlocks() {
+        const checks = [
+            ['Renderer', !!renderer?.domElement],
+            ['Composer', !!effectComposer],
+            ['Camera', !!camera && camera.isCamera],
+            ['Controls', !!controls],
+            ['Lighting', !!sunMesh && !!ambientLight],
+            ['Bodies', planets.length > 0],
+            ['Background', !!backgroundStars],
+            ['Nebulae', !!window.nebulaeGroup],
+            ['Stars', !!starsPoints || !CONFIG.showStars]
+        ];
+        console.table(checks.map(([name, ok]) => ({ block: name, status: ok ? 'OK' : 'WARN' })));
+    }
+
     async function start() {
-        initBodies();
-        createAsteroidBelts(CONFIG.quality);
-        createDust(CONFIG.quality);
-        createBackgroundStars();
-        createNebulae();
-        spaceDust = createSpaceDust();  // добавляем космическую пыль
-        if (CONFIG.showStars) await loadRealStars();
-        if (CONFIG.showDeepSky) await loadDeepSkyObjects();
-        addConstellationNames();
-        orbitLines.forEach(l => l.visible = showOrbits);
-        verifyRenderingTasks();
-        animate();
+        try {
+            initBodies();
+            createAsteroidBelts(CONFIG.quality);
+            createDust(CONFIG.quality);
+            createBackgroundStars();
+            createNebulae();
+            spaceDust = createSpaceDust();
+            if (CONFIG.showStars) await loadRealStars();
+            if (CONFIG.showDeepSky) await loadDeepSkyObjects();
+            addConstellationNames();
+            orbitLines.forEach(l => l.visible = showOrbits);
+            verifyRenderingTasks();
+            validateSceneBlocks();
+            animate();
+        } catch (error) {
+            console.error('Scene initialization failed:', error);
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) loadingDiv.textContent = 'Ошибка инициализации сцены';
+        }
     }
     start();
 
     // ========== 9. UI, DAT.GUI С РУССКИМИ НАЗВАНИЯМИ ==========
+    window.addEventListener('error', event => {
+        console.error('Runtime error:', event.error || event.message);
+    });
+    window.addEventListener('unhandledrejection', event => {
+        console.error('Unhandled promise rejection:', event.reason);
+    });
+
     const speedSpan = document.getElementById('speedVal');
     document.getElementById('slower').onclick = () => { currentSpeed = Math.max(0.1, currentSpeed/1.5); currentSpeed = Math.min(currentSpeed, CONFIG.maxTimeScale); speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
     document.getElementById('faster').onclick = () => { currentSpeed = Math.min(CONFIG.maxTimeScale, currentSpeed*1.5); speedSpan.innerText = currentSpeed.toFixed(1)+'x'; };
     document.getElementById('resetSpeed').onclick = () => { currentSpeed = 1.0; speedSpan.innerText = '1.0x'; };
-    document.getElementById('resetView').onclick = () => { controls.target.set(0,0,0); camera.position.set(0,18,60); controls.update(); };
+    document.getElementById('resetView').onclick = resetCameraToDefault;
     document.getElementById('resetSimulation').onclick = resetSimulation;
     const pauseBtn = document.getElementById('togglePause');
     const autoOrbitBtn = document.getElementById('toggleAutoOrbit');
@@ -1123,8 +1163,18 @@
         autoOrbitBtn.textContent = autoOrbitEnabled ? 'ОБЗОР ВКЛ' : 'АВТООБЗОР';
         autoOrbitBtn.classList.toggle('active', autoOrbitEnabled);
     };
-    trailsBtn.onclick = () => { CONFIG.showTrails = !CONFIG.showTrails; trailsBtn.textContent = CONFIG.showTrails ? "ВКЛ" : "ВЫКЛ"; trailsBtn.style.background = CONFIG.showTrails ? "#27ae60" : "#aa2e1e"; if(!CONFIG.showTrails) trailLines.forEach(l=>l.visible=false); else updateTrailVisuals(); };
-    document.getElementById('zoomSens').oninput = e => { controls.zoomSpeed = parseFloat(e.target.value); };
+    trailsBtn.onclick = () => {
+        CONFIG.showTrails = !CONFIG.showTrails;
+        trailsBtn.textContent = CONFIG.showTrails ? 'ВКЛ' : 'ВЫКЛ';
+        trailsBtn.classList.toggle('active', CONFIG.showTrails);
+        trailsBtn.style.background = CONFIG.showTrails ? '#27ae60' : '#aa2e1e';
+        if (!CONFIG.showTrails) trailLines.forEach(l => l.visible = false);
+        else updateTrailVisuals();
+    };
+    document.getElementById('zoomSens').oninput = e => {
+        const value = parseFloat(e.target.value);
+        controls.zoomSpeed = Number.isFinite(value) ? value : 1.0;
+    };
     controls.addEventListener('start', () => { userInteracting = true; });
     controls.addEventListener('end', () => { userInteracting = false; });
     const targetSelect = document.getElementById('targetSelect');
@@ -1134,7 +1184,9 @@
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight); effectComposer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+        const pixelRatio = Math.min(window.devicePixelRatio, 1.75);
+        renderer.setPixelRatio(pixelRatio);
+        effectComposer.setPixelRatio(pixelRatio);
         labelRenderer.setSize(window.innerWidth, window.innerHeight);
     });
     const gui = new GUI({ title: 'Настройки', width: 240, container: document.getElementById('gui-wrapper') });
