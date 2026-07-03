@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Солнечная система</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; background-color: black; }
+        body {
+            margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif;
+            background: radial-gradient(circle at top, #07131f 0%, #03050c 45%, #000000 100%);
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0; pointer-events: none;
+            background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 30%);
+            mix-blend-mode: screen;
+        }
         #info {
             position: absolute; top: 20px; left: 20px; color: white;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
-            padding: 8px 16px; border-radius: 8px; pointer-events: none;
+            background: rgba(4,10,24,0.72); backdrop-filter: blur(8px);
+            padding: 10px 16px; border-radius: 12px; pointer-events: none;
             z-index: 10; font-size: 12px; border-left: 3px solid #ffaa44;
-            font-family: monospace;
+            font-family: monospace; max-width: 720px; line-height: 1.45;
+            box-shadow: 0 0 24px rgba(0,0,0,0.4);
         }
         #controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
@@ -42,8 +51,8 @@
 </head>
 <body>
 <div id="info">
-    <strong>СОЛНЕЧНАЯ СИСТЕМА | HYG (звёзды) + OpenNGC (галактики) | Анимированный Deep Space</strong><br>
-    Мерцание галактик | Вращение звёзд | Космическая пыль | Орбиты можно отключить
+    <strong>СОЛНЕЧНАЯ СИСТЕМА | HYG + OpenNGC | Эстетичный космический рендер</strong><br>
+    Спутники вращаются вокруг планет | Улучшенные материалы планет | Звёзды и галактики с мягким свечением | Орбиты можно отключить
 </div>
 <div id="controls">
     <div class="ctrl-group">
@@ -131,13 +140,14 @@
     ];
 
     const moonsData = [
-        { name: "Ио",       radius: 0.25, color: 0xffaa66, a: 15.6, e: 0.004, incl: 0.04, M0: 0.1 },
-        { name: "Европа",   radius: 0.24, color: 0xaaffcc, a: 15.7, e: 0.009, incl: 0.05, M0: 2.3 },
-        { name: "Ганимед",  radius: 0.28, color: 0xccaa99, a: 15.9, e: 0.002, incl: 0.03, M0: 3.7 },
-        { name: "Каллисто", radius: 0.27, color: 0xaa8866, a: 16.2, e: 0.007, incl: 0.06, M0: 4.2 },
-        { name: "Титан",    radius: 0.29, color: 0xddbb99, a: 19.5, e: 0.029, incl: 0.03, M0: 0.8 },
-        { name: "Рея",      radius: 0.20, color: 0xccaa88, a: 19.3, e: 0.001, incl: 0.02, M0: 1.9 },
-        { name: "Япет",     radius: 0.22, color: 0xaa8866, a: 19.8, e: 0.028, incl: 0.04, M0: 3.3 }
+        { name: "Луна",     radius: 0.24, color: 0xb7bcc8, host: "Земля", orbitRadius: 3.8, orbitSpeed: 1.2, orbitPhase: 0.4 },
+        { name: "Ио",       radius: 0.25, color: 0xffaa66, host: "Юпитер", orbitRadius: 4.4, orbitSpeed: 2.6, orbitPhase: 0.1 },
+        { name: "Европа",   radius: 0.24, color: 0xaaffcc, host: "Юпитер", orbitRadius: 4.9, orbitSpeed: 2.2, orbitPhase: 1.0 },
+        { name: "Ганимед",  radius: 0.28, color: 0xccaa99, host: "Юпитер", orbitRadius: 5.4, orbitSpeed: 1.7, orbitPhase: 2.2 },
+        { name: "Каллисто", radius: 0.27, color: 0xaa8866, host: "Юпитер", orbitRadius: 6.0, orbitSpeed: 1.35, orbitPhase: 3.1 },
+        { name: "Титан",    radius: 0.29, color: 0xddbb99, host: "Сатурн", orbitRadius: 4.2, orbitSpeed: 1.8, orbitPhase: 0.8 },
+        { name: "Рея",      radius: 0.20, color: 0xccaa88, host: "Сатурн", orbitRadius: 4.7, orbitSpeed: 1.5, orbitPhase: 2.4 },
+        { name: "Япет",     radius: 0.22, color: 0xaa8866, host: "Сатурн", orbitRadius: 5.2, orbitSpeed: 1.25, orbitPhase: 4.2 }
     ];
 
     const cometsData = [
@@ -157,6 +167,11 @@
             this.e = data.e;
             this.incl = data.incl;
             this.M0 = data.M0 || 0;
+            this.host = data.host || null;
+            this.parentBody = null;
+            this.orbitRadius = data.orbitRadius || 0;
+            this.orbitSpeed = data.orbitSpeed || 0.6;
+            this.orbitPhase = data.orbitPhase || 0;
             this.pos = new THREE.Vector3();
             this.mesh = null;
             this.tailSystem = null;
@@ -166,7 +181,13 @@
             this.updatePosition(0);
             this.initialPos = this.pos.clone();
         }
-        updatePosition(dt) {
+        updatePosition(dt, parentPosition = null) {
+            if (this.parentBody) {
+                const angle = this.orbitPhase + dt * this.orbitSpeed;
+                this.pos.set(Math.cos(angle) * this.orbitRadius, 0, Math.sin(angle) * this.orbitRadius);
+                if (parentPosition) this.pos.add(parentPosition);
+                return;
+            }
             const GM = 1000;
             const n = Math.sqrt(GM / Math.pow(this.a, 3));
             const M = this.M0 + n * dt;
@@ -185,7 +206,7 @@
         }
         createMesh(scene, segments) {
             const geometry = new THREE.SphereGeometry(this.radius * CONFIG.planetScaleFactor * this.scaleFactor, segments, segments);
-            const material = new THREE.MeshStandardMaterial({ color: this.color, roughness: 0.5, metalness: 0.1 });
+            const material = createPlanetMaterial(this, this.color);
             const mesh = new THREE.Mesh(geometry, material);
             mesh.position.copy(this.pos);
             scene.add(mesh);
@@ -231,28 +252,25 @@
         }
     }
 
-    function createAtmosphere(radius, intensity = 0.35) {
-        const geometry = new THREE.SphereGeometry(radius * 1.02, 64, 64);
-        const material = new THREE.ShaderMaterial({
-            uniforms: { glowIntensity: { value: intensity } },
-            vertexShader: `
-                varying vec3 vNormal;
-                void main() {
-                    vNormal = normalize(normalMatrix * normal);
-                    gl_PointSize = 1.0;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform float glowIntensity;
-                varying vec3 vNormal;
-                void main() {
-                    float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-                    vec3 atmosphere = vec3(0.3, 0.6, 1.0) * intensity * glowIntensity;
-                    gl_FragColor = vec4(atmosphere, 0.8);
-                }
-            `,
-            transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending
+    function createPlanetMaterial(bodyData, baseColor) {
+        const isGasGiant = ['Юпитер', 'Сатурн', 'Уран', 'Нептун'].includes(bodyData.name);
+        return new THREE.MeshPhysicalMaterial({
+            color: baseColor,
+            roughness: isGasGiant ? 0.86 : 0.62,
+            metalness: isGasGiant ? 0.04 : 0.08,
+            clearcoat: 0.25,
+            clearcoatRoughness: 0.3,
+            emissive: new THREE.Color(baseColor).multiplyScalar(0.04),
+            emissiveIntensity: 0.18,
+            sheen: 0.1,
+            sheenColor: new THREE.Color(0xffffff)
+        });
+    }
+
+    function createAtmosphere(radius, color = 0x6ea8ff, opacity = 0.24) {
+        const geometry = new THREE.SphereGeometry(radius, 64, 64);
+        const material = new THREE.MeshBasicMaterial({
+            color, transparent: true, opacity, side: THREE.BackSide, depthWrite: false
         });
         return new THREE.Mesh(geometry, material);
     }
@@ -352,7 +370,7 @@
             const starGeometry = new THREE.BufferGeometry();
             starGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
             starGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
-            const starMaterial = new THREE.PointsMaterial({ size: 0.35, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending });
+            const starMaterial = new THREE.PointsMaterial({ size: 0.22, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending });
             starsPoints = new THREE.Points(starGeometry, starMaterial);
             starsPoints.frustumCulled = false;
             scene.add(starsPoints);
@@ -459,7 +477,7 @@
                 ring.rotation.x = Math.PI / 2;
                 body.mesh.add(ring);
             }
-            if (data.atmosphere) body.mesh.add(createAtmosphere(body.radius * CONFIG.planetScaleFactor, 0.4));
+            if (data.atmosphere) body.mesh.add(createAtmosphere(body.radius * CONFIG.planetScaleFactor * 1.05, 0x69a8ff, 0.22));
             planets.push(body);
         });
         dwarfPlanetsData.forEach(data => {
@@ -468,8 +486,9 @@
             dwarfPlanets.push(body);
         });
         moonsData.forEach(data => {
-            const body = new Body({ ...data, mass: 0, a: data.a, e: data.e, incl: data.incl, M0: data.M0 }, 0.6);
+            const body = new Body({ ...data, mass: 0, a: 0, e: 0, incl: 0, M0: 0 }, 0.6);
             body.createMesh(scene, 24);
+            body.parentBody = planets.find(planet => planet.name === data.host) || null;
             moons.push(body);
         });
         cometsData.forEach(data => {
@@ -577,7 +596,8 @@
             color: 0x88aaff,
             size: 0.05,
             transparent: true,
-            opacity: 0.4,
+            opacity: 0.28,
+            depthWrite: false,
             blending: THREE.AdditiveBlending
         });
         const dustParticlesObj = new THREE.Points(dustGeometry, dustMaterial);
@@ -605,8 +625,16 @@
         simTime += dt * currentSpeed;
         const all = [...planets, ...dwarfPlanets, ...moons, ...comets];
         for (let b of all) {
-            b.updatePosition(simTime);
-            if (b.mesh) b.mesh.position.copy(b.pos);
+            if (b.parentBody) {
+                b.updatePosition(simTime, b.parentBody.mesh?.position || b.parentBody.pos);
+            } else {
+                b.updatePosition(simTime);
+            }
+            if (b.mesh) {
+                b.mesh.position.copy(b.pos);
+                b.mesh.rotation.y += 0.002 + b.radius * 0.0005;
+                b.mesh.rotation.x += 0.0002;
+            }
             if (b.tailSystem) b.updateTail();
             b.updateTrail();
         }
