@@ -538,13 +538,18 @@
     const rimLight = new THREE.DirectionalLight(0x5bd4ff, 0.35);
     rimLight.position.set(-20, -10, -20);
     scene.add(rimLight);
-    const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(2.25, 128, 128), new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0xff4411, emissiveIntensity: 1.35, toneMapped: true }));
+    const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(2.35, 128, 128), new THREE.MeshStandardMaterial({ color: 0xffd09a, emissive: 0xff7a1a, emissiveIntensity: 1.55, toneMapped: true }));
     scene.add(sunMesh);
     const sunHalo = new THREE.Mesh(
-        new THREE.SphereGeometry(3.2, 64, 64),
-        new THREE.MeshBasicMaterial({ color: 0xffa04d, transparent: true, opacity: 0.16, side: THREE.BackSide, depthWrite: false })
+        new THREE.SphereGeometry(3.6, 64, 64),
+        new THREE.MeshBasicMaterial({ color: 0xffb15e, transparent: true, opacity: 0.22, side: THREE.BackSide, depthWrite: false })
     );
     scene.add(sunHalo);
+    let sunCorona = new THREE.Mesh(
+        new THREE.SphereGeometry(5.2, 64, 64),
+        new THREE.MeshBasicMaterial({ color: 0xff8a3d, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending })
+    );
+    scene.add(sunCorona);
 
     const defaultCameraPosition = new THREE.Vector3(0, 18, 60);
     const defaultCameraTarget = new THREE.Vector3(0, 0, 0);
@@ -1108,7 +1113,12 @@
         if (sunHalo) {
             const time = performance.now() * 0.001;
             sunHalo.scale.setScalar(1 + 0.03 * Math.sin(time * 0.7));
-            sunHalo.material.opacity = 0.12 + 0.04 * Math.sin(time * 0.9);
+            sunHalo.material.opacity = 0.16 + 0.05 * Math.sin(time * 0.9);
+        }
+        if (sunCorona) {
+            const time = performance.now() * 0.001;
+            sunCorona.scale.setScalar(1 + 0.035 * Math.sin(time * 0.55));
+            sunCorona.material.opacity = 0.06 + 0.02 * Math.sin(time * 0.75);
         }
 
         updateCameraFocus();
