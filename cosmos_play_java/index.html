@@ -165,14 +165,14 @@
 
     // ----- Данные планет, карликов, лун, комет (как в предыдущих версиях) -----
     const planetsKepler = [
-        { name: "Меркурий", mass: 0.055, radius: 0.38, color: 0xbc9a6c, a: 3.5, e: 0.2056, incl: 0.122, omega: 0.0, M0: 0.0, rings: false, atmosphere: false },
-        { name: "Венера",   mass: 0.815, radius: 0.95, color: 0xe6b800, a: 5.2, e: 0.0068, incl: 0.059, omega: 0.0, M0: 1.2, rings: false, atmosphere: true },
-        { name: "Земля",    mass: 1.0,   radius: 1.0,  color: 0x4c8cff, a: 7.0, e: 0.0167, incl: 0.0,   omega: 0.0, M0: 2.5, rings: false, atmosphere: true },
-        { name: "Марс",     mass: 0.107, radius: 0.53, color: 0xc4553c, a: 9.0, e: 0.0934, incl: 0.032, omega: 0.0, M0: 3.1, rings: false, atmosphere: false },
+        { name: "Меркурий", mass: 0.055, radius: 0.38, color: 0xa58a6b, a: 3.5, e: 0.2056, incl: 0.122, omega: 0.0, M0: 0.0, rings: false, atmosphere: false },
+        { name: "Венера",   mass: 0.815, radius: 0.95, color: 0xd9b45b, a: 5.2, e: 0.0068, incl: 0.059, omega: 0.0, M0: 1.2, rings: false, atmosphere: true },
+        { name: "Земля",    mass: 1.0,   radius: 1.0,  color: 0x5a95ff, a: 7.0, e: 0.0167, incl: 0.0,   omega: 0.0, M0: 2.5, rings: false, atmosphere: true },
+        { name: "Марс",     mass: 0.107, radius: 0.53, color: 0xc96b4b, a: 9.0, e: 0.0934, incl: 0.032, omega: 0.0, M0: 3.1, rings: false, atmosphere: false },
         { name: "Юпитер",   mass: 317.8, radius: 2.2,  color: 0xd8a27a, a: 15.5, e: 0.0489, incl: 0.022, omega: 0.0, M0: 0.5, rings: false, atmosphere: false },
-        { name: "Сатурн",   mass: 95.2,  radius: 1.9,  color: 0xf0d9b0, a: 19.0, e: 0.0565, incl: 0.043, omega: 0.0, M0: 1.8, rings: true,  atmosphere: false },
-        { name: "Уран",     mass: 14.5,  radius: 1.6,  color: 0xb0e0e6, a: 24.0, e: 0.0457, incl: 0.046, omega: 0.0, M0: 2.2, rings: false, atmosphere: false },
-        { name: "Нептун",   mass: 17.1,  radius: 1.6,  color: 0x4a6eff, a: 29.5, e: 0.0113, incl: 0.030, omega: 0.0, M0: 3.0, rings: false, atmosphere: false }
+        { name: "Сатурн",   mass: 95.2,  radius: 1.9,  color: 0xe7cf9b, a: 19.0, e: 0.0565, incl: 0.043, omega: 0.0, M0: 1.8, rings: true,  atmosphere: false },
+        { name: "Уран",     mass: 14.5,  radius: 1.6,  color: 0xbfe7ee, a: 24.0, e: 0.0457, incl: 0.046, omega: 0.0, M0: 2.2, rings: false, atmosphere: false },
+        { name: "Нептун",   mass: 17.1,  radius: 1.6,  color: 0x4f73ff, a: 29.5, e: 0.0113, incl: 0.030, omega: 0.0, M0: 3.0, rings: false, atmosphere: false }
     ];
 
     const dwarfPlanetsData = [
@@ -298,8 +298,8 @@
 
     function createPlanetMaterial(bodyData, baseColor) {
         const isGasGiant = ['Юпитер', 'Сатурн', 'Уран', 'Нептун'].includes(bodyData.name);
-        const accent = isGasGiant ? new THREE.Color(0xffffff) : new THREE.Color(baseColor).offsetHSL(0.03, 0.08, 0.08);
-        const specular = isGasGiant ? new THREE.Color(0xb8d8ff) : new THREE.Color(0xffffff);
+        const accent = isGasGiant ? new THREE.Color(0xffffff) : new THREE.Color(baseColor).offsetHSL(0.03, 0.10, 0.10);
+        const specular = isGasGiant ? new THREE.Color(0xb8d8ff) : new THREE.Color(0xfef1c7);
         const shaderMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 baseColor: { value: new THREE.Color(baseColor) },
@@ -354,7 +354,7 @@
                     color += vec3(0.02, 0.02, 0.02) * smoothstep(0.8, 1.0, n);
                     float diffuse = max(dot(normalize(vNormal), lightDir), 0.0);
                     float spec = pow(max(dot(reflect(-lightDir, normalize(vNormal)), viewDir), 0.0), 24.0);
-                    vec3 finalColor = color * (0.6 + diffuse * 0.45) + specularColor * spec * 0.4 + fresnel * vec3(0.12, 0.16, 0.22);
+                    vec3 finalColor = color * (0.58 + diffuse * 0.48) + specularColor * spec * 0.45 + fresnel * vec3(0.10, 0.14, 0.18);
                     gl_FragColor = vec4(finalColor * brightness, 1.0);
                 }
             `
@@ -364,12 +364,12 @@
         return shaderMaterial;
     }
 
-    function createCloudLayer(radius) {
-        const geometry = new THREE.SphereGeometry(radius * 1.01, 48, 48);
+    function createCloudLayer(radius, color = 0xf7f9ff, opacity = 0.16) {
+        const geometry = new THREE.SphereGeometry(radius * 1.015, 64, 64);
         const material = new THREE.MeshBasicMaterial({
-            color: 0xf7f9ff,
+            color,
             transparent: true,
-            opacity: 0.16,
+            opacity,
             depthWrite: false,
             blending: THREE.AdditiveBlending
         });
@@ -378,12 +378,27 @@
         return mesh;
     }
 
+    function createPlanetGlow(radius, color = 0x6ea8ff, opacity = 0.08) {
+        const geometry = new THREE.SphereGeometry(radius, 48, 48);
+        const material = new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity,
+            depthWrite: false,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.renderOrder = 0;
+        return mesh;
+    }
+
     function createAtmosphere(radius, color = 0x6ea8ff, opacity = 0.24) {
         const group = new THREE.Group();
         const layers = [
-            { radius: radius * 1.00, opacity: opacity * 0.90, detail: 1.0 },
-            { radius: radius * 1.04, opacity: opacity * 0.42, detail: 1.35 },
-            { radius: radius * 1.08, opacity: opacity * 0.18, detail: 1.75 }
+            { radius: radius * 1.01, opacity: opacity * 1.05, detail: 1.0 },
+            { radius: radius * 1.07, opacity: opacity * 0.52, detail: 1.35 },
+            { radius: radius * 1.12, opacity: opacity * 0.22, detail: 1.75 }
         ];
         layers.forEach((layer, index) => {
             const geometry = new THREE.SphereGeometry(layer.radius, 64, 64);
@@ -433,13 +448,13 @@
 
                     void main() {
                         vec3 n = normalize(vNormal);
-                        float rim = pow(1.0 - clamp(dot(n, vec3(0.0, 0.0, 1.0)), 0.0, 1.0), 2.0);
+                        float rim = pow(1.0 - clamp(dot(n, vec3(0.0, 0.0, 1.0)), 0.0, 1.0), 1.6);
                         float wave = sin((n.y + time * 0.35) * 6.0 + detail * 1.2) * 0.5 + 0.5;
-                        float haze = smoothstep(0.05, 0.95, rim * 0.7 + wave * 0.3);
+                        float haze = smoothstep(0.05, 0.95, rim * 0.72 + wave * 0.28);
                         float grain = noise(vWorldPosition * (0.75 + detail * 0.25) + vec3(time * 0.16, time * 0.08, time * 0.04));
                         float edge = smoothstep(0.0, 1.0, grain);
-                        float alpha = haze * intensity * (0.45 + 0.25 * edge + 0.2 * sin(time * 0.8 + detail));
-                        gl_FragColor = vec4(color1, alpha);
+                        float alpha = haze * intensity * (0.65 + 0.22 * edge + 0.18 * sin(time * 0.8 + detail));
+                        gl_FragColor = vec4(color1, alpha * 1.25);
                     }
                 `
             });
@@ -533,7 +548,10 @@
 
     const defaultCameraPosition = new THREE.Vector3(0, 18, 60);
     const defaultCameraTarget = new THREE.Vector3(0, 0, 0);
+    let cameraFocusState = { active: false, target: new THREE.Vector3(), cameraPosition: new THREE.Vector3() };
+
     function resetCameraToDefault() {
+        cameraFocusState.active = false;
         controls.target.copy(defaultCameraTarget);
         camera.position.copy(defaultCameraPosition);
         controls.update();
@@ -702,9 +720,14 @@
                 const ring = createPlanetRings(body.radius * CONFIG.planetScaleFactor * 1.35, body.radius * CONFIG.planetScaleFactor * 1.85, 0xd8c09a);
                 body.mesh.add(ring);
             }
-            if (data.atmosphere) body.mesh.add(createAtmosphere(body.radius * CONFIG.planetScaleFactor * 1.05, 0x69a8ff, 0.22));
-            if (data.name === 'Земля') body.mesh.add(createCloudLayer(body.radius * CONFIG.planetScaleFactor * 1.01));
-            if (data.name === 'Венера') body.mesh.add(createCloudLayer(body.radius * CONFIG.planetScaleFactor * 1.012));
+            if (data.atmosphere) {
+                const atmosphereColor = data.name === 'Земля' ? 0x74bbff : 0xdcb36f;
+                const atmosphereOpacity = data.name === 'Земля' ? 0.30 : 0.28;
+                body.mesh.add(createAtmosphere(body.radius * CONFIG.planetScaleFactor * 1.05, atmosphereColor, atmosphereOpacity));
+                body.mesh.add(createPlanetGlow(body.radius * CONFIG.planetScaleFactor * 1.08, atmosphereColor, data.name === 'Земля' ? 0.12 : 0.09));
+            }
+            if (data.name === 'Земля') body.mesh.add(createCloudLayer(body.radius * CONFIG.planetScaleFactor * 1.01, 0xeaf5ff, 0.19));
+            if (data.name === 'Венера') body.mesh.add(createCloudLayer(body.radius * CONFIG.planetScaleFactor * 1.012, 0xf3e2b3, 0.17));
             planets.push(body);
         });
         dwarfPlanetsData.forEach(data => {
@@ -881,22 +904,23 @@
             window.nebulaeGroup.children.forEach(child => child.geometry.dispose());
         }
         const group = new THREE.Group();
-        const colors = [0x3b82f6, 0xff5f7d, 0x7c3aed, 0x2dd4bf, 0xffc857];
+        const colors = [0x3b82f6, 0xff5f7d, 0x7c3aed, 0x2dd4bf, 0xffc857, 0x8dd3ff];
         colors.forEach((color, index) => {
-            const geometry = new THREE.SphereGeometry(180 + index * 45, 64, 64);
+            const geometry = new THREE.SphereGeometry(210 + index * 55, 64, 64);
             const material = new THREE.MeshBasicMaterial({
                 color,
                 transparent: true,
-                opacity: 0.08 + index * 0.014,
+                opacity: 0.08 + index * 0.012,
                 side: THREE.BackSide,
                 depthWrite: false,
                 blending: THREE.AdditiveBlending
             });
             const mesh = new THREE.Mesh(geometry, material);
-            mesh.position.set((index - 2) * 85, 35 + index * 22, -240 + index * 30);
+            mesh.position.set((index - 2.5) * 100, 45 + index * 24, -280 + index * 38);
+            mesh.scale.setScalar(1.0 + index * 0.08);
             group.add(mesh);
         });
-        group.userData.speed = 0.00008;
+        group.userData.speed = 0.00009;
         scene.add(group);
         window.nebulaeGroup = group;
     }
@@ -1004,10 +1028,22 @@
             if (ds) pos = ds.mesh.position;
         }
         if (pos) {
-            controls.target.copy(pos);
-            const distance = Math.min(50, Math.max(15, pos.length() * 0.25));
-            camera.position.copy(pos.clone().add(new THREE.Vector3(1,1,1).normalize().multiplyScalar(distance)));
+            const targetPosition = pos.clone();
+            const distance = Math.min(50, Math.max(13, targetPosition.length() * 0.28));
+            const idealCameraPosition = targetPosition.clone().add(new THREE.Vector3(1, 1, 1).normalize().multiplyScalar(distance));
+            cameraFocusState.active = true;
+            cameraFocusState.target.copy(targetPosition);
+            cameraFocusState.cameraPosition.copy(idealCameraPosition);
             controls.update();
+        }
+    }
+
+    function updateCameraFocus() {
+        if (!cameraFocusState.active) return;
+        camera.position.lerp(cameraFocusState.cameraPosition, 0.035);
+        controls.target.lerp(cameraFocusState.target, 0.05);
+        if (camera.position.distanceTo(cameraFocusState.cameraPosition) < 0.08 && controls.target.distanceTo(cameraFocusState.target) < 0.08) {
+            cameraFocusState.active = false;
         }
     }
 
@@ -1074,6 +1110,8 @@
             sunHalo.scale.setScalar(1 + 0.03 * Math.sin(time * 0.7));
             sunHalo.material.opacity = 0.12 + 0.04 * Math.sin(time * 0.9);
         }
+
+        updateCameraFocus();
 
         if (!isPaused && !userInteracting) {
             const driftTime = performance.now() * 0.00012;
