@@ -1,0 +1,13 @@
+{
+  "name": "cosmos_play_java",
+  "version": "1.0.0",
+  "description": "<img width=\"663\" height=\"840\" alt=\"IMG_20260523_033518\" src=\"https://github.com/user-attachments/assets/e1645705-95d2-4c0e-a9b4-50a63a7a1129\" />",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

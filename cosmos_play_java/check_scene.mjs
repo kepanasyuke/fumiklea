@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+page.on('console', msg => console.log('BROWSER:', msg.type(), msg.text()));
+page.on('pageerror', err => console.log('PAGEERROR:', err.message));
+await page.goto('http://127.0.0.1:8000/index.html', { waitUntil: 'load', timeout: 60000 });
+await page.waitForTimeout(5000);
+console.log('TITLE:', await page.title());
+console.log('CANVAS_COUNT:', await page.locator('canvas').count());
+console.log('LOADING_TEXT:', await page.locator('#loading').textContent().catch(() => ''));
+console.log('BUTTONS_COUNT:', await page.locator('#controls button').count());
+await browser.close();
