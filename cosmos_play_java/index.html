@@ -209,6 +209,30 @@
         { name: "Темпеля-1", radius: 0.16, color: 0xbb9977, a: 3.1,  e: 0.519, incl: 0.17,  M0: 3.8, tail: true }
     ];
 
+    const localStarCatalog = Array.from({ length: 220 }, (_, index) => {
+        const theta = (index / 220) * Math.PI * 2;
+        const phi = (index % 17) / 17 * Math.PI;
+        const radius = 430 + (index % 9) * 18;
+        return {
+            ra: theta * 12 / Math.PI,
+            dec: (phi - Math.PI / 2) * 180 / Math.PI,
+            mag: 1.4 + (index % 8) * 0.18,
+            ci: ((index % 7) - 3) * 0.12,
+            x: radius * Math.cos(theta) * Math.sin(phi),
+            y: radius * Math.cos(phi),
+            z: radius * Math.sin(theta) * Math.sin(phi)
+        };
+    });
+
+    const localDeepSkyCatalog = [
+        { name: 'M31', type: 'Gx', ra: 0.67, dec: 41.27, mag: 3.4, color: 0xffb36b, size: 3.6 },
+        { name: 'NGC 6992', type: 'Neb', ra: 20.7, dec: 31.3, mag: 7.2, color: 0x88aaff, size: 2.7 },
+        { name: 'M42', type: 'Neb', ra: 5.58, dec: -5.45, mag: 4.0, color: 0x7cc8ff, size: 2.4 },
+        { name: 'M13', type: 'Cl', ra: 16.7, dec: 36.46, mag: 5.8, color: 0xaaccff, size: 2.1 },
+        { name: 'M45', type: 'Cl', ra: 3.8, dec: 24.1, mag: 1.6, color: 0xffd79a, size: 2.2 },
+        { name: 'NGC 253', type: 'Gx', ra: 0.8, dec: -25.3, mag: 7.1, color: 0xff8e8e, size: 3.1 }
+    ];
+
     // ========== 2. КЛАСС BODY (Кеплеровы орбиты, трейлы, хвосты) ==========
     class Body {
         constructor(data, scaleFactor = 1.0) {
@@ -618,94 +642,169 @@
         return deepSkyGroup;
     }
 
-    // ========== 4. ЗАГРУЗКА ЗВЁЗД (HYG CSV) ==========
-    async function loadRealStars() {
-        if (starsPoints) scene.remove(starsPoints);
-        const loadingDiv = document.getElementById('loading');
-        loadingDiv.textContent = 'Загрузка звёзд (HYG)...';
+    async function fetchWithTimeout(url, timeoutMs = 4000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
         try {
-            const response = await fetch('https://raw.githubusercontent.com/LS1030/HYG-Database/master/hygdata_v3.csv');
-            if (!response.ok) throw new Error('HYG not available');
-            const csvText = await response.text();
-            const lines = csvText.split('\n');
-            const headers = lines[0].split(',');
-            const raIdx = headers.indexOf('ra'), decIdx = headers.indexOf('dec'), magIdx = headers.indexOf('mag');
-            const xIdx = headers.indexOf('x'), yIdx = headers.indexOf('y'), zIdx = headers.indexOf('z');
-            const ciIdx = headers.indexOf('ci');
-            const positions = [];
-            const colors = [];
-            let count = 0;
-            const maxStars = qualitySettings[CONFIG.quality].starCount;
-            for (let i = 1; i < lines.length && count < maxStars; i++) {
-                const cols = lines[i].split(',');
-                if (cols.length < 3) continue;
-                const mag = parseFloat(cols[magIdx]);
-                if (isNaN(mag) || mag > 6.5) continue;
-                let x, y, z;
-                if (xIdx !== -1 && yIdx !== -1 && zIdx !== -1) {
-                    x = parseFloat(cols[xIdx]) * 2.5;
-                    y = parseFloat(cols[yIdx]) * 2.5;
-                    z = parseFloat(cols[zIdx]) * 2.5;
-                } else {
-                    const ra = parseFloat(cols[raIdx]);
-                    const dec = parseFloat(cols[decIdx]);
-                    if (isNaN(ra) || isNaN(dec)) continue;
-                    const raRad = ra * Math.PI / 12;
-                    const decRad = dec * Math.PI / 180;
-                    const r = 500;
-                    x = r * Math.cos(decRad) * Math.cos(raRad);
-                    y = r * Math.sin(decRad);
-                    z = r * Math.cos(decRad) * Math.sin(raRad);
-                }
-                const intensity = Math.max(0.2, 1.2 - (mag + 1.5) / 6);
-                let hue = 0.55;
-                if (ciIdx !== -1 && cols[ciIdx]) {
-                    let ci = parseFloat(cols[ciIdx]);
-                    if (!isNaN(ci)) hue = 0.55 + ci * 0.15;
-                } else {
-                    hue = 0.55 + Math.random() * 0.15;
-                }
-                const color = new THREE.Color().setHSL(hue, 1.0, 0.5 + intensity * 0.3);
-                positions.push(x, y, z);
-                colors.push(color.r, color.g, color.b);
-                count++;
-            }
-            const starGeometry = new THREE.BufferGeometry();
-            starGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
-            starGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
-            const starMaterial = new THREE.PointsMaterial({ size: 0.23, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.97, depthWrite: false, blending: THREE.AdditiveBlending });
-            starsPoints = new THREE.Points(starGeometry, starMaterial);
-            starsPoints.frustumCulled = false;
-            scene.add(starsPoints);
-            console.log(`Загружено ${count} звёзд HYG`);
-        } catch(e) {
-            console.warn('HYG error, using fallback stars', e);
-            createFallbackStars();
+            const response = await fetch(url, { signal: controller.signal });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.text();
+        } finally {
+            clearTimeout(timer);
         }
     }
 
-    // ========== 5. ЗАГРУЗКА ГАЛАКТИК (OpenNGC CSV) С ДОБАВЛЕНИЕМ ПАРАМЕТРОВ ДЛЯ АНИМАЦИИ ==========
-    async function loadDeepSkyObjects() {
+    function createStarsFromCatalog(catalog, maxStars, sourceLabel = 'local') {
+        if (starsPoints) scene.remove(starsPoints);
+        const positions = [];
+        const colors = [];
+        let count = 0;
+        const items = Array.isArray(catalog) ? catalog : [];
+        for (let i = 0; i < items.length && count < maxStars; i++) {
+            const item = items[i];
+            let x = item?.x;
+            let y = item?.y;
+            let z = item?.z;
+            if ((x == null || y == null || z == null) && item?.ra != null && item?.dec != null) {
+                const raRad = item.ra * Math.PI / 12;
+                const decRad = item.dec * Math.PI / 180;
+                const r = 480;
+                x = r * Math.cos(decRad) * Math.cos(raRad);
+                y = r * Math.sin(decRad);
+                z = r * Math.cos(decRad) * Math.sin(raRad);
+            }
+            if (x == null || y == null || z == null) continue;
+            const mag = Number.isFinite(item?.mag) ? item.mag : 4.5;
+            const intensity = Math.max(0.22, 1.22 - (mag + 1.3) / 6.4);
+            const ci = Number.isFinite(item?.ci) ? item.ci : 0.0;
+            const hue = 0.55 + ci * 0.16;
+            const color = new THREE.Color().setHSL(hue, 1.0, 0.5 + intensity * 0.3);
+            positions.push(x, y, z);
+            colors.push(color.r, color.g, color.b);
+            count++;
+        }
+        const starGeometry = new THREE.BufferGeometry();
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+        starGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+        const starMaterial = new THREE.PointsMaterial({ size: 0.23, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.97, depthWrite: false, blending: THREE.AdditiveBlending });
+        starsPoints = new THREE.Points(starGeometry, starMaterial);
+        starsPoints.frustumCulled = false;
+        scene.add(starsPoints);
+        console.log(`Star catalog (${sourceLabel}): ${count} points`);
+        return starsPoints;
+    }
+
+    // ========== 4. ЗАГРУЗКА ЗВЁЗД (HYG CSV) ==========
+    async function loadRealStars() {
+        const loadingDiv = document.getElementById('loading');
+        loadingDiv.textContent = 'Загрузка звёзд (HYG)...';
+        try {
+            const csvText = await fetchWithTimeout('https://raw.githubusercontent.com/LS1030/HYG-Database/master/hygdata_v3.csv', 3500);
+            const lines = csvText.split(/\r?\n/).filter(Boolean);
+            if (!lines.length) throw new Error('Empty HYG catalog');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const raIdx = headers.indexOf('ra'), decIdx = headers.indexOf('dec'), magIdx = headers.indexOf('mag');
+            const xIdx = headers.indexOf('x'), yIdx = headers.indexOf('y'), zIdx = headers.indexOf('z');
+            const ciIdx = headers.indexOf('ci');
+            const catalog = [];
+            const maxStars = qualitySettings[CONFIG.quality].starCount;
+            for (let i = 1; i < lines.length && catalog.length < maxStars; i++) {
+                const cols = lines[i].split(',');
+                if (cols.length < 3) continue;
+                const mag = parseFloat(cols[magIdx]);
+                if (!isNaN(mag) && mag > 6.5) continue;
+                let x = parseFloat(cols[xIdx]);
+                let y = parseFloat(cols[yIdx]);
+                let z = parseFloat(cols[zIdx]);
+                const ra = parseFloat(cols[raIdx]);
+                const dec = parseFloat(cols[decIdx]);
+                if (xIdx !== -1 && yIdx !== -1 && zIdx !== -1 && isFinite(x) && isFinite(y) && isFinite(z)) {
+                    catalog.push({ x: x * 2.5, y: y * 2.5, z: z * 2.5, mag, ci: parseFloat(cols[ciIdx]) });
+                } else if (!isNaN(ra) && !isNaN(dec)) {
+                    catalog.push({ ra, dec, mag, ci: parseFloat(cols[ciIdx]) });
+                }
+            }
+            createStarsFromCatalog(catalog, maxStars, 'HYG');
+            console.log(`Загружено ${catalog.length} звёзд HYG`);
+        } catch (e) {
+            console.warn('HYG unavailable, using local star catalog', e);
+            createStarsFromCatalog(localStarCatalog, qualitySettings[CONFIG.quality].starCount, 'local');
+        }
+    }
+
+    function createDeepSkyFromCatalog(catalog, maxObjects) {
         if (deepSkyGroup) scene.remove(deepSkyGroup);
         deepSkyGroup = new THREE.Group();
         const targetSelect = document.getElementById('targetSelect');
         const baseCount = 1 + planetsKepler.length + dwarfPlanetsData.length + moonsData.length + cometsData.length;
         while (targetSelect.options.length > baseCount) targetSelect.remove(baseCount);
         window.deepSpaceTargets = [];
+        const DEEP_RADIUS = 900;
+        let added = 0;
+        const items = Array.isArray(catalog) ? catalog : [];
+        for (let i = 0; i < items.length && added < maxObjects; i++) {
+            const item = items[i];
+            const type = item?.type || 'Gx';
+            if (!['Gx', 'Neb', 'Gb', 'Gc', 'Cl'].includes(type)) continue;
+            const ra = Number(item?.ra);
+            const dec = Number(item?.dec);
+            if (!isFinite(ra) || !isFinite(dec)) continue;
+            const mag = Number(item?.mag);
+            const raRad = ra * Math.PI / 12;
+            const decRad = dec * Math.PI / 180;
+            const x = DEEP_RADIUS * Math.cos(decRad) * Math.cos(raRad);
+            const y = DEEP_RADIUS * Math.sin(decRad);
+            const z = DEEP_RADIUS * Math.cos(decRad) * Math.sin(raRad);
+            let size = Number(item?.size) || 2.5;
+            let emissiveIntensity = 0.6;
+            let color = Number(item?.color) || 0xffccaa;
+            if (isFinite(mag)) {
+                size = Math.min(5.0, Math.max(1.5, (13 - mag) / 4));
+                emissiveIntensity = Math.min(1.2, Math.max(0.4, 0.6 + (13 - mag) / 20));
+            }
+            if (type === 'Neb') { color = 0x88aaff; emissiveIntensity *= 0.8; }
+            else if (type === 'Cl') { color = 0xaaccff; emissiveIntensity *= 0.7; }
+            const material = new THREE.MeshStandardMaterial({
+                color, emissive: color, emissiveIntensity,
+                transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending
+            });
+            const mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 24, 24), material);
+            mesh.position.set(x, y, z);
+            mesh.userData = {
+                baseIntensity: emissiveIntensity,
+                pulseSpeed: 0.3 + Math.random() * 1.2,
+                phase: Math.random() * Math.PI * 2
+            };
+            deepSkyGroup.add(mesh);
+            added++;
+            const name = item?.name;
+            if (name && type === 'Gx') {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                targetSelect.appendChild(opt);
+                window.deepSpaceTargets.push({ name: name, mesh: mesh });
+            }
+        }
+        deepSkyGroup.frustumCulled = false;
+        scene.add(deepSkyGroup);
+        return deepSkyGroup;
+    }
+
+    // ========== 5. ЗАГРУЗКА ГАЛАКТИК (OpenNGC CSV) С ДОБАВЛЕНИЕМ ПАРАМЕТРОВ ДЛЯ АНИМАЦИИ ==========
+    async function loadDeepSkyObjects() {
         const loadingDiv = document.getElementById('loading');
         loadingDiv.textContent = 'Загрузка галактик (OpenNGC)...';
         try {
-            const response = await fetch('https://raw.githubusercontent.com/mattiaverga/OpenNGC/master/database_files/NGC.csv');
-            if (!response.ok) throw new Error('OpenNGC not available');
-            const csvText = await response.text();
-            const lines = csvText.split('\n');
+            const csvText = await fetchWithTimeout('https://raw.githubusercontent.com/mattiaverga/OpenNGC/master/database_files/NGC.csv', 3500);
+            const lines = csvText.split(/\r?\n/).filter(Boolean);
+            if (!lines.length) throw new Error('Empty OpenNGC catalog');
             const headers = lines[0].split(';').map(h => h.trim());
             const typeIdx = headers.indexOf('Type'), raIdx = headers.indexOf('RA'), decIdx = headers.indexOf('Dec'), magIdx = headers.indexOf('Mag');
             const nameIdx = headers.indexOf('Name');
-            const DEEP_RADIUS = 900;
+            const catalog = [];
             const maxGalaxies = qualitySettings[CONFIG.quality].galaxyCount;
-            let added = 0;
-            for (let i = 1; i < lines.length && added < maxGalaxies; i++) {
+            for (let i = 1; i < lines.length && catalog.length < maxGalaxies; i++) {
                 const cols = lines[i].split(';');
                 if (cols.length < 3) continue;
                 const type = cols[typeIdx]?.trim();
@@ -715,56 +814,20 @@
                 if (isNaN(ra) || isNaN(dec)) continue;
                 const mag = parseFloat(cols[magIdx]);
                 if (!isNaN(mag) && mag > 13) continue;
-                const raRad = ra * Math.PI / 12;
-                const decRad = dec * Math.PI / 180;
-                const x = DEEP_RADIUS * Math.cos(decRad) * Math.cos(raRad);
-                const y = DEEP_RADIUS * Math.sin(decRad);
-                const z = DEEP_RADIUS * Math.cos(decRad) * Math.sin(raRad);
-                let size = 2.5;
-                let emissiveIntensity = 0.6;
-                let color = 0xffccaa;
-                if (!isNaN(mag)) {
-                    size = Math.min(5.0, Math.max(1.5, (13 - mag) / 4));
-                    emissiveIntensity = Math.min(1.2, Math.max(0.4, 0.6 + (13 - mag) / 20));
-                }
-                if (type === 'Neb') { color = 0x88aaff; emissiveIntensity *= 0.8; }
-                else if (type === 'Cl') { color = 0xaaccff; emissiveIntensity *= 0.7; }
-                const material = new THREE.MeshStandardMaterial({
-                    color, emissive: color, emissiveIntensity,
-                    transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending
-                });
-                const mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 24, 24), material);
-                mesh.position.set(x, y, z);
-                // СОХРАНЯЕМ ПАРАМЕТРЫ ДЛЯ АНИМАЦИИ МЕРЦАНИЯ
-                mesh.userData = {
-                    baseIntensity: emissiveIntensity,
-                    pulseSpeed: 0.3 + Math.random() * 1.2,
-                    phase: Math.random() * Math.PI * 2
-                };
-                deepSkyGroup.add(mesh);
-                added++;
-                const name = cols[nameIdx]?.trim();
-                if (name && type === 'Gx') {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    targetSelect.appendChild(opt);
-                    window.deepSpaceTargets.push({ name: name, mesh: mesh });
-                }
+                catalog.push({ name: cols[nameIdx]?.trim(), type, ra, dec, mag });
             }
-            console.log(`Deep Sky: загружено ${added} объектов`);
-        } catch(e) {
-            console.warn('OpenNGC error, using fallback deep-sky objects', e);
-            createFallbackDeepSky();
+            createDeepSkyFromCatalog(catalog, maxGalaxies);
+            console.log(`Deep Sky: загружено ${catalog.length} объектов`);
+        } catch (e) {
+            console.warn('OpenNGC unavailable, using local deep-sky catalog', e);
+            createDeepSkyFromCatalog(localDeepSkyCatalog, qualitySettings[CONFIG.quality].galaxyCount);
         }
         finally {
             setTimeout(() => {
                 loadingDiv.style.opacity = '0';
                 setTimeout(() => loadingDiv.style.display = 'none', 1000);
-            }, 2000);
+            }, 1200);
         }
-        deepSkyGroup.frustumCulled = false;
-        scene.add(deepSkyGroup);
     }
 
     // ========== 6. ИНИЦИАЛИЗАЦИЯ ПЛАНЕТ, ОРБИТ, ТРЕЙЛОВ, СОЗВЕЗДИЙ ==========
@@ -1249,14 +1312,14 @@
             createBackgroundStars();
             createNebulae();
             spaceDust = createSpaceDust();
-            if (CONFIG.showStars) await loadRealStars();
-            if (CONFIG.showDeepSky) await loadDeepSkyObjects();
             addConstellationNames();
             orbitLines.forEach(l => l.visible = showOrbits);
             updateQualityBadge();
             verifyRenderingTasks();
             validateSceneBlocks();
             animate();
+            if (CONFIG.showStars) void loadRealStars();
+            if (CONFIG.showDeepSky) void loadDeepSkyObjects();
         } catch (error) {
             console.error('Scene initialization failed:', error);
             const loadingDiv = document.getElementById('loading');
