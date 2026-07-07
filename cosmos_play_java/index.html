@@ -8,17 +8,22 @@
         :root {
             color-scheme: dark;
             --accent: #ffb36b;
-            --panel-bg: linear-gradient(135deg, rgba(6, 10, 22, 0.92), rgba(12, 20, 35, 0.84));
-            --panel-border: rgba(255, 179, 107, 0.28);
+            --accent-glow: rgba(255, 179, 107, 0.4);
+            --panel-bg: rgba(6, 10, 22, 0.85);
+            --panel-border: rgba(255, 179, 107, 0.25);
+            --font-main: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        }
+        * {
+            box-sizing: border-box;
         }
         html, body {
             width: 100%; height: 100%; margin: 0; overflow: hidden; position: relative;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: var(--font-main);
             background: radial-gradient(circle at top, #13233d 0%, #05070f 45%, #000000 100%);
         }
         body::before {
             content: ''; position: fixed; inset: 0; pointer-events: none;
-            background: radial-gradient(circle at 18% 18%, rgba(255,255,255,0.08), transparent 30%);
+            background: radial-gradient(circle at 18% 18%, rgba(255,255,255,0.06), transparent 30%);
             mix-blend-mode: screen;
         }
         body::after {
@@ -27,19 +32,39 @@
             z-index: 5;
         }
         #info {
-            position: fixed; top: 20px; left: 20px; color: white;
-            background: var(--panel-bg); backdrop-filter: blur(10px);
-            padding: 12px 16px; border-radius: 14px; pointer-events: none;
-            z-index: 10; font-size: 12px; border: 1px solid var(--panel-border);
-            font-family: monospace; max-width: 740px; line-height: 1.45;
-            box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+            position: fixed; top: 24px; left: 24px; color: white;
+            background: var(--panel-bg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 16px 20px;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 10;
+            font-family: var(--font-main);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            max-width: 740px;
+            line-height: 1.5;
+            font-size: 13px;
+            letter-spacing: 0.01em;
         }
         #info .info-title {
-            font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
-            color: #ffd39b; margin-bottom: 4px;
+            font-size: 10px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        #info strong {
+            color: #fff;
+            font-weight: 600;
         }
         #info .info-meta {
-            margin-top: 5px; color: rgba(255,255,255,0.72); font-size: 11px;
+            margin-top: 6px;
+            color: rgba(255,255,255,0.6);
+            font-size: 11px;
+            letter-spacing: 0.02em;
         }
         canvas {
             cursor: grab;
@@ -52,78 +77,228 @@
         }
         canvas:active { cursor: grabbing; }
         #controls {
-            position: fixed; bottom: 20px; left: 20px; right: 20px;
-            background: var(--panel-bg); backdrop-filter: blur(12px);
-            padding: 10px 16px; border-radius: 999px; color: white;
-            display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between;
-            align-items: center; z-index: 20; font-family: monospace;
-            font-size: 13px; pointer-events: auto; border: 1px solid var(--panel-border);
-            box-shadow: 0 16px 44px rgba(0,0,0,0.35);
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 16px 24px;
+            border-radius: 6px; /* прямоугольное */
+            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+            font-family: var(--font-main);
+            font-size: 13px;
+            pointer-events: auto;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.55);
         }
-        .ctrl-group { display: flex; gap: 10px; background: rgba(19, 25, 39, 0.76);
-            padding: 6px 11px; border-radius: 999px; align-items: center;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); }
+        .ctrl-group {
+            display: flex;
+            gap: 8px 14px;
+            background: rgba(255,255,255,0.04);
+            padding: 6px 14px;
+            border-radius: 6px;
+            align-items: center;
+            border: 1px solid rgba(255,179,107,0.12);
+            flex-wrap: wrap;
+        }
+        .ctrl-group span {
+            color: rgba(255,255,255,0.7);
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
         .quality-badge {
-            color: #ffd39b; font-size: 11px; padding: 4px 8px; border-radius: 999px;
-            background: rgba(255,179,107,0.12); border: 1px solid rgba(255,179,107,0.2);
-            margin-left: auto; white-space: nowrap;
+            color: var(--accent);
+            font-size: 11px;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: rgba(255,179,107,0.1);
+            border: 1px solid rgba(255,179,107,0.2);
+            text-shadow: 0 0 12px var(--accent-glow);
+            letter-spacing: 0.02em;
+            white-space: nowrap;
         }
         button {
-            background: linear-gradient(135deg, #2b3b52, #182536);
-            border: 1px solid rgba(255,255,255,0.12);
-            color: white; padding: 6px 14px;
-            border-radius: 999px; cursor: pointer; transition: 0.2s; font-weight: 700;
-            letter-spacing: 0.04em; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.22);
+            background: linear-gradient(135deg, rgba(255,179,107,0.18), rgba(255,107,53,0.08));
+            border: 1px solid rgba(255,179,107,0.25);
+            color: #ffd39b;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.03em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            text-shadow: 0 0 6px rgba(255,179,107,0.15);
+            font-family: var(--font-main);
         }
-        button:hover { background: linear-gradient(135deg, #e67e22, #ff9f43); transform: translateY(-1px); box-shadow: 0 10px 24px rgba(230,126,34,0.25); }
-        button:focus-visible { outline: 2px solid rgba(255,179,107,0.8); outline-offset: 2px; }
-        button.active { background: linear-gradient(135deg, #27ae60, #2ecc71); box-shadow: 0 10px 24px rgba(39,174,96,0.24); }
-        select { background: rgba(15, 22, 34, 0.95); color: white; border: 1px solid rgba(255,179,107,0.42);
-            padding: 5px 12px; border-radius: 30px; cursor: pointer; max-width: 260px; }
-        input[type="range"] { width: 130px; cursor: pointer; background: linear-gradient(90deg, #e67e22, #ffb36b);
-            height: 3px; border-radius: 3px; }
-        .gui-wrapper { position: fixed; top: 20px; right: 20px; z-index: 30; }
-        @media (max-width: 800px) { #controls { flex-direction: column; align-items: stretch; gap: 8px; border-radius: 16px; }
-            .ctrl-group { justify-content: space-between; } .gui-wrapper { display: none; } }
+        button:hover {
+            background: linear-gradient(135deg, #ffb36b, #ff8a3d);
+            color: #0a0a0a;
+            box-shadow: 0 0 24px rgba(255,179,107,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+            border-color: #ffb36b;
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        button.active {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            border-color: #27ae60;
+            color: white;
+            box-shadow: 0 0 20px rgba(39,174,96,0.3);
+        }
+        select {
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: 1px solid rgba(255,179,107,0.3);
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 12px;
+            outline: none;
+            transition: border 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        select:hover, select:focus {
+            border-color: var(--accent);
+        }
+        input[type="range"] {
+            width: 110px;
+            cursor: pointer;
+            background: linear-gradient(90deg, #ffb36b, #ff6b35);
+            height: 3px;
+            border-radius: 2px;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffb36b, #e67e22);
+            border: 2px solid rgba(255,255,255,0.6);
+            box-shadow: 0 0 12px rgba(255,179,107,0.6);
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffb36b, #e67e22);
+            border: 2px solid rgba(255,255,255,0.6);
+            box-shadow: 0 0 12px rgba(255,179,107,0.6);
+            cursor: pointer;
+        }
+        .gui-wrapper {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 30;
+        }
+        @media (max-width: 800px) {
+            #controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                border-radius: 6px;
+                padding: 16px;
+                bottom: 12px;
+                left: 12px;
+                right: 12px;
+            }
+            .ctrl-group {
+                justify-content: space-between;
+                padding: 8px 12px;
+            }
+            .gui-wrapper { display: none; }
+        }
         #loading {
-            position: fixed; bottom: 50px; left: 20px; color: #ffaa66;
-            background: rgba(0,0,0,0.72); padding: 4px 12px; border-radius: 20px;
-            font-size: 11px; font-family: monospace; z-index: 15; pointer-events: none;
+            position: fixed;
+            bottom: 80px;
+            left: 24px;
+            color: var(--accent);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            padding: 4px 14px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: var(--font-main);
+            z-index: 15;
+            pointer-events: none;
+            border: 1px solid rgba(255,179,107,0.15);
+            letter-spacing: 0.04em;
+        }
+        /* Стили для кнопок с иконками (добавлены эмодзи) */
+        #slower::before { content: "◀ "; }
+        #faster::before { content: " ▶"; }
+        #resetSpeed::before { content: "↺ "; }
+        #resetView::before { content: "⌖ "; }
+        #resetSimulation::before { content: "⟳ "; }
+        #toggleTrails::before { content: "∿ "; }
+        #togglePause::before { content: "⏸ "; }
+        #toggleAutoOrbit::before { content: "⟐ "; }
+        /* Стили для селекта */
+        #targetSelect {
+            min-width: 100px;
+        }
+        /* Стиль для ползунка */
+        .ctrl-group input[type="range"] {
+            flex: 1;
+            min-width: 80px;
         }
     </style>
 </head>
 <body>
 <div id="info">
-    <div class="info-title">Cinematic orbit view</div>
+    <div class="info-title">✦ Cinematic orbit view</div>
     <strong>СОЛНЕЧНАЯ СИСТЕМА | HYG + OpenNGC | Эстетичный космический рендер</strong><br>
     Атмосферы теперь показывают мягкие, читаемые слои свечения, а интерфейс собран в единый HUD-стиль.
     <div class="info-meta">Орбиты • атмосферы • глубокий космос • управляемая камера • Пробел: пауза</div>
 </div>
 <div id="controls">
     <div class="ctrl-group">
-        <span>СКОРОСТЬ:</span>
+        <span>СКОРОСТЬ</span>
         <button id="slower">−</button>
-        <span id="speedVal">1.0x</span>
+        <span id="speedVal" style="min-width:36px;text-align:center;">1.0x</span>
         <button id="faster">+</button>
-        <button id="resetSpeed" style="background:#aa2e1e;">СБРОС</button>
+        <button id="resetSpeed" style="background:rgba(170,46,30,0.3);border-color:#aa2e1e;">СБРОС</button>
     </div>
     <div class="ctrl-group" id="focusGroup">
-        <span>ЦЕЛЬ:</span>
+        <span>ЦЕЛЬ</span>
         <select id="targetSelect"></select>
         <button id="resetView">СБРОС КАМЕРЫ</button>
-        <button id="resetSimulation" style="background:#e67e22;">СБРОС СИМУЛЯЦИИ</button>
+        <button id="resetSimulation" style="background:rgba(230,126,34,0.25);border-color:#e67e22;">СБРОС СИМУЛЯЦИИ</button>
     </div>
     <div class="ctrl-group">
-        <span>СЛЕДЫ:</span>
-        <button id="toggleTrails" style="background:#27ae60;">ВКЛ</button>
+        <span>СЛЕДЫ</span>
+        <button id="toggleTrails" style="background:rgba(39,174,96,0.25);border-color:#27ae60;">ВКЛ</button>
     </div>
     <div class="ctrl-group">
-        <span>ОБЗОР:</span>
+        <span>ОБЗОР</span>
         <button id="togglePause">ПАУЗА</button>
         <button id="toggleAutoOrbit">АВТООБЗОР</button>
     </div>
     <div class="ctrl-group">
-        <span>ЧУВСТВ. ЗУМА:</span>
+        <span>ЗУМ</span>
         <input type="range" id="zoomSens" min="0.3" max="2.0" step="0.01" value="1.0">
     </div>
     <span id="qualityBadge" class="quality-badge">Качество: Сбалансированное</span>
@@ -164,7 +339,7 @@
         quality: 'balanced',
         useLogarithmicDepth: false,
         useDynamicOrigin: false,
-        showConstellationLabels: true, showStars: true, showDeepSky: false, // отключаем глубокий космос (галактики)
+        showConstellationLabels: true, showStars: true, showDeepSky: false,
         cameraFar: 7800, sceneScale: 1.12, loadingTimeoutMs: 6500
     };
 
@@ -662,7 +837,6 @@
     let planets = [], dwarfPlanets = [], moons = [], comets = [], orbitLines = [], trailLines = [];
     let asteroidField = null, asteroidField2 = null, asteroidField3 = null, dustParticles = null, constellationLabels = [];
     let deepSkyGroup = null, starsPoints = null, backgroundStars = null;
-    // Группа для реальных изображений туманностей
     let realNebulaGroup = null;
 
     function createFallbackStars(count = 2400) {
@@ -687,11 +861,9 @@
         return starsPoints;
     }
 
-    // Функция createFallbackDeepSky больше не используется, но оставлена для совместимости
     function createFallbackDeepSky() {
         if (deepSkyGroup) scene.remove(deepSkyGroup);
         deepSkyGroup = new THREE.Group();
-        // Можно оставить пустым, чтобы ничего не создавалось
         scene.add(deepSkyGroup);
         return deepSkyGroup;
     }
@@ -786,18 +958,14 @@
         }
     }
 
-    // Функция createDeepSkyFromCatalog больше не используется, но оставлена
     function createDeepSkyFromCatalog(catalog, maxObjects) {
         if (deepSkyGroup) scene.remove(deepSkyGroup);
         deepSkyGroup = new THREE.Group();
-        // Не добавляем объекты, чтобы убрать "столбы"
         scene.add(deepSkyGroup);
         return deepSkyGroup;
     }
 
-    // ========== 5. ЗАГРУЗКА ГАЛАКТИК (OpenNGC CSV) — отключена, но функция оставлена ==========
     async function loadDeepSkyObjects() {
-        // Просто ничего не делаем, чтобы не загружать галактики
         console.log('DeepSkyObjects loading disabled (showDeepSky=false)');
         return;
     }
@@ -1005,20 +1173,18 @@
         backgroundStars = group;
     }
 
-    // ========== НОВАЯ РЕАЛИЗАЦИЯ ТУМАННОСТЕЙ С РЕАЛЬНЫМИ ИЗОБРАЖЕНИЯМИ ==========
-    // Список URL-адресов реальных изображений туманностей (с Wikimedia Commons)
+    // ========== ТУМАННОСТИ С РЕАЛЬНЫМИ ИЗОБРАЖЕНИЯМИ ==========
     const NEBULA_IMAGES = [
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Orion_Nebula_-_Hubble_2006.jpg/800px-Orion_Nebula_-_Hubble_2006.jpg', // M42
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Rosette_Nebula.jpg/800px-Rosette_Nebula.jpg', // Розетка
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Eagle_nebula_pebbles_hubble.jpg/800px-Eagle_nebula_pebbles_hubble.jpg', // Орёл
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Carina_Nebula_Hubble_2007.jpg/800px-Carina_Nebula_Hubble_2007.jpg', // Киля
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Trifid_Nebula.jpg/800px-Trifid_Nebula.jpg', // Трёхраздельная
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Lagoon_Nebula.jpg/800px-Lagoon_Nebula.jpg', // Лагуна
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Cone_Nebula.jpg/800px-Cone_Nebula.jpg', // Конус
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Ngc_2024_2mass.jpg/800px-Ngc_2024_2mass.jpg', // NGC 2024 (Пламя)
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Orion_Nebula_-_Hubble_2006.jpg/800px-Orion_Nebula_-_Hubble_2006.jpg',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Rosette_Nebula.jpg/800px-Rosette_Nebula.jpg',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Eagle_nebula_pebbles_hubble.jpg/800px-Eagle_nebula_pebbles_hubble.jpg',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Carina_Nebula_Hubble_2007.jpg/800px-Carina_Nebula_Hubble_2007.jpg',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Trifid_Nebula.jpg/800px-Trifid_Nebula.jpg',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Lagoon_Nebula.jpg/800px-Lagoon_Nebula.jpg',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Cone_Nebula.jpg/800px-Cone_Nebula.jpg',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Ngc_2024_2mass.jpg/800px-Ngc_2024_2mass.jpg',
     ];
 
-    // Функция для создания туманностей на основе изображений
     function createRealNebulae() {
         if (realNebulaGroup) {
             scene.remove(realNebulaGroup);
@@ -1031,7 +1197,6 @@
         const group = new THREE.Group();
         const loader = new THREE.TextureLoader();
 
-        // Размещаем 8 туманностей на разных расстояниях и в разных направлениях
         const positions = [
             { x: -800, y: 100, z: -200 },
             { x: 700, y: -80, z: -500 },
@@ -1042,67 +1207,34 @@
             { x: -600, y: -120, z: -600 },
             { x: 400, y: 80, z: -900 }
         ];
-
         const scales = [1.2, 1.5, 1.8, 1.3, 1.0, 1.6, 1.4, 1.7];
 
         NEBULA_IMAGES.forEach((url, index) => {
             const pos = positions[index % positions.length];
-            const scale = scales[index % scales.length] * 80; // базовый размер
-
-            // Загружаем текстуру
+            const scale = scales[index % scales.length] * 80;
             const texture = loader.load(url, (tex) => {
                 tex.colorSpace = THREE.SRGBColorSpace;
-                // Можно слегка подкорректировать
             }, undefined, (err) => {
                 console.warn('Не удалось загрузить изображение туманности:', url, err);
             });
-
             const material = new THREE.SpriteMaterial({
                 map: texture,
                 transparent: true,
                 depthWrite: false,
                 blending: THREE.AdditiveBlending,
                 opacity: 0.85,
-                rotation: 0
             });
             const sprite = new THREE.Sprite(material);
             sprite.scale.set(scale, scale, 1);
             sprite.position.set(pos.x, pos.y, pos.z);
             group.add(sprite);
         });
-
-        // Добавляем процедурные туманности как запасной вариант и для разнообразия (но они могут быть не видны, т.к. реальные перекрывают)
-        // Можно оставить процедурные, но они могут быть не нужны. Оставим для фона.
-        // Вместо этого добавим ещё несколько мелких процедурных, но с низкой прозрачностью.
-
-        // Но мы оставим процедурные, созданные ранее, но они в другой функции. Чтобы не дублировать, мы можем просто создать дополнительно.
-
         scene.add(group);
         realNebulaGroup = group;
     }
 
-    // Процедурные туманности (оставляем для совместимости, но они могут быть не нужны)
-    function createProceduralNebulae() {
-        // Процедурные туманности уже создаются в отдельной функции, но мы не будем их вызывать,
-        // вместо этого используем реальные изображения.
-        // Однако мы оставим процедурные как запасной вариант, если изображения не загрузятся.
-        // Для этого создадим их в отдельной группе, но с низкой прозрачностью.
-        // Но чтобы не перегружать, можно не создавать процедурные.
-        // Я просто создам одну или две, чтобы фон не был пустым, если картинки не загрузятся.
-        // Однако в предыдущих версиях мы уже имели процедурные, и их можно не трогать.
-        // Я отключу создание процедурных, чтобы не мешали.
-        // Вместо этого мы можем создать несколько процедурных с низкой прозрачностью для фона.
-        // Но для простоты, я просто создам небольшую группу процедурных с очень низкой прозрачностью.
-        // Или можно использовать старую функцию createNebulae, но она создаёт много объектов.
-        // Я отключу её вызов в start().
-        // Так что здесь оставим пустую функцию.
-    }
-
-    // Для совместимости оставим старую функцию createNebulae, но переопределим её
     function createNebulae() {
-        // Создаём реальные туманности
         createRealNebulae();
-        // Процедурные не создаём, чтобы не перекрывать реальные
     }
 
     function updateQualityBadge() {
@@ -1142,7 +1274,7 @@
     }
 
     // ========== 8. ФИЗИКА, АНИМАЦИЯ, УПРАВЛЕНИЕ ==========
-    let simTime = 0, currentSpeed = CONFIG.timeScale, showOrbits = false; // по умолчанию орбиты выключены
+    let simTime = 0, currentSpeed = CONFIG.timeScale, showOrbits = false;
     let isPaused = false;
     let autoOrbitEnabled = false;
     let lastTime = performance.now(), accumulator = 0;
@@ -1254,13 +1386,9 @@
             updateTrailVisuals();
             if (asteroidField) asteroidField.rotation.y += 0.001 * currentSpeed;
             if (dustParticles) { dustParticles.rotation.y += 0.0003; dustParticles.rotation.x += 0.0002; }
-
-            // deepSkyGroup удалён, поэтому не обрабатываем
-
             if (starsPoints) {
                 starsPoints.rotation.y += 0.0001 * currentSpeed;
             }
-
             if (spaceDust) {
                 spaceDust.rotation.y += 0.0003;
                 spaceDust.rotation.x += 0.0001;
@@ -1340,11 +1468,9 @@
             createAsteroidBelts(CONFIG.quality);
             createDust(CONFIG.quality);
             createBackgroundStars();
-            // Создаём туманности (реальные изображения + процедурные как запасные)
             createNebulae();
             spaceDust = createSpaceDust();
             addConstellationNames();
-            // Орбиты выключены по умолчанию
             orbitLines.forEach(l => l.visible = showOrbits);
             updateQualityBadge();
             verifyRenderingTasks();
@@ -1352,8 +1478,6 @@
             validateUIControls();
             animate();
             if (CONFIG.showStars) void loadRealStars();
-            // DeepSkyObjects не загружаем (showDeepSky=false)
-            // void loadDeepSkyObjects(); // отключено
         } catch (error) {
             console.error('Scene initialization failed:', error);
             const loadingDiv = document.getElementById('loading');
@@ -1451,7 +1575,7 @@
     gui.add(CONFIG, 'showConstellationLabels').name('Названия созвездий').onChange(v => constellationLabels.forEach(l => l.visible = v));
     gui.add(CONFIG, 'showStars').name('Реальные звёзды (HYG)').onChange(async v => { CONFIG.showStars = v; if(v) await loadRealStars(); else if(starsPoints) scene.remove(starsPoints); });
     gui.add(CONFIG, 'showDeepSky').name('Галактики (OpenNGC)').onChange(async v => { CONFIG.showDeepSky = v; if(v) await loadDeepSkyObjects(); else if(deepSkyGroup) scene.remove(deepSkyGroup); });
-    console.log('Симуляция загружена. Добавлены реальные изображения туманностей, галактики удалены.');
+    console.log('Симуляция загружена. Интерфейс обновлён: прямоугольное меню, неоновые акценты, реальные туманности.');
 </script>
 </body>
 </html>
