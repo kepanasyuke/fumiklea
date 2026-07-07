@@ -153,21 +153,26 @@
     // ========== 1. КОНФИГУРАЦИЯ ==========
     const CONFIG = {
         width: window.innerWidth, height: window.innerHeight, bgColor: 0x030318,
-        bloomStrength: 0.95, bloomRadius: 0.7, bloomThreshold: 0.28,
+        bloomStrength: 0.45,        // уменьшено для избежания пересвета
+        bloomRadius: 0.7,
+        bloomThreshold: 0.55,       // увеличен порог
         G: 0.8, softeningSq: 0.5, dtFixed: 0.01, timeScale: 1.0, maxTimeScale: 4.0,
-        trailLength: 320, showTrails: true, planetScaleFactor: 0.078, distanceScale: 1.5,
+        trailLength: 320, showTrails: true,
+        planetScaleFactor: 0.85,    // увеличен с 0.078 до 0.85 для видимости планет
+        distanceScale: 1.5,
         zoomSensitivity: 1.0, adaptiveDtEnabled: true,
         quality: 'balanced',
-        useLogarithmicDepth: true, useDynamicOrigin: false,
+        useLogarithmicDepth: false, // отключён для совместимости
+        useDynamicOrigin: false,
         showConstellationLabels: true, showStars: true, showDeepSky: true,
         cameraFar: 7800, sceneScale: 1.12, loadingTimeoutMs: 6500
     };
 
     const qualitySettings = {
-        performance: { planetSegments: 32, shadowMapSize: 256, asteroidCount: 5000, bloomStrength: 0.5, dustParticles: 2000, starCount: 8000, galaxyCount: 80 },
-        balanced:   { planetSegments: 48, shadowMapSize: 512, asteroidCount: 10000, bloomStrength: 0.85, dustParticles: 5000, starCount: 15000, galaxyCount: 150 },
-        quality:    { planetSegments: 64, shadowMapSize: 1024, asteroidCount: 20000, bloomStrength: 0.9, dustParticles: 8000, starCount: 30000, galaxyCount: 200 },
-        cinematic:  { planetSegments: 128, shadowMapSize: 2048, asteroidCount: 30000, bloomStrength: 1.0, dustParticles: 8000, starCount: 60000, galaxyCount: 250 }
+        performance: { planetSegments: 32, shadowMapSize: 256, asteroidCount: 5000, bloomStrength: 0.3, dustParticles: 2000, starCount: 8000, galaxyCount: 80 },
+        balanced:   { planetSegments: 48, shadowMapSize: 512, asteroidCount: 10000, bloomStrength: 0.45, dustParticles: 5000, starCount: 15000, galaxyCount: 150 },
+        quality:    { planetSegments: 64, shadowMapSize: 1024, asteroidCount: 20000, bloomStrength: 0.6, dustParticles: 8000, starCount: 30000, galaxyCount: 200 },
+        cinematic:  { planetSegments: 128, shadowMapSize: 2048, asteroidCount: 30000, bloomStrength: 0.8, dustParticles: 8000, starCount: 60000, galaxyCount: 250 }
     };
 
     const RENDERING_TASKS = {
@@ -570,16 +575,25 @@
     scene.fog = new THREE.FogExp2(CONFIG.bgColor, 0.00015);
     const camera = new THREE.PerspectiveCamera(46, CONFIG.width / CONFIG.height, 0.1, CONFIG.cameraFar);
     camera.position.set(0, 24, 78);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", logarithmicDepthBuffer: CONFIG.useLogarithmicDepth });
+    const renderer = new THREE.WebGLRenderer({ 
+        antialias: true, 
+        powerPreference: "high-performance", 
+        logarithmicDepthBuffer: CONFIG.useLogarithmicDepth 
+    });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
     renderer.setSize(CONFIG.width, CONFIG.height);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Исправление для Three.js r128: outputEncoding вместо outputColorSpace
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    // renderer.outputColorSpace = THREE.SRGBColorSpace; // закомментировано, т.к. в r128 используется outputEncoding
     renderer.domElement.style.display = 'block';
     renderer.domElement.style.outline = 'none';
     renderer.domElement.style.position = 'fixed';
-    renderer.domElement.style.inset = '0';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.right = '0';
+    renderer.domElement.style.bottom = '0';
     renderer.domElement.style.width = '100vw';
     renderer.domElement.style.height = '100vh';
     renderer.domElement.style.zIndex = '0';
@@ -597,7 +611,12 @@
     const effectComposer = new EffectComposer(renderer);
     effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     effectComposer.addPass(new RenderPass(scene, camera));
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(CONFIG.width, CONFIG.height), CONFIG.bloomStrength, CONFIG.bloomRadius, CONFIG.bloomThreshold);
+    const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(CONFIG.width, CONFIG.height),
+        CONFIG.bloomStrength,
+        CONFIG.bloomRadius,
+        CONFIG.bloomThreshold
+    );
     bloomPass.enabled = true;
     effectComposer.addPass(bloomPass);
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -661,7 +680,7 @@
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
-        const material = new THREE.PointsMaterial({ size: 0.2, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending });
+        const material = new THREE.PointsMaterial({ size: 0.5, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending });
         starsPoints = new THREE.Points(geometry, material);
         starsPoints.frustumCulled = false;
         scene.add(starsPoints);
@@ -733,7 +752,7 @@
         const starGeometry = new THREE.BufferGeometry();
         starGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
         starGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
-        const starMaterial = new THREE.PointsMaterial({ size: 0.23, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.97, depthWrite: false, blending: THREE.AdditiveBlending });
+        const starMaterial = new THREE.PointsMaterial({ size: 0.5, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.97, depthWrite: false, blending: THREE.AdditiveBlending });
         starsPoints = new THREE.Points(starGeometry, starMaterial);
         starsPoints.frustumCulled = false;
         scene.add(starsPoints);
@@ -1023,7 +1042,6 @@
         dustParticles.frustumCulled = false; scene.add(dustParticles);
     }
 
-    // НОВАЯ ФУНКЦИЯ: КОСМИЧЕСКАЯ ПЫЛЬ (отдельный слой вращающихся частиц)
     function createSpaceDust() {
         const dustCount = 9000;
         const dustGeometry = new THREE.BufferGeometry();
@@ -1052,9 +1070,9 @@
         if (backgroundStars) scene.remove(backgroundStars);
         const group = new THREE.Group();
         const layers = [
-            { count: 12000, size: 0.12, spread: 1100, color: 0xffffff, opacity: 0.95 },
-            { count: 8000, size: 0.22, spread: 750, color: 0x7ec8ff, opacity: 0.72 },
-            { count: 4000, size: 0.30, spread: 520, color: 0x9fd5ff, opacity: 0.46 }
+            { count: 12000, size: 0.5, spread: 1100, color: 0xffffff, opacity: 0.95 },
+            { count: 8000, size: 0.8, spread: 750, color: 0x7ec8ff, opacity: 0.72 },
+            { count: 4000, size: 1.2, spread: 520, color: 0x9fd5ff, opacity: 0.46 }
         ];
         layers.forEach((layer, index) => {
             const geometry = new THREE.BufferGeometry();
@@ -1150,7 +1168,7 @@
     let isPaused = false;
     let autoOrbitEnabled = false;
     let lastTime = performance.now(), accumulator = 0;
-    let spaceDust = null; // для вращения пыли
+    let spaceDust = null;
     let userInteracting = false;
 
     function updateAllPositions(dt) {
@@ -1244,11 +1262,11 @@
         }
     }
 
-    // АНИМАЦИОННЫЙ ЦИКЛ С АНИМАЦИЕЙ ГЛУБОКОГО КОСМОСА
     function animate() {
         const now = performance.now();
         let dt = Math.min(0.033, (now - lastTime) / 1000);
-        lastTime = now; if (dt < 0.003) dt = 0.016;
+        lastTime = now;
+        if (dt < 0.003) dt = 0.016;
         if (!isPaused) {
             accumulator += dt;
             if (accumulator >= CONFIG.dtFixed) {
