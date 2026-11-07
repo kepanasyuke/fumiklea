@@ -1,4 +1,4 @@
-import random
+﻿import random
 import http.server
 import socketserver
 import json
@@ -10,7 +10,7 @@ import numpy as np
 # --- ГЛОБАЛЬНЫЕ КОНСТАНТЫ МАТРИЦЫ ---
 WIDTH, HEIGHT = 32, 32
 TOTAL_FRAMES = 50
-TOTAL_SCENES = 19
+TOTAL_SCENES = 20
 
 # --- ПАЛИТРА ЦВЕТОВ КРИСТИНЫ (ПОЛНАЯ ВЕРСИЯ ДЛЯ ГРАФИКИ) ---
 C = {
@@ -186,6 +186,7 @@ class GameEngine:
                 ]
                 self.last_message = random.choice(epilogues)
                 self.game_active = False
+                self.current_scene = 19
                 result["message"] = f"{resp}\n\n[ЭПИЛОГ СТИВЕНА КИНГА]: {self.last_message}"
                 result["gameActive"] = False
             return result
@@ -436,9 +437,1146 @@ def get_quest_storyboard():
                                                    "победный, оглушительный гудок, её гигантская фара вспыхивает сингулярным белым взрывом, "
                                                    "и мы на полной скорости летим в бездну горизонта. Тьма забирает нас обоих. Мы вечны.")
             },
+            next_scene=12
+        ),
+        12: SceneData(
+            intro="Кристина срывается вниз, кувыркаясь в темноте. Крыша, лобовое, янтарные фары — теперь я смотрю на неё сверху. Она падает, и я падаю вместе с ней.",
+            expected=["дальше"],
+            effects={
+                "дальше": (0, 0, 0, 0, "Кадр меняется. Падение сверху.")
+            },
+            next_scene=13
+        ),
+        13: SceneData(
+            intro="Обломок Бадди уходит в кувырок, за ним тянется огненный шлейф. Внизу вспыхивает ядерное белое пламя, и угли сыплются на асфальт.",
+            expected=["дальше"],
+            effects={
+                "дальше": (0, 0, 0, 0, "Кадр меняется. Кувырок и пламя.")
+            },
+            next_scene=14
+        ),
+        14: SceneData(
+            intro="Я снова в салоне. В стекле проступают её глаза с прожилками, а впереди, в свете фар, замирает олень. Машина встаёт — дворник замирает на полпути.",
+            expected=["дальше"],
+            effects={
+                "дальше": (0, 0, 0, 0, "Кадр меняется. Отрезвление.")
+            },
+            next_scene=15
+        ),
+        15: SceneData(
+            intro="На шоссе появляются огни: патрульная машина, красно-синяя люстра, стая птиц над дорогой. Из окна высовывается коп с фонарём.",
+            expected=["дальше"],
+            effects={
+                "дальше": (0, 0, 0, 0, "Кадр меняется. Ночной патруль.")
+            },
+            next_scene=16
+        ),
+        16: SceneData(
+            intro="Ледяная площадка. Кристину заносит и крутит — фары копов наплывают с обеих сторон, к машине идут двое с фонарями.",
+            expected=["дальше"],
+            effects={
+                "дальше": (0, 0, 0, 0, "Кадр меняется. Окружение.")
+            },
+            next_scene=17
+        ),
+        17: SceneData(
+            intro="Мост, молния бьёт в небо, лес стеной по берегам. Кристина уходит в прыжок над чёрной водой.",
+            expected=["дальше"],
+            effects={
+                "дальше": (0, 0, 0, 0, "Кадр меняется. Прыжок через мост.")
+            },
+            next_scene=18
+        ),
+        18: SceneData(
+            intro="Тьма. Только глаза — с прожилками, с бликами влаги. Вверху проступает HELLO, и глаза медленно закрываются.",
+            expected=["дальше"],
+            effects={
+                "дальше": (0, 0, 0, 0, "Кадр меняется. Глаза во тьме.")
+            },
+            next_scene=19
+        ),
+        19: SceneData(
+            intro="Рассвет, тишина. Через лобовое стекло видно остров с пальмой, солнце и воду. "
+                  "Кристина молчит, и впервые за всю дорогу я слышу только собственное дыхание. "
+                  "Впереди — THE END.",
+            expected=["дальше"],
+            effects={
+                "дальше": (0, 0, 0, 0, "Титры гаснут. Мы на месте.")
+            },
             next_scene=None
         )
     }
+
+# ------------------------- СЦЕНЫ 11–18: ДЕТАЛИЗИРОВАННЫЕ ВАРИАНТЫ ОТРИСОВКИ -------------------------
+SCENE_VARIANTS = 8
+SCENE_VARIANT_CHOICE = {
+    11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0
+}
+
+
+def scene_variant_profile(variant):
+    v = int(variant) % SCENE_VARIANTS
+    return {
+        "warm": (v - 3.5) * 7.0,
+        "shift": (v % 3) - 1,
+        "density": 0.75 + 0.08 * v,
+        "glow": 0.80 + 0.06 * v,
+        "grain": 0.20 + 0.09 * v,
+        "tilt": (v % 4) - 1.5,
+    }
+
+
+def tinted(color, warm, glow=1.0):
+    r = (color[0] + warm) * glow
+    g = (color[1] + warm * 0.45) * glow
+    b = (color[2] - warm * 0.55) * glow
+    return [min(255, max(0, int(round(value)))) for value in (r, g, b)]
+
+
+def px(frame, y, x, color):
+    if 0 <= y < HEIGHT and 0 <= x < WIDTH:
+        frame[y, x] = color
+
+
+def rect(frame, y1, y2, x1, x2, color):
+    y1, y2 = max(0, int(y1)), min(HEIGHT, int(y2))
+    x1, x2 = max(0, int(x1)), min(WIDTH, int(x2))
+    if y1 < y2 and x1 < x2:
+        frame[y1:y2, x1:x2] = color
+
+
+def disc(frame, cy, cx, radius, color):
+    for y in range(cy - radius, cy + radius + 1):
+        for x in range(cx - radius, cx + radius + 1):
+            if (y - cy) ** 2 + (x - cx) ** 2 <= radius * radius:
+                px(frame, y, x, color)
+
+
+def hrand(a, b):
+    value = (a * 1103515245 + b * 12345 + 7) & 0x7FFFFFFF
+    return value / 0x7FFFFFFF
+
+
+def overlay(frame, y1, y2, x1, x2, color, strength):
+    y1, y2 = max(0, int(y1)), min(HEIGHT, int(y2))
+    x1, x2 = max(0, int(x1)), min(WIDTH, int(x2))
+    if y1 >= y2 or x1 >= x2 or strength <= 0:
+        return
+    region = frame[y1:y2, x1:x2].astype(np.int16)
+    tint = np.array(color, dtype=np.int16)
+    frame[y1:y2, x1:x2] = np.clip(
+        region * (1 - strength) + tint * strength, 0, 255
+    ).astype(np.uint8)
+
+
+def person(frame, x, y, color, height=8):
+    rect(frame, y, y + 2, x, x + 2, color)
+    rect(frame, y + 2, y + height - 2, x, x + 2, color)
+    px(frame, y + height - 2, x, color)
+    px(frame, y + height - 1, x, color)
+    px(frame, y + height - 2, x + 1, color)
+    px(frame, y + height - 1, x + 1, color)
+
+
+def scene_11(frame, f_idx, t, p):
+    frame[:] = tinted([6, 8, 20], p["warm"])
+    rect(frame, 0, 10, 0, WIDTH, tinted([10, 14, 32], p["warm"]))
+    rect(frame, 9, 10, 0, WIDTH, tinted([30, 34, 54], p["warm"]))
+
+    for y in range(10, 32):
+        depth = (y - 10) / 21.0
+        half = int(3 + depth * 15)
+        rect(frame, y, y + 1, 16 - half, 16 + half, tinted([26 + int(14 * depth), 26, 32], p["warm"]))
+
+    dash = (f_idx * 2) % 6
+    for y in range(12, 32):
+        depth = (y - 10) / 21.0
+        if (y + dash) % 6 < 3:
+            width = 1 if depth < 0.4 else 2
+            rect(frame, y, y + 1, 16 - width // 2, 16 + width - width // 2, tinted([160, 158, 168], p["warm"], 0.8))
+
+    beam = 0.7 + 0.3 * np.sin(f_idx * 0.3)
+    for lamp_x, direction in ((5, -1), (26, 1)):
+        for step in range(18):
+            y = 26 - step
+            spread = 1 + step // 2
+            left = max(0, lamp_x + direction * spread if direction > 0 else lamp_x - spread)
+            right = lamp_x if direction > 0 else lamp_x + spread
+            strength = max(0.0, 0.5 * beam * (1 - step / 21.0))
+            overlay(frame, y, y + 1, left, right, [255, 248, 220], strength)
+        disc(frame, 26, lamp_x, 1, tinted([255, 250, 215], p["warm"]))
+        px(frame, 25, lamp_x, tinted([255, 240, 190], p["warm"]))
+
+    bx = 16 + int(2 * np.sin(f_idx * 0.22)) + p["shift"]
+    by = 12 + int(t * 2)
+    rect(frame, by, by + 2, bx - 3, bx + 3, tinted(C["C_BUDDY_BLUE"], p["warm"]))
+    rect(frame, by, by + 1, bx - 2, bx + 2, tinted([36, 68, 140], p["warm"]))
+    px(frame, by + 2, bx - 3, [255, 70, 70])
+    px(frame, by + 2, bx + 2, [255, 70, 70])
+    px(frame, by + 3, bx - 2, tinted(C["BLK"], p["warm"]))
+    px(frame, by + 3, bx + 1, tinted(C["BLK"], p["warm"]))
+
+    rect(frame, 27, 32, 0, WIDTH, tinted([22, 8, 10], p["warm"]))
+    rect(frame, 26, 27, 2, 30, tinted([48, 12, 14], p["warm"]))
+    rect(frame, 25, 26, 4, 28, tinted([86, 20, 22], p["warm"]))
+    rect(frame, 0, 32, 0, 1, tinted([8, 8, 12], p["warm"]))
+    rect(frame, 0, 32, 31, 32, tinted([8, 8, 12], p["warm"]))
+
+    if 18 <= f_idx <= 26:
+        power = max(0.0, 1.0 - abs(f_idx - 22) / 5.0)
+        overlay(frame, 8, 20, 4, 28, [255, 245, 220], 0.5 * power)
+
+    if 34 <= f_idx <= 44:
+        dim = abs(f_idx - 39) / 5.0
+        overlay(frame, 20, 28, 0, WIDTH, [0, 0, 0], 0.5 * (1 - dim))
+
+
+def scene_12(frame, f_idx, t, p):
+    frame[:] = tinted([4, 4, 10], p["warm"])
+
+    for i in range(14):
+        sx = int(hrand(i, 3) * WIDTH)
+        speed = 3 + int(hrand(i, 5) * 5)
+        sy = int((hrand(i, 7) * HEIGHT + f_idx * speed) % HEIGHT)
+        length = 2 + int(hrand(i, 9) * 3)
+        for step in range(length):
+            px(frame, (sy + step) % HEIGHT, sx, tinted([60, 66, 96], p["warm"], 0.8 - step * 0.2))
+
+    if f_idx >= 30:
+        power = min(1.0, (f_idx - 30) / 15.0)
+        for y in range(HEIGHT):
+            for x in range(WIDTH):
+                distance = np.hypot(x - 16, y - 16)
+                if distance > 10:
+                    px(frame, y, x, tinted([40 + int(90 * power), 30, 26], p["warm"], power))
+
+    pulse = int(170 + np.sin(f_idx * 0.6) * 85)
+    sprite, alpha = top_sprite(pulse, p)
+    angle = 0.0
+    if f_idx >= 6:
+        angle = 0.12 + np.sin(f_idx * 0.12) * 0.28
+    draw_rotated(frame, sprite, alpha, angle, 16, 16)
+
+    if f_idx <= 6:
+        overlay(frame, 0, HEIGHT, 0, WIDTH, [0, 0, 0], 0.6 * (1 - f_idx / 6.0))
+
+    if 18 <= f_idx <= 26:
+        power = max(0.0, 1.0 - abs(f_idx - 22) / 5.0)
+        overlay(frame, 6, 26, 4, 28, [255, 200, 120], 0.16 * power)
+
+
+def scene_13(frame, f_idx, t, p):
+    frame[:] = tinted([3, 4, 10], p["warm"])
+    cx = int(26 - 20 * t) + p["shift"]
+    cy = int(24 - 20 * t)
+    angle = t * 5 * np.pi
+
+    for trail in range(1, 7):
+        disc(
+            frame,
+            cy + int(trail * 1.7),
+            cx + int(trail * 1.7),
+            max(1, 3 - trail // 2),
+            tinted(C["ORG"], p["warm"], 0.55 - trail * 0.07),
+        )
+    for puff in range(3):
+        disc(frame, cy + 7 + puff * 2, cx + 8 + puff, 2, tinted([40, 40, 46], p["warm"]))
+
+    for u in range(-4, 5):
+        for v in range(-2, 3):
+            rx = int(cx + u * np.cos(angle) - v * np.sin(angle))
+            ry = int(cy + u * np.sin(angle) + v * np.cos(angle))
+            if v == 0:
+                color = [16, 22, 36]
+            elif v == 2:
+                color = [120, 126, 140]
+            elif abs(u) == 4:
+                color = [70, 90, 150]
+            else:
+                color = C["C_BUDDY_BLUE"]
+            px(frame, ry, rx, color)
+
+    for i in range(int(5 + 9 * p["density"])):
+        px(
+            frame,
+            cy + int((hrand(i, f_idx) - 0.5) * 12),
+            cx + int((hrand(i, f_idx + 3) - 0.5) * 12),
+            tinted(C["ORG"], p["warm"]),
+        )
+
+    if t > 0.78:
+        power = (t - 0.78) / 0.22
+        radius = int(4 + 26 * power * p["glow"])
+        for y in range(HEIGHT):
+            for x in range(WIDTH):
+                distance = np.hypot(x - cx, y - cy)
+                if distance < radius:
+                    if distance < radius * 0.35:
+                        frame[y, x] = tinted(C["WHT"], p["warm"])
+                    elif distance < radius * 0.7:
+                        frame[y, x] = tinted(C["YLW"], p["warm"])
+                    else:
+                        frame[y, x] = tinted(C["ORG"], p["warm"], 0.85)
+                elif distance < radius + 2:
+                    px(frame, y, x, tinted([255, 200, 120], p["warm"], 0.5))
+
+    if t > 0.8:
+        for i in range(int(12 * p["density"])):
+            px(
+                frame,
+                (f_idx * 2 + i * 7) % HEIGHT,
+                (i * 5 + f_idx) % WIDTH,
+                tinted(C["ORG"], p["warm"], 0.85 - (i % 3) * 0.2),
+            )
+
+    if 18 <= f_idx <= 26:
+        for i in range(7):
+            px(
+                frame,
+                20 + (i % 3),
+                3 + i * 4 + (f_idx % 3),
+                tinted(C["ORG"], p["warm"], 0.95 - i * 0.1),
+            )
+
+
+def scene_14(frame, f_idx, t, p):
+    frame[:] = tinted([8, 6, 12], p["warm"])
+    rect(frame, 0, 12, 0, WIDTH, tinted([10, 12, 22], p["warm"]))
+    rect(frame, 0, 2, 0, WIDTH, tinted([4, 5, 10], p["warm"]))
+    still_idx = min(38, f_idx)
+
+    for i in range(int(18 * p["density"])):
+        x = int(hrand(i, 11) * WIDTH)
+        speed = 2 + 6 * (1 - t)
+        y = int((hrand(i, 5) * HEIGHT + still_idx * speed) % HEIGHT)
+        px(frame, y, x, tinted([120, 150, 200], p["warm"], 0.8))
+        if hrand(i, 9) < 0.4:
+            px(frame, max(y - 1, 0), x, tinted([70, 100, 150], p["warm"], 0.6))
+
+    wiper = int(5 + 11 * abs(np.sin(still_idx * 0.22)))
+    for step in range(10):
+        px(frame, 4 + step, wiper + step, tinted([18, 20, 26], p["warm"]))
+        px(frame, 4 + step, wiper + step + 1, tinted([40, 44, 52], p["warm"], 0.5))
+
+    rect(frame, 19, 32, 0, WIDTH, tinted([40, 26, 18], p["warm"]))
+    rect(frame, 19, 20, 0, WIDTH, tinted([80, 50, 30], p["warm"]))
+    rect(frame, 30, 32, 2, 12, tinted([26, 17, 11], p["warm"]))
+    for vent in range(4):
+        px(frame, 31, 3 + vent * 2, tinted([60, 42, 28], p["warm"]))
+
+    for gauge_x in (9, 23):
+        disc(frame, 25, gauge_x, 4, tinted([16, 18, 20], p["warm"]))
+        disc(frame, 25, gauge_x, 3, tinted([26, 28, 32], p["warm"]))
+        arc_color = tinted([int(200 * t), int(220 - 150 * t), int(80 - 40 * t)], p["warm"])
+        for step in range(0, 11):
+            angle = np.pi * (1.12 + step * 0.07)
+            px(
+                frame,
+                int(25 - np.sin(angle) * 3),
+                int(gauge_x + np.cos(angle) * 3),
+                arc_color,
+            )
+        needle = np.pi * (1.2 + 0.55 * (0.5 + 0.5 * np.sin(f_idx * 0.25 + gauge_x)))
+        px(
+            frame,
+            int(25 - np.sin(needle) * 2),
+            int(gauge_x + np.cos(needle) * 2),
+            tinted(C["WHT"], p["warm"]),
+        )
+        px(frame, 25, gauge_x, tinted(C["WHT"], p["warm"], 0.5))
+
+    for smear in range(int(4 * p["density"]) + 1):
+        y0 = 3 + int(hrand(smear, 9) * 12)
+        for step in range(7):
+            px(
+                frame,
+                y0 + step // 2,
+                6 + smear * 5 + step,
+                tinted(C["B_RED"], p["warm"], 0.75 - step * 0.08),
+            )
+
+    sweep = int((f_idx / TOTAL_FRAMES) * (WIDTH + 24)) - 12
+    for dy in range(-3, 4):
+        px(
+            frame,
+            8 + dy,
+            sweep + dy,
+            tinted([130, 140, 170], p["warm"], 0.75 - abs(dy) * 0.15),
+        )
+        px(
+            frame,
+            9 + dy,
+            sweep + 1 + dy,
+            tinted([80, 92, 124], p["warm"], 0.5 - abs(dy) * 0.1),
+        )
+
+    if 18 <= f_idx <= 34:
+        fade_in = min(1.0, (f_idx - 18) / 6.0, (34 - f_idx) / 6.0)
+        for ex in (10, 21):
+            px(frame, 4, ex, tinted([220, 60, 60], p["warm"], 0.9 * fade_in))
+            px(frame, 4, ex + 1, tinted([220, 60, 60], p["warm"], 0.9 * fade_in))
+            for k in range(3):
+                px(
+                    frame,
+                    5 + k,
+                    ex - 1 - k,
+                    tinted([150, 40, 40], p["warm"], (0.6 - k * 0.15) * fade_in),
+                )
+                px(
+                    frame,
+                    5 + k,
+                    ex + 2 + k,
+                    tinted([150, 40, 40], p["warm"], (0.6 - k * 0.15) * fade_in),
+                )
+
+    if f_idx >= 30:
+        power = min(1.0, (f_idx - 30) / 8.0)
+        overlay(frame, 8, 19, 0, WIDTH, [255, 245, 210], 0.32 * power)
+        deer_x = 13 + int(2 * np.sin(f_idx * 0.1))
+        deer_y = 10
+        rect(frame, deer_y, deer_y + 4, deer_x, deer_x + 3, tinted([92, 68, 46], p["warm"]))
+        rect(frame, deer_y - 2, deer_y, deer_x + 1, deer_x + 2, tinted([72, 54, 38], p["warm"]))
+        for antler in range(2):
+            base_x = deer_x + (0 if antler == 0 else 3)
+            px(frame, deer_y - 3, base_x, tinted([160, 140, 110], p["warm"]))
+            px(frame, deer_y - 4, base_x + (-1 if antler == 0 else 1), tinted([160, 140, 110], p["warm"]))
+        for leg in range(4):
+            px(frame, deer_y + 4 + leg % 2, deer_x + leg, tinted([72, 54, 38], p["warm"]))
+        px(frame, deer_y + 1, deer_x - 1, tinted([255, 240, 190], p["warm"]))
+        px(frame, deer_y + 1, deer_x + 3, tinted([255, 240, 190], p["warm"]))
+
+    if 8 <= f_idx <= 20:
+        radio_glow = 1.0 - abs(f_idx - 14) / 7.0
+        rect(
+            frame,
+            22,
+            24,
+            12,
+            20,
+            tinted([40, 220, 90], p["warm"], 0.55 * max(radio_glow, 0.0)),
+        )
+        px(frame, 22, 19, tinted([255, 60, 60], p["warm"], max(radio_glow, 0.0)))
+
+    flick = 1.0 if (f_idx // 6) % 2 == 0 else 0.9
+    if flick < 1.0:
+        frame[:] = np.clip(frame.astype(np.int16) * flick, 0, 255).astype(np.uint8)
+
+    if 28 <= f_idx <= 36:
+        streak_y = 3 + (f_idx - 28) * 2
+        for k in range(6):
+            px(
+                frame,
+                min(streak_y + k, 18),
+                14 + k // 3,
+                tinted([140, 170, 220], p["warm"], 0.9 - k * 0.1),
+            )
+
+    if f_idx >= 40:
+        fade = (f_idx - 40) / 9.0
+        overlay(frame, 18, 32, 0, WIDTH, [0, 0, 0], 0.55 * fade)
+
+
+def scene_15(frame, f_idx, t, p):
+    flash = (f_idx // 4) % 2
+    frame[:] = tinted([10, 12, 26], p["warm"])
+    rect(frame, 0, 11, 0, WIDTH, tinted([12, 15, 34], p["warm"]))
+
+    for x in range(WIDTH):
+        far_h = 2 + int(2 * hrand(x, 3))
+        rect(frame, 11 - far_h, 11, x, x + 1, tinted([12, 18, 24], p["warm"]))
+        px(frame, 10 - far_h, x, tinted([18, 28, 30], p["warm"]))
+
+    scroll = (f_idx * 2) % 11
+    for base in range(-11, 12, 11):
+        for side in (0, 1):
+            cx = base - scroll if side == 0 else WIDTH - 4 - (base - scroll)
+            if cx < -4 or cx > WIDTH + 4:
+                continue
+            for h in range(10):
+                half = h // 2
+                rect(
+                    frame,
+                    15 - h,
+                    16 - h,
+                    cx - half,
+                    cx + half + 1,
+                    tinted([10, 30, 22], p["warm"]),
+                )
+                if half > 0:
+                    px(frame, 15 - h, cx - half, tinted([18, 46, 32], p["warm"]))
+                    px(frame, 15 - h, cx + half, tinted([18, 46, 32], p["warm"]))
+            rect(frame, 16, 18, cx, cx + 1, tinted([26, 18, 12], p["warm"]))
+
+    for y in range(13, 32):
+        depth = (y - 13) / 18.0
+        half = int(4 + depth * 17)
+        rect(frame, y, y + 1, 16 - half, 16 + half, tinted([28 + int(18 * depth), 28, 36], p["warm"]))
+    for y in range(13, 32):
+        depth = (y - 13) / 18.0
+        half = int(4 + depth * 17)
+        px(frame, y, 16 - half, tinted([124, 122, 130], p["warm"], 0.8))
+        px(frame, y, 16 + half - 1, tinted([124, 122, 130], p["warm"], 0.8))
+
+    dash = (f_idx * 2) % 8
+    for y in range(15, 32):
+        depth = (y - 13) / 18.0
+        if (y + dash) % 5 < 2:
+            width = 1 if depth < 0.45 else 2
+            rect(frame, y, y + 1, 16 - width // 2, 16 + width, tinted([150, 148, 156], p["warm"], 0.85))
+
+    shadow_shift = (f_idx * 3) % 24
+    for base in range(-24, WIDTH + 24, 12):
+        sx = base + shadow_shift
+        for step in range(11):
+            y = 14 + step
+            depth = step / 10.0
+            px(frame, y, sx + int(step * 1.1), tinted([14, 14, 20], p["warm"]))
+            if depth > 0.35:
+                px(frame, y, sx + int(step * 1.1) + 1, tinted([22, 22, 28], p["warm"]))
+
+    pool = [255, 70, 80] if flash == 0 else [70, 110, 255]
+    for step in range(10):
+        y = 15 + step
+        half = 6 + step
+        overlay(frame, y, y + 1, max(0, 16 - half), min(WIDTH, 16 + half), pool, 0.07)
+
+    y = 17
+    rect(frame, y, y + 1, 8, 24, tinted([18, 20, 28], p["warm"]))
+    rect(frame, y + 1, y + 3, 9, 23, tinted([24, 30, 48], p["warm"]))
+    rect(frame, y + 3, y + 6, 7, 25, tinted([34, 38, 52], p["warm"]))
+    rect(frame, y + 1, y + 6, 7, 10, tinted([210, 214, 226], p["warm"]))
+    rect(frame, y + 1, y + 6, 22, 25, tinted([210, 214, 226], p["warm"]))
+    rect(frame, y + 2, y + 3, 16, 17, tinted([120, 126, 140], p["warm"]))
+    rect(frame, y + 6, y + 7, 7, 25, tinted([132, 134, 146], p["warm"]))
+    rect(frame, y + 7, y + 8, 8, 11, tinted(C["BLK"], p["warm"]))
+    rect(frame, y + 7, y + 8, 21, 24, tinted(C["BLK"], p["warm"]))
+    px(frame, y + 8, 9, tinted([90, 92, 104], p["warm"]))
+    px(frame, y + 8, 22, tinted([90, 92, 104], p["warm"]))
+    rect(frame, y + 4, y + 5, 12, 20, tinted([150, 155, 170], p["warm"]))
+    px(frame, y, 23, tinted([180, 186, 200], p["warm"]))
+    px(frame, y - 1, 23, tinted([180, 186, 200], p["warm"], 0.7))
+
+    red = [255, 40, 50] if flash == 0 else [96, 62, 72]
+    blue = [40, 90, 255] if flash == 1 else [72, 72, 112]
+    rect(frame, y - 2, y - 1, 9, 24, tinted([70, 74, 88], p["warm"]))
+    for slot in range(4):
+        sx = 10 + slot * 3
+        rect(frame, y - 1, y, sx, sx + 2, red if slot % 2 == 0 else blue)
+
+    if f_idx >= 8:
+        for bird in range(5):
+            bx = 30 - int((f_idx - 8) * 1.4) - bird * 3
+            by = 4 + (bird % 2) * 2 + int(np.sin(f_idx * 0.3 + bird) * 1)
+            if 0 <= bx < WIDTH:
+                px(frame, by, bx, tinted([40, 46, 60], p["warm"]))
+                px(frame, by - 1, bx - 1, tinted([52, 58, 74], p["warm"]))
+                px(frame, by - 1, bx + 1, tinted([52, 58, 74], p["warm"]))
+
+    if 24 <= f_idx <= 44:
+        lean = min(1.0, (f_idx - 24) / 6.0)
+        head_x = 7 - int(2 * lean)
+        rect(frame, 17, 19, head_x - 1, head_x + 2, tinted([46, 50, 64], p["warm"]))
+        rect(frame, 16, 17, head_x - 2, head_x + 3, tinted([64, 68, 84], p["warm"]))
+        rect(frame, 19, 22, head_x - 2, head_x + 3, tinted([38, 42, 56], p["warm"]))
+        px(frame, 16, head_x + 2, tinted([120, 126, 142], p["warm"]))
+        arm_x = head_x - 3
+        px(frame, 20, arm_x, tinted([214, 218, 230], p["warm"]))
+        px(frame, 19, arm_x - 1, tinted([214, 218, 230], p["warm"]))
+        px(frame, 18, arm_x - 2, tinted([255, 245, 210], p["warm"]))
+        for step in range(int(5 * lean)):
+            px(
+                frame,
+                18 - step // 3,
+                arm_x - 3 - step,
+                tinted([255, 245, 210], p["warm"], 0.85 - step * 0.13),
+            )
+
+    overlay(frame, 0, 11, 0, WIDTH, pool, 0.14)
+
+
+def scene_16(frame, f_idx, t, p):
+    flash = (f_idx // 5) % 2
+    frame[:] = tinted([8, 9, 18], p["warm"])
+    rect(frame, 0, 12, 0, WIDTH, tinted([14, 16, 34], p["warm"]))
+    overlay(
+        frame,
+        0,
+        12,
+        0,
+        WIDTH,
+        [255, 60, 70] if flash == 0 else [60, 90, 255],
+        0.3,
+    )
+
+    grow = int(3 + 4 * min(1.0, 0.2 + t * 1.2))
+    for cx in (2, WIDTH - 3):
+        disc(frame, 14, cx, grow, tinted([255, 250, 230], p["warm"], 0.75))
+        disc(frame, 14, cx, max(1, grow - 2), tinted([255, 255, 255], p["warm"]))
+
+    rect(frame, 18, 32, 0, WIDTH, tinted([56, 64, 82], p["warm"]))
+    rect(frame, 18, 19, 0, WIDTH, tinted([100, 112, 136], p["warm"]))
+    for i in range(8):
+        px(
+            frame,
+            23 + int(hrand(i, 3) * 8),
+            int(hrand(i, 4) * WIDTH),
+            tinted([140, 160, 190], p["warm"], 0.8),
+        )
+
+    pulse = int(170 + np.sin(f_idx * 0.5) * 85)
+    rear, rear_alpha = rear_sprite(pulse, p)
+    rear_q, rear_q_alpha = rear_quarter_sprite(pulse, p)
+    side, side_alpha = side_sprite(pulse, p)
+    front_q, front_q_alpha = front_quarter_sprite(pulse, p)
+    angle = 0.0
+    if f_idx >= 5:
+        angle = (f_idx - 5) * 0.16
+
+    if f_idx >= 6:
+        for arc in range(3):
+            radius = 6 + arc * 3
+            for step in range(7):
+                px(
+                    frame,
+                    int(19 + step * 0.6),
+                    int(16 + np.cos(angle - step * 0.2) * radius),
+                    tinted([150, 170, 200], p["warm"], 0.5 - arc * 0.12),
+                )
+
+    if f_idx >= 12:
+        step_in = min(3, (f_idx - 12) // 9)
+        for px_x in (9 + step_in, 21 - step_in):
+            person(frame, px_x, 21, tinted([34, 38, 50], p["warm"]), height=7)
+            rect(frame, 20, 21, px_x, px_x + 2, tinted([64, 68, 84], p["warm"]))
+            for k in range(3):
+                px(
+                    frame,
+                    23,
+                    px_x + (3 + k if px_x < 16 else -1 - k),
+                    tinted(C["WHT"], p["warm"], 0.9 - k * 0.18),
+                )
+
+    drift = int((f_idx - 5) * 0.3) if f_idx >= 5 else 0
+    cx = 16 + drift
+    phase = angle % (2 * np.pi)
+    turn = phase / (np.pi / 2)
+    views = (
+        (rear, rear_alpha, False),
+        (rear_q, rear_q_alpha, False),
+        (side, side_alpha, False),
+        (front_q, front_q_alpha, False),
+        (rear, rear_alpha, True),
+        (rear_q, rear_q_alpha, True),
+        (side, side_alpha, True),
+        (front_q, front_q_alpha, True),
+    )
+    index = int(turn) % 8
+    blend = turn - int(turn)
+    sprite_now, alpha_now, mirror_now = views[index]
+    sprite_next, alpha_next, mirror_next = views[(index + 1) % 8]
+    width_now = 1.05 - 0.2 * blend
+    width_next = 1.05 - 0.2 * (1 - blend)
+    blit_scaled(frame, sprite_now, alpha_now, width_now, cx, 15, mirror=mirror_now)
+    if blend > 0.45:
+        blit_scaled(frame, sprite_next, alpha_next, width_next, cx, 15, mirror=mirror_next)
+
+    if 25 <= f_idx <= 29:
+        power = max(0.0, 1.0 - abs(f_idx - 27) / 3.0)
+        overlay(frame, 0, 32, 0, WIDTH, [255, 255, 255], 0.25 * power)
+
+    if f_idx >= 40:
+        overlay(frame, 0, 32, 0, WIDTH, [0, 0, 0], 0.35)
+
+
+def scene_17(frame, f_idx, t, p):
+    frame[:] = tinted([8, 12, 32], p["warm"])
+    rect(frame, 0, 13, 0, WIDTH, tinted([10, 15, 40], p["warm"]))
+    rect(frame, 9, 13, 0, WIDTH, tinted([14, 20, 48], p["warm"]))
+
+    for x in range(WIDTH):
+        tree_h = 4 + int(4 * hrand(x, 5))
+        top = 13 - tree_h
+        rect(frame, top, 13, x, x + 1, tinted(C["WOOD_SHADOW"], p["warm"]))
+        px(frame, top - 1, x, tinted(C["WOOD_NEEDLES"], p["warm"]))
+        px(frame, top, x, tinted(C["WOOD_NEEDLES"], p["warm"], 0.85))
+        if hrand(x, 7) > 0.5:
+            px(frame, top - 2, x, tinted(C["WOOD_NEEDLES"], p["warm"], 0.7))
+        if hrand(x, 9) > 0.7:
+            px(frame, 12, x, tinted(C["WOOD_TRUNK"], p["warm"]))
+
+    rect(frame, 13, 16, 0, WIDTH, tinted([66, 70, 82], p["warm"]))
+    rect(frame, 13, 14, 0, WIDTH, tinted([118, 124, 138], p["warm"]))
+    rect(frame, 16, 17, 0, WIDTH, tinted([40, 42, 52], p["warm"]))
+    for post in range(1, WIDTH, 6):
+        rect(frame, 11, 13, post, post + 1, tinted([104, 110, 124], p["warm"]))
+    rect(frame, 11, 12, 0, WIDTH, tinted([88, 94, 108], p["warm"]))
+    for pillar in (4, 27):
+        rect(frame, 16, 22, pillar, pillar + 2, tinted([54, 58, 70], p["warm"]))
+
+    rect(frame, 17, 32, 0, WIDTH, tinted([8, 22, 58], p["warm"]))
+    for row in range(18, 32, 2):
+        for x in range(WIDTH):
+            if (x + row * 3 + f_idx) % 7 == 0:
+                px(frame, row, x, tinted([26, 52, 112], p["warm"]))
+
+    if 11 <= f_idx <= 21:
+        strike = 1.0 - abs(f_idx - 16) / 6.0
+        power = max(strike, 0.0)
+        overlay(frame, 0, 17, 0, WIDTH, [185, 205, 255], 0.42 * power)
+        bolt = [
+            (0, 13), (1, 13), (2, 12), (3, 12), (4, 13), (5, 14), (6, 14),
+            (7, 13), (8, 12), (9, 12), (10, 11), (11, 10), (12, 10), (13, 9),
+        ]
+        for index, (by, bx) in enumerate(bolt):
+            px(frame, by, bx, [255, 255, 255])
+            px(frame, by, bx + 1, [235, 245, 255])
+            if index % 2 == 0:
+                px(frame, by, bx - 1, [150, 185, 255])
+        for branch in range(3):
+            by = 4 + branch * 2
+            for step in range(3):
+                px(frame, by + step, 14 + branch * 2 - step, [200, 220, 255])
+
+    car_x = int(-8 + t * 46)
+    rise = int(9 * np.sin(np.pi * t))
+    car_y = 13 - rise
+    rect(frame, car_y, car_y + 3, car_x, car_x + 9, C["RED"])
+    rect(frame, car_y, car_y + 1, car_x + 1, car_x + 8, C["CHR_GLOSS"])
+    rect(frame, car_y + 3, car_y + 4, car_x, car_x + 9, C["CHRM"])
+    px(frame, car_y + 1, car_x + 8, [255, 240, 200])
+    for step in range(4):
+        px(
+            frame,
+            car_y + 1,
+            car_x + 9 + step,
+            tinted([255, 240, 200], p["warm"], 0.65 - step * 0.13),
+        )
+
+    if t < 0.2:
+        for i in range(int(5 * p["density"])):
+            px(
+                frame,
+                15 + int(hrand(i, f_idx) * 2),
+                int(3 + hrand(i, 4) * 7),
+                tinted(C["ORG"], p["warm"]),
+            )
+
+    if t > 0.88:
+        for ring in range(3):
+            radius = 2 + ring * 2 + (f_idx % 4)
+            for step in range(12):
+                angle = step * (2 * np.pi / 12)
+                px(
+                    frame,
+                    int(19 + np.sin(angle) * radius * 0.35),
+                    int(car_x + 4 + np.cos(angle) * radius),
+                    tinted([200, 220, 250], p["warm"], 0.8 - ring * 0.2),
+                )
+
+
+GLYPHS = {
+    "H": ("10001", "10001", "10001", "11111", "10001", "10001", "10001"),
+    "E": ("11111", "10000", "10000", "11110", "10000", "10000", "11111"),
+    "L": ("10000", "10000", "10000", "10000", "10000", "10000", "11111"),
+    "O": ("01110", "10001", "10001", "10001", "10001", "10001", "01110"),
+    "T": ("11111", "00100", "00100", "00100", "00100", "00100", "00100"),
+    "N": ("10001", "11001", "11001", "10101", "10011", "10011", "10001"),
+    "D": ("11110", "10001", "10001", "10001", "10001", "10001", "11110"),
+}
+
+
+def draw_word(frame, text, x, y, strength, color=(255, 240, 240)):
+    cursor = x
+    for char in text:
+        rows = GLYPHS.get(char)
+        if rows is None:
+            cursor += 6
+            continue
+        for dy, row in enumerate(rows):
+            for dx, bit in enumerate(row):
+                if bit == "1":
+                    px(frame, y + dy, cursor + dx, tinted(list(color), 0, strength))
+        cursor += 6
+
+
+def scene_18(frame, f_idx, t, p):
+    frame[:] = tinted([2, 2, 6], p["warm"])
+    openness = 1.0
+    if f_idx >= 45:
+        openness = max(0.0, 1.0 - (f_idx - 45) / 4.0)
+    blink_phase = f_idx % 25
+    if 18 <= blink_phase <= 22:
+        openness *= 0.35
+    if 28 <= f_idx <= 36:
+        openness *= 1.3
+    if f_idx <= 8:
+        openness *= f_idx / 8.0
+
+    drift = int(np.sin(f_idx * 0.12))
+    glow_phase = 0.5 + 0.5 * np.sin(f_idx * 0.22)
+    rect(frame, 21, 22, 3, 29, tinted([30 + int(18 * glow_phase), 3, 5], p["warm"]))
+
+    for wisp in range(6):
+        wx = int((hrand(wisp, 3) * WIDTH + f_idx * 0.7) % WIDTH)
+        wy = 17 + int(hrand(wisp, 4) * 11)
+        rect(frame, wy, wy + 1, wx, wx + 7, tinted([24, 6, 8], p["warm"], 0.6))
+
+    for eye_x in (9 + drift, 22 + drift):
+        radius = 7 + int(3 * glow_phase)
+        for y in range(17, 31):
+            for x in range(eye_x - radius, eye_x + radius + 1):
+                distance = np.hypot(x - eye_x, (y - 27) * 1.4)
+                if distance < radius:
+                    px(frame, y, x, tinted([30 + int(16 * glow_phase), 3, 5], p["warm"]))
+
+    if openness <= 0.05:
+        for eye_x in (9, 22):
+            rect(frame, 28, 29, eye_x - 5, eye_x + 6, tinted([90, 26, 30], p["warm"]))
+            rect(frame, 29, 30, eye_x - 4, eye_x + 5, tinted([40, 14, 16], p["warm"]))
+    else:
+        height = max(1, int(5 * openness))
+        top = 28 - p["shift"]
+        for eye_x in (9 + drift, 22 + drift):
+            rect(frame, top - height - 1, top - height, eye_x - 7, eye_x + 8, tinted([54, 16, 18], p["warm"]))
+            rect(
+                frame,
+                top - height - 2,
+                top - height - 1,
+                eye_x - 5,
+                eye_x + 6,
+                tinted([34, 11, 13], p["warm"]),
+            )
+            for dy in range(-height, height + 1):
+                half = int(6 * np.sqrt(max(0.0, 1 - (dy / (height + 1)) ** 2)))
+                rect(
+                    frame,
+                    top + dy,
+                    top + dy + 1,
+                    eye_x - half,
+                    eye_x + half + 1,
+                    tinted([205, 195, 185], p["warm"], 0.85),
+                )
+            for side in (-1, 1):
+                for step in range(3):
+                    px(
+                        frame,
+                        top - height + 1 + step * 2,
+                        eye_x + side * (5 - step),
+                        tinted([200, 70, 70], p["warm"], 0.85 - step * 0.2),
+                    )
+                    px(
+                        frame,
+                        top + height - 1 - step,
+                        eye_x + side * (4 - step),
+                        tinted([180, 55, 55], p["warm"], 0.6 - step * 0.15),
+                    )
+            disc(frame, top, eye_x, max(1, height - 2), tinted([150, 12, 14], p["warm"]))
+            disc(frame, top, eye_x, max(0, height - 4), tinted(C["BLK"], p["warm"]))
+            for spoke in range(6):
+                angle = spoke * (np.pi / 3) + f_idx * 0.06
+                px(
+                    frame,
+                    int(top + np.sin(angle) * max(1, height - 2)),
+                    int(eye_x + np.cos(angle) * max(1, height - 2)),
+                    tinted([200, 45, 32], p["warm"]),
+                )
+            px(frame, top - 2, eye_x - 2, tinted(C["WHT"], p["warm"]))
+            px(frame, top - 1, eye_x + 3, tinted(C["WHT"], p["warm"], 0.75))
+            px(frame, top + 1, eye_x - 3, tinted([255, 240, 235], p["warm"], 0.9))
+            for lash in range(-4, 5, 2):
+                px(frame, top + height + 1, eye_x + lash, tinted([150, 140, 135], p["warm"], 0.7))
+                px(frame, top + height + 2, eye_x + lash + 1, tinted([110, 100, 98], p["warm"], 0.5))
+
+    if openness > 0.2 and (f_idx // 12) % 2 == 0:
+        for i in range(int(3 * p["density"])):
+            px(
+                frame,
+                20 + int(hrand(i, 2) * 6),
+                int(hrand(i, 3) * WIDTH),
+                tinted([40, 8, 10], p["warm"]),
+            )
+
+    if f_idx >= 28:
+        appear = min(1.0, (f_idx - 28) / 8.0)
+        if f_idx >= 45:
+            appear *= max(0.0, 1 - (f_idx - 45) / 4.0)
+        if appear > 0.05:
+            rect(
+                frame,
+                9,
+                10,
+                2,
+                30,
+                tinted([60, 8, 10], p["warm"], 0.5 * appear),
+            )
+            draw_word(frame, "HELLO", 2, 2, appear)
+
+
+def scene_19(frame, f_idx, t, p):
+    frame[:] = tinted([6, 10, 24], p["warm"])
+
+    for y in range(3, 16):
+        band = [14 + y, 22 + y // 2, 52 + y + (6 if y > 10 else 0)]
+        rect(frame, y, y + 1, 2, 30, tinted(band, p["warm"]))
+
+    disc(frame, 7, 24, 2, tinted([255, 224, 150], p["warm"]))
+    disc(frame, 7, 24, 1, tinted([255, 245, 200], p["warm"]))
+
+    rect(frame, 16, 27, 2, 30, tinted([10, 36, 84], p["warm"]))
+    for y in range(17, 27, 2):
+        for x in range(2, 30):
+            if (x + y * 2 + f_idx // 2) % 6 == 0:
+                px(frame, y, x, tinted([44, 96, 158], p["warm"]))
+
+    rect(frame, 14, 17, 3, 14, tinted([58, 90, 52], p["warm"]))
+    rect(frame, 16, 18, 3, 14, tinted([92, 74, 48], p["warm"]))
+    rect(frame, 13, 14, 5, 11, tinted([44, 78, 44], p["warm"]))
+
+    sway = int(np.sin(f_idx * 0.16))
+    for step in range(9):
+        trunk_x = 8 - step // 3 + (sway if step > 4 else 0)
+        px(frame, 13 - step, trunk_x, tinted([92, 66, 40], p["warm"]))
+        px(frame, 13 - step, trunk_x + 1, tinted([72, 50, 30], p["warm"]))
+    crown_x = 8 - 2 + sway
+    leaf = tinted([54, 140, 70], p["warm"])
+    dark_leaf = tinted([38, 108, 56], p["warm"])
+    for spread in range(-4, 5):
+        tip_x = crown_x + spread * 2
+        tip_y = 4 - abs(spread) // 2 + (sway if spread > 0 else -sway)
+        px(frame, tip_y, tip_x, leaf)
+        px(frame, tip_y + 1, tip_x - (1 if spread < 0 else -1), dark_leaf)
+        phase = 1 + abs(spread)
+        px(frame, min(12, tip_y + phase), tip_x, dark_leaf)
+    for nut in range(3):
+        px(frame, 5, crown_x - 1 + nut, tinted([120, 84, 44], p["warm"]))
+    px(frame, 3, crown_x - 4, tinted([92, 42, 60], p["warm"]))
+
+    rect(frame, 0, 3, 0, WIDTH, tinted([8, 10, 16], p["warm"]))
+    rect(frame, 3, 32, 0, 2, tinted([8, 10, 16], p["warm"]))
+    rect(frame, 3, 32, 30, 32, tinted([8, 10, 16], p["warm"]))
+    rect(frame, 27, 32, 2, 30, tinted([26, 18, 14], p["warm"]))
+    rect(frame, 27, 28, 2, 30, tinted([52, 38, 28], p["warm"]))
+    for vent in range(5):
+        px(frame, 30, 4 + vent * 5, tinted([64, 48, 34], p["warm"]))
+
+    if f_idx >= 35:
+        power = min(1.0, (f_idx - 35) / 6.0)
+        overlay(frame, 0, HEIGHT, 0, WIDTH, [0, 0, 0], 0.55 * power)
+        draw_word(frame, "THE", 7, 11, power)
+        draw_word(frame, "END", 7, 20, power)
+
+
+SCENE_PAINTERS = {
+    11: scene_11,
+    12: scene_12,
+    13: scene_13,
+    14: scene_14,
+    15: scene_15,
+    16: scene_16,
+    17: scene_17,
+    18: scene_18,
+    19: scene_19,
+}
+
+
+def rear_sprite(pulse, p):
+    sprite = np.zeros((10, 22, 3), dtype=np.uint8)
+    alpha = np.zeros((10, 22), dtype=bool)
+
+    def put(y1, y2, x1, x2, color):
+        sprite[y1:y2, x1:x2] = color
+        alpha[y1:y2, x1:x2] = True
+
+    put(0, 1, 1, 21, C["B_RED"])
+    put(1, 3, 0, 22, C["RED"])
+    put(1, 2, 1, 21, C["CHR_GLOSS"])
+    put(3, 5, 0, 22, C["CHRM"])
+    put(5, 6, 0, 22, tinted([90, 96, 106], p["warm"]))
+    put(3, 4, 1, 5, [pulse, 0, 0])
+    put(3, 4, 17, 21, [pulse, 0, 0])
+    put(4, 5, 9, 14, [200, 200, 205])
+    put(5, 7, 2, 4, C["BLK"])
+    put(5, 7, 18, 20, C["BLK"])
+    return sprite, alpha
+
+
+def top_sprite(pulse, p):
+    sprite = np.zeros((18, 12, 3), dtype=np.uint8)
+    alpha = np.zeros((18, 12), dtype=bool)
+
+    def put(y1, y2, x1, x2, color):
+        sprite[y1:y2, x1:x2] = color
+        alpha[y1:y2, x1:x2] = True
+
+    put(0, 1, 2, 10, C["CHRM"])
+    put(1, 3, 2, 10, C["RED"])
+    put(1, 2, 3, 5, [255, 220, 150])
+    put(1, 2, 7, 9, [255, 220, 150])
+    put(3, 6, 3, 9, [18, 26, 44])
+    put(5, 12, 2, 10, C["RED"])
+    put(6, 11, 4, 8, C["CHR_GLOSS"])
+    put(12, 15, 3, 9, [18, 26, 44])
+    put(15, 17, 2, 10, C["RED"])
+    put(17, 18, 2, 10, C["CHRM"])
+    put(17, 18, 2, 4, [pulse, 0, 0])
+    put(17, 18, 8, 10, [pulse, 0, 0])
+    put(4, 6, 0, 2, C["BLK"])
+    put(4, 6, 10, 12, C["BLK"])
+    put(11, 13, 0, 2, C["BLK"])
+    put(11, 13, 10, 12, C["BLK"])
+    return sprite, alpha
+
+
+def side_sprite(pulse, p):
+    sprite = np.zeros((8, 22, 3), dtype=np.uint8)
+    alpha = np.zeros((8, 22), dtype=bool)
+
+    def put(y1, y2, x1, x2, color):
+        sprite[y1:y2, x1:x2] = color
+        alpha[y1:y2, x1:x2] = True
+
+    put(2, 3, 3, 19, C["RED"])
+    put(1, 2, 5, 17, C["CHR_GLOSS"])
+    put(2, 4, 4, 18, C["RED"])
+    put(4, 5, 2, 20, C["CHRM"])
+    put(3, 4, 6, 11, [18, 22, 34])
+    put(3, 4, 12, 16, [18, 22, 34])
+    put(4, 5, 18, 21, [pulse, 0, 0])
+    put(5, 6, 4, 7, C["BLK"])
+    put(5, 6, 15, 18, C["BLK"])
+    put(2, 3, 2, 3, [255, 240, 200])
+    return sprite, alpha
+
+
+def rear_quarter_sprite(pulse, p):
+    sprite = np.zeros((10, 16, 3), dtype=np.uint8)
+    alpha = np.zeros((10, 16), dtype=bool)
+
+    def put(y1, y2, x1, x2, color):
+        sprite[y1:y2, x1:x2] = color
+        alpha[y1:y2, x1:x2] = True
+
+    put(1, 3, 1, 12, C["RED"])
+    put(1, 2, 2, 11, C["CHR_GLOSS"])
+    put(0, 1, 2, 10, C["B_RED"])
+    put(3, 5, 0, 13, C["CHRM"])
+    put(5, 6, 0, 13, tinted([90, 96, 106], p["warm"]))
+    put(3, 4, 1, 4, [pulse, 0, 0])
+    put(2, 4, 11, 15, [18, 24, 38])
+    put(1, 2, 12, 15, C["CHR_GLOSS"])
+    put(5, 7, 2, 4, C["BLK"])
+    put(5, 7, 9, 11, C["BLK"])
+    return sprite, alpha
+
+
+def front_quarter_sprite(pulse, p):
+    sprite = np.zeros((10, 16, 3), dtype=np.uint8)
+    alpha = np.zeros((10, 16), dtype=bool)
+
+    def put(y1, y2, x1, x2, color):
+        sprite[y1:y2, x1:x2] = color
+        alpha[y1:y2, x1:x2] = True
+
+    put(2, 5, 1, 12, C["RED"])
+    put(2, 3, 2, 11, C["CHR_GLOSS"])
+    put(0, 2, 3, 11, [18, 24, 38])
+    put(5, 7, 0, 13, C["CHRM"])
+    put(4, 5, 1, 3, [255, 235, 190])
+    put(2, 4, 11, 15, C["RED"])
+    put(1, 3, 11, 15, [18, 24, 38])
+    put(5, 7, 3, 5, C["BLK"])
+    put(5, 7, 9, 11, C["BLK"])
+    return sprite, alpha
+
+
+def blit_scaled(frame, sprite, alpha, scale_x, cx, cy, mirror=False):
+    height, width = sprite.shape[:2]
+    new_w = max(1, round(width * max(scale_x, 0.08)))
+    for tx in range(new_w):
+        src_x = int(tx * width / new_w)
+        if mirror:
+            src_x = width - 1 - src_x
+        for ty in range(height):
+            if alpha[ty, src_x]:
+                px(frame, cy - height // 2 + ty, cx - new_w // 2 + tx, sprite[ty, src_x])
+
+
+def draw_rotated(frame, sprite, alpha, angle, cx, cy):
+    height, width = sprite.shape[:2]
+    cos_a, sin_a = np.cos(angle), np.sin(angle)
+    half_h, half_w = height // 2, width // 2
+    for dy in range(-height, height + 1):
+        for dx in range(-width, width + 1):
+            ty, tx = cy + dy, cx + dx
+            if not (0 <= ty < HEIGHT and 0 <= tx < WIDTH):
+                continue
+            sx = dx * cos_a + dy * sin_a + half_w
+            sy = -dx * sin_a + dy * cos_a + half_h
+            ix, iy = round(sx), round(sy)
+            if 0 <= ix < width and 0 <= iy < height and alpha[iy, ix]:
+                frame[ty, tx] = sprite[iy, ix]
+
+
+def apply_montage(frame, scene_idx, f_idx):
+    strength = min(0.86, (f_idx - 44) * 0.17)
+    overlay(frame, 0, HEIGHT, 0, WIDTH, [0, 0, 0], strength)
+
+    if scene_idx == 11:
+        rect(frame, 13, 19, 4, 10, [255, 200, 60])
+        rect(frame, 13, 19, 22, 28, [255, 200, 60])
+        rect(frame, 15, 17, 11, 21, [40, 36, 20])
+    elif scene_idx == 12:
+        disc(frame, 16, 16, 6, [120, 18, 18])
+        disc(frame, 16, 16, 4, [230, 40, 36])
+        disc(frame, 16, 16, 2, [255, 255, 255])
+    elif scene_idx == 13:
+        disc(frame, 10, 9, 4, [255, 120, 20])
+        disc(frame, 10, 9, 2, [255, 220, 120])
+        for k in range(4):
+            px(frame, 4 + k, 6 + k, [255, 160, 40])
+    elif scene_idx == 14:
+        rect(frame, 19, 21, 0, WIDTH, [40, 22, 14])
+        for k in range(9):
+            px(frame, 25, 5 + k, [255, 60, 40])
+        px(frame, 24, 13, [255, 90, 60])
+    elif scene_idx == 15:
+        rect(frame, 12, 18, 3, 15, [255, 40, 50])
+        rect(frame, 12, 18, 17, 29, [40, 90, 255])
+        rect(frame, 12, 13, 3, 29, [70, 74, 88])
+    elif scene_idx == 16:
+        disc(frame, 12, 4, 4, [255, 250, 220])
+        disc(frame, 12, 27, 4, [255, 250, 220])
+        rect(frame, 20, 22, 10, 22, [200, 20, 30])
+    elif scene_idx == 17:
+        for ring in range(3):
+            radius = 3 + ring * 3 + (f_idx - 45)
+            for step in range(12):
+                angle = step * (2 * np.pi / 12)
+                px(
+                    frame,
+                    int(17 + np.sin(angle) * radius * 0.35),
+                    int(16 + np.cos(angle) * radius),
+                    [200, 220, 250],
+                )
+
+
+def build_scene_frame(scene_idx, variant, f_idx):
+    frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+    painter = SCENE_PAINTERS.get(scene_idx)
+    if painter is not None:
+        painter(frame, f_idx, f_idx / TOTAL_FRAMES, scene_variant_profile(variant))
+        if f_idx >= 45 and scene_idx != 18:
+            apply_montage(frame, scene_idx, f_idx)
+        frame = np.clip(frame.astype(np.int16) * 1.18, 0, 255).astype(np.uint8)
+    return frame
+
+
+def generate_scene_variants(scene_idx):
+    return [
+        [build_scene_frame(scene_idx, variant, f_idx).tolist() for f_idx in range(TOTAL_FRAMES)]
+        for variant in range(SCENE_VARIANTS)
+    ]
+
 
 # ------------------------- ГЕНЕРАЦИЯ СЦЕН (С ИСПРАВЛЕНИЕМ ГРАНИЦ) -------------------------
 def generate_scenes():
@@ -1608,8 +2746,8 @@ def generate_scenes():
                                 if n2_y - 2 >= 0 and n2_x + 3 < WIDTH:
                                     frame[n2_y - 2, n2_x + 1 : n2_x + 4] = [C['YLW']] * 3
 
-            # --- СЦЕНА 11: Одержимая фара Кристины (Максимальный Ultra-Macro Zoom 32x32) ---
-            elif scene_idx == 11:
+            # --- СЦЕНА 11: Одержимая фара Кристины (Вариант 0 — авторская отрисовка) ---
+            elif scene_idx == 11 and SCENE_VARIANT_CHOICE.get(11, 0) == -1:
                 # Никакого воздуха! Вся матрица 32х32 — это чистый, плотный хоррор-арт в упор
                 frame[0:32, :] = C['BLK']
 
@@ -1747,8 +2885,8 @@ def generate_scenes():
                 frame[24, 0:WIDTH] = C['BLK']
                 frame[24, cx:min(WIDTH, cx+22)] = C['BLK']
 
-            # --- СЦЕНА 12: Мощнейший таран, разрушение оригинальной решетки и трещина (Часть 1) ---
-            elif scene_idx == 12:
+            # --- СЦЕНА 12: Мощнейший таран (Вариант 0 — авторская отрисовка) ---
+            elif scene_idx == 12 and SCENE_VARIANT_CHOICE.get(12, 0) == -1:
                 # Вся матрица 32х32 отдана под макро-деформацию металла и огонь взрыва!
                 frame[0:32, :] = C['BLK']
 
@@ -1967,85 +3105,10 @@ def generate_scenes():
                 if y_pos+1 < HEIGHT:
                     frame[y_pos+1, 10:13] = frame[y_pos+1, 19:22] = C['YLW']
 
-            # СЦЕНА 11: Силуэт Арни
-            elif scene_idx == 11:
-                frame[18:24, 10:22] = C['BLK']
-                frame[12:18, 13:19] = C['BLK']
-                frame[17:23, 9:23] = C['BLK']
-                if f_idx % 10 > 7:
-                    frame[14, 15] = frame[14, 16] = C['B_RED']
-
-            # СЦЕНА 12: Camaro
-            elif scene_idx == 12:
-                frame[:, :12] = C['RED']
-                crash_x = int(24 - t * 8)
-                if crash_x < 0: crash_x = 0
-                frame[:, crash_x:] = C['CHRM']
-                for _ in range(3):
-                    y = np.random.randint(10, 22)
-                    frame[y, crash_x] = C['YLW']
-
-            # СЦЕНА 13: Разбитое стекло
-            elif scene_idx == 13:
-                frame[:] = C['BLK']
-                num_cracks = int(t * 12)
-                for i in range(num_cracks):
-                    angle = (i * 30) * np.pi / 180
-                    for d in range(16):
-                        cx = int(16 + np.cos(angle) * d)
-                        cy = int(16 + np.sin(angle) * d)
-                        if 0 <= cx < WIDTH and 0 <= cy < HEIGHT:
-                            frame[cy, cx] = C['WHT']
-
-            # СЦЕНА 14: Бульдозер
-            elif scene_idx == 14:
-                heavy_y = int(t * 16)
-                frame[0:heavy_y, :] = C['YLW']
-                if heavy_y+2 <= HEIGHT:
-                    frame[heavy_y:heavy_y+2, :] = C['BLK']
-                frame[20:, :] = C['RED']
-
-            # СЦЕНА 15: Дым из-под капота
-            elif scene_idx == 15:
-                frame[16:, 4:28] = C['RED']
-                for y in range(0, 16):
-                    for x in range(WIDTH):
-                        if (x + y + f_idx) % 4 == 0:
-                            frame[y, x] = C['CHRM']
-
-            # СЦЕНА 16: Ночное шоссе
-            elif scene_idx == 16:
-                for y in range(12, HEIGHT):
-                    w = int((y - 12) * 0.8)
-                    frame[y, 16-w:16+w] = C['BLK']
-                    if (y + f_idx) % 8 == 0:
-                        frame[y, 16] = C['YLW']
-                frame[12:14, 15:18] = C['RED']
-
-            # СЦЕНА 17: Нож мясника
-            elif scene_idx == 17:
-                for i in range(20):
-                    lx = 6 + i
-                    ly = int(10 + t * 4 + i * 0.5)
-                    if ly < HEIGHT:
-                        frame[ly, lx] = C['CHRM']
-                if t > 0.5:
-                    drop_y = int(15 + (t - 0.5) * 20)
-                    if drop_y < HEIGHT:
-                        frame[drop_y, 16] = C['B_RED']
-
-            # СЦЕНА 18: Финальная утилизация
-            elif scene_idx == 18:
-                size = int(14 * (1.0 - t)) + 2
-                if size > 2:
-                    y1, y2 = max(0, 16-size), min(HEIGHT, 16+size)
-                    x1, x2 = max(0, 16-size), min(WIDTH, 16+size)
-                    frame[y1:y2, x1:x2] = C['RED']
-                    frame[y1, x1:x2] = C['CHRM']
-                    if y2-1 >= 0:
-                        frame[y2-1, x1:x2] = C['CHRM']
-                else:
-                    frame[15:17, 15:17] = C['BLK']
+            # СЦЕНЫ 11–18 (варианты): детализированная отрисовка по README
+            elif 11 <= scene_idx <= 19:
+                variant = SCENE_VARIANT_CHOICE.get(scene_idx, 0)
+                frame = build_scene_frame(scene_idx, variant, f_idx)
 
             scene_frames.append(frame.tolist())
         all_scenes.append(scene_frames)

@@ -99,7 +99,7 @@
         }
         /* Стили бабблов (общие) */
         .christine-pixelbox {
-            background: #fff; border: 3px solid #000; padding: 10px 14px;
+            background: #fff; color: #0b0b0b; border: 3px solid #000; padding: 10px 14px;
             box-shadow: 5px 5px 0 #990000; font-weight: bold; align-self: flex-start;
             max-width: 85%; white-space: pre-wrap;
             transition: all 0.2s;
@@ -167,6 +167,7 @@
         /* ---------- ОСНОВНЫЕ ТЕМЫ (20 вариантов) ---------- */
         /* Универсальные классы – каждая тема переопределяет переменные */
         .theme-custom { --term-color: #2aff6e; --term-glow: 0 0 8px #2aff6e; --term-bg: #06090e; --border-color: #2aff6e; }
+        .theme-classic-sega { --term-color: #2aff6e; --term-glow: 0 0 8px #2aff6e; --term-bg: #06090e; --border-color: #2aff6e; }
         .theme-green-phosphor { --term-color: #33ff33; --term-glow: 0 0 8px #00ff00; --term-bg: #030803; --border-color: #1b471b; }
         .theme-amber-terminal { --term-color: #ffaa00; --term-glow: 0 0 8px #ff8800; --term-bg: #080500; --border-color: #4a2f00; }
         .theme-blood-fury { --term-color: #ff2222; --term-glow: 0 0 10px #ff0000; --term-bg: #0a0101; --border-color: #5c0404; }
@@ -529,7 +530,7 @@
             let autoFx = "fx-crt";
             if ([2, 10, 11].includes(targetScene)) { autoTheme = "green-phosphor"; autoFx = "fx-normal"; }
             else if ([5, 6].includes(targetScene)) { autoTheme = "amber-terminal"; autoFx = "fx-flicker"; }
-            else if ([9, 12, 17, 82].includes(targetScene)) { autoTheme = "blood-fury"; autoFx = "fx-bad-signal"; }
+            else if ([9, 17, 82].includes(targetScene)) { autoTheme = "blood-fury"; autoFx = "fx-bad-signal"; }
             else if ([13, 83].includes(targetScene)) { autoTheme = "bw-thunder"; autoFx = "fx-crt"; }
             else if ([84].includes(targetScene)) { autoTheme = "cyberpunk-88"; autoFx = "fx-total-madness"; }
             // Применяем стиль (ручной выбор из селекторов имеет приоритет, но авто-стиль применяется только если пользователь не менял вручную? 
@@ -668,7 +669,8 @@
             let s=await fetch('/api/state'); let st=await s.json();
             currentScene=st.currentScene; targetScene=st.currentScene;
             updateStatsUI(st.stats.repair,st.stats.sanity,st.stats.fuel,st.stats.reputation,st.stats.aggression);
-            if(st.intro_steps) await displayMessageSteps(st.intro_steps);
+            const introSteps = st.intro_steps || (st.intro ? String(st.intro).split(/\n\s*\n/).filter(s=>s.trim()) : []);
+            if(introSteps.length) await displayMessageSteps(introSteps, introSteps.length > 1);
             setInputEnabled(true);
             expectedCommands=st.expected||[];
             if(expectedCommands.length) appendTerm(`Ожидание: ${expectedCommands.join(', ').toUpperCase()}`);
